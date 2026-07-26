@@ -2,9 +2,10 @@ const express = require('express');
 const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
+
+const roleRoutes = require('./routes/roleRoutes');
+const permissionRoutes = require('./routes/permissionRoutes');
 const userRoutes = require('./routes/userRoutes');
-const productRoutes = require('./routes/productRoutes'); // <--- Importar
-const documentRoutes = require('./routes/documentRoutes');
 
 const app = express();
 
@@ -16,9 +17,8 @@ app.use('/uploads', express.static(path.resolve(__dirname, '..', 'uploads')));
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Rotas da API
+app.use('/api', roleRoutes);
+app.use('/api', permissionRoutes);
 app.use('/api', userRoutes);
-app.use('/api', productRoutes); 
-app.use('/api', documentRoutes);
 
 module.exports = app;

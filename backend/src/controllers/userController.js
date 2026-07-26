@@ -1,228 +1,206 @@
 const pool = require('../config/db');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'sua_chave_secreta_super_segura';
-
-// ==========================================
-// AUTH CONTROLLER (LOGIN)
-// ==========================================
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'E-mail e senha são obrigatórios' });
-  }
-
   try {
-    const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (rows.length === 0) {
-      return res.status(401).json({ error: 'Credenciais inválidas' });
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email e palavra-passe são obrigatórios.' });
     }
 
-    const user = rows[0];
-
-    // Comparação simples (em produção recomenda-se o uso do bcrypt)
-    if (user.password !== password) {
-      return res.status(401).json({ error: 'Credenciais inválidas' });
+    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    if (users.length === 0) {
+      return res.status(401).json({ success: false, message: 'Credenciais inválidas.' });
     }
 
-    // Gera o token JWT com validade de 8h
+    const user = users[0];
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ success: false, message: 'Credenciais inválidas.' });
+    }
+
+    delete user.password;
+
     const token = jwt.sign(
       { id: user.id, email: user.email, role_id: user.role_id },
-      JWT_SECRET,
+      process.env.JWT_SECRET || 'secret_key_sgpd_2026',
       { expiresIn: '8h' }
     );
 
-    res.json({
-      message: 'Login realizado com sucesso',
+    return res.status(200).json({
+      success: true,
+      message: 'Login efetuado com sucesso.',
       token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role_id: user.role_id
-      }
+      data: user
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
-
-// ==========================================
-// ROTA /me (Identificado pelo Token JWT)
-// ==========================================
-exports.getMe = async (req, res) => {
-  // Pega o ID do usuário injetado pelo authMiddleware
-  const userId = req.user.id;
-
-  try {
-    const [userRows] = await pool.query(
-      `SELECT u.id, u.name, u.email, u.created_at, r.name AS role
-       FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.id = ?`,
-      [userId]
-    );
-
-    if (userRows.length === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
-
-    const [permRows] = await pool.query(
-      `SELECT p.name FROM permissions p
-       INNER JOIN role_permissions rp ON p.id = rp.permission_id
-       INNER JOIN users u ON u.role_id = rp.role_id WHERE u.id = ?`,
-      [userId]
-    );
-
-    res.json({
-      ...userRows[0],
-      permissions: permRows.map((p) => p.name)
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// ==========================================
-// CONTROLLERS DE USUÁRIOS
-// ==========================================
 
 exports.getUsers = async (req, res) => {
   try {
-    const [users] = await pool.query(
-      `SELECT u.id, u.name, u.email, u.created_at, r.name AS role 
-       FROM users u LEFT JOIN roles r ON u.role_id = r.id`
-    );
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const [users] = await pool.query(`
+      SELECT 
+        u.id, 
+        u.name, 
+        u.email, 
+        u.role_id, 
+        r.name as role_name, 
+        u.created_at 
+      FROM users u
+      LEFT JOIN roles r ON u.role_id = r.id
+      ORDER BY u.id DESC
+    `);
+
+    return res.status(200).json({ success: true, data: users });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
 
 exports.getUserById = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT id, name, email, role_id FROM users WHERE id = ?', [req.params.id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
-    res.json(rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const { id } = req.params;
+    const [users] = await pool.query(`
+      SELECT 
+        u.id, 
+        u.name, 
+        u.email, 
+        u.role_id, 
+        r.name as role_name, 
+        u.created_at 
+      FROM users u
+      LEFT JOIN roles r ON u.role_id = r.id
+      WHERE u.id = ?
+    `, [id]);
+
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: 'Utilizador não encontrado.' });
+    }
+
+    const user = users[0];
+    let permissions = [];
+
+    if (user.role_id) {
+      const [perms] = await pool.query(`
+        SELECT p.id, p.name 
+        FROM permissions p
+        INNER JOIN role_permissions rp ON p.id = rp.permission_id
+        WHERE rp.role_id = ?
+      `, [user.role_id]);
+      permissions = perms;
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...user,
+        permissions
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
 
 exports.createUser = async (req, res) => {
-  const { name, email, password, role_id } = req.body;
   try {
+    const { name, email, password, role_id } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Nome, email e palavra-passe são obrigatórios.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password, role_id) VALUES (?, ?, ?, ?)',
-      [name, email, password, role_id]
+      [name, email, hashedPassword, role_id || null]
     );
-    res.status(201).json({ id: result.insertId, name, email, role_id });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Utilizador criado com sucesso.',
+      data: {
+        id: result.insertId,
+        name,
+        email,
+        role_id: role_id || null
+      }
+    });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ success: false, message: 'Este e-mail já está registado.' });
+    }
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
 
 exports.updateUser = async (req, res) => {
-  const { name, email, password, role_id } = req.body;
   try {
-    const [result] = await pool.query(
-      'UPDATE users SET name = ?, email = ?, password = ?, role_id = ? WHERE id = ?',
-      [name, email, password, role_id, req.params.id]
-    );
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
-    res.json({ message: 'Usuário atualizado com sucesso' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+    const { id } = req.params;
+    const { name, email, password, role_id } = req.body;
 
-exports.patchUser = async (req, res) => {
-  const fields = req.body;
-  const updates = [];
-  const values = [];
+    const updates = [];
+    const values = [];
 
-  Object.keys(fields).forEach((key) => {
-    updates.push(`${key} = ?`);
-    values.push(fields[key]);
-  });
+    if (name) {
+      updates.push('name = ?');
+      values.push(name);
+    }
+    if (email) {
+      updates.push('email = ?');
+      values.push(email);
+    }
+    if (role_id !== undefined) {
+      updates.push('role_id = ?');
+      values.push(role_id);
+    }
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      updates.push('password = ?');
+      values.push(hashedPassword);
+    }
 
-  if (updates.length === 0) return res.status(400).json({ error: 'Nenhum campo enviado para atualização' });
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, message: 'Forneça pelo menos um campo para atualizar.' });
+    }
 
-  values.push(req.params.id);
+    values.push(id);
+    const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
 
-  try {
-    const [result] = await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values);
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
-    res.json({ message: 'Usuário atualizado com sucesso (PATCH)' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const [result] = await pool.query(query, values);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Utilizador não encontrado.' });
+    }
+
+    return res.status(200).json({ success: true, message: 'Utilizador atualizado com sucesso.' });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ success: false, message: 'Este e-mail já está em uso.' });
+    }
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
 
 exports.deleteUser = async (req, res) => {
   try {
-    const [result] = await pool.query('DELETE FROM users WHERE id = ?', [req.params.id]);
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
-    res.json({ message: 'Usuário removido com sucesso' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+    const { id } = req.params;
+    const [result] = await pool.query('DELETE FROM users WHERE id = ?', [id]);
 
-// ==========================================
-// CONTROLLERS DE ROLES
-// ==========================================
-
-exports.getRoles = async (req, res) => {
-  try {
-    const [roles] = await pool.query('SELECT * FROM roles');
-    res.json(roles);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-exports.getRoleById = async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT * FROM roles WHERE id = ?', [req.params.id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Role não encontrada' });
-    res.json(rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-exports.createRole = async (req, res) => {
-  const { name } = req.body;
-  if (!name) return res.status(400).json({ error: 'O nome da role é obrigatório.' });
-
-  try {
-    const [result] = await pool.query('INSERT INTO roles (name) VALUES (?)', [name]);
-    res.status(201).json({ id: result.insertId, name });
-  } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({ error: 'Role com este nome já existe.' });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Utilizador não encontrado.' });
     }
-    res.status(500).json({ error: err.message });
-  }
-};
 
-exports.updateRole = async (req, res) => {
-  const { name } = req.body;
-  if (!name) return res.status(400).json({ error: 'O nome da role é obrigatório.' });
-
-  try {
-    const [result] = await pool.query('UPDATE roles SET name = ? WHERE id = ?', [name, req.params.id]);
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Role não encontrada' });
-    res.json({ message: 'Role atualizada com sucesso' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-exports.deleteRole = async (req, res) => {
-  try {
-    const [result] = await pool.query('DELETE FROM roles WHERE id = ?', [req.params.id]);
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Role não encontrada' });
-    res.json({ message: 'Role removida com sucesso' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(200).json({ success: true, message: 'Utilizador eliminado com sucesso.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
   }
 };

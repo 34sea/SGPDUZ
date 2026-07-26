@@ -1,11 +1,11 @@
 services:
   db:
     image: mysql:8.0
-    container_name: mysql_db
+    container_name: mysql_db_SGPDUZ
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: app_db
+      MYSQL_ROOT_PASSWORD: SGPDUZ@12345
+      MYSQL_DATABASE: SGPDUZ
     ports:
       - "3307:3307"
     volumes:
@@ -14,23 +14,23 @@ services:
 
   backend:
     build: ./backend    
-    container_name: node_backend
+    container_name: node_backend_SGPDUZ
     ports:
       - "5000:5000"
     environment:
       DB_HOST: db
       DB_USER: root
-      DB_PASSWORD: rootpassword
-      DB_NAME: app_db
+      DB_PASSWORD: SGPDUZ@12345
+      DB_NAME: SGPDUZ
     volumes:
-      - ./backend:/app                  # Sincroniza o código e a pasta uploads com o seu PC
-      - /app/node_modules              # Evita sobrescrever as dependências do container
+      - ./backend:/app                  
+      - /app/node_modules              
     depends_on:
       - db
 
   frontend:
-    build: ./frontend     # Aponta para a pasta frontend onde está o segundo Dockerfile
-    container_name: react_frontend
+    build: ./frontend     
+    container_name: react_frontend_SGPDUZ
     ports:
       - "3000:3000"
     environment:

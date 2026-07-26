@@ -5,243 +5,154 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
- * components:
- *   schemas:
- *     User:
- *       type: object
- *       required:
- *         - name
- *         - email
- *         - password
- *         - role_id
- *       properties:
- *         id:
- *           type: integer
- *         name:
- *           type: string
- *         email:
- *           type: string
- *         role_id:
- *           type: integer
- *     LoginInput:
- *       type: object
- *       required:
- *         - email
- *         - password
- *       properties:
- *         email:
- *           type: string
- *           example: "user@example.com"
- *         password:
- *           type: string
- *           example: "123456"
- *     RoleInput:
- *       type: object
- *       required:
- *         - name
- *       properties:
- *         name:
- *           type: string
- *           example: "MANAGER"
+ * tags:
+ *   name: Users
+ *   description: Gestão de Utilizadores e Autenticação
  */
-
-// ==========================================
-// ROTAS PÚBLICAS (Sem Autenticação)
-// ==========================================
 
 /**
  * @swagger
- * /api/login:
+ * /api/users/login:
  *   post:
- *     summary: Autentica o usuário e retorna o Token JWT
- *     tags: [Auth]
+ *     summary: Autenticação de Utilizador (Login)
+ *     tags: [Users]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/LoginInput'
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "admin@unizambeze.ac.mz"
+ *               password:
+ *                 type: string
+ *                 example: "123456"
  *     responses:
  *       200:
- *         description: Login realizado com sucesso
+ *         description: Login com sucesso e retorno do token JWT
  *       401:
  *         description: Credenciais inválidas
  */
-router.post('/login', userController.login);
+router.post('/users/login', userController.login);
+
+router.use(authMiddleware);
 
 /**
  * @swagger
  * /api/users:
- *   post:
- *     summary: Cria um novo usuário (Cadastro público)
+ *   get:
+ *     summary: Listar todos os utilizadores
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de utilizadores
+ *   post:
+ *     summary: Criar novo utilizador
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/User'
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Prof. Dr. João Silva"
+ *               email:
+ *                 type: string
+ *                 example: "joao.silva@unizambeze.ac.mz"
+ *               password:
+ *                 type: string
+ *                 example: "senha123"
+ *               role_id:
+ *                 type: integer
+ *                 example: 4
  *     responses:
  *       201:
- *         description: Usuário criado com sucesso
+ *         description: Utilizador criado
  */
-router.post('/users', userController.createUser);
-
-// ==========================================
-// MIDDLEWARE DE PROTEÇÃO (JWT)
-// Todas as rotas abaixo requerem "Authorization: Bearer <token>"
-// ==========================================
-router.use(authMiddleware);
-
-// ==========================================
-// ROTAS PROTEGIDAS
-// ==========================================
-
-/**
- * @swagger
- * /api/me:
- *   get:
- *     summary: Retorna o perfil completo do usuário logado (extraído do Token JWT)
- *     tags: [Auth]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Perfil obtido com sucesso
- *       401:
- *         description: Token não fornecido ou inválido
- */
-router.get('/me', userController.getMe);
-
-/**
- * @swagger
- * /api/users:
- *   get:
- *     summary: Retorna a lista de usuários
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Lista de usuários obtida com sucesso
- */
-router.get('/users', userController.getUsers);
+router.route('/users')
+  .get(userController.getUsers)
+  .post(userController.createUser);
 
 /**
  * @swagger
  * /api/users/{id}:
  *   get:
- *     summary: Obtém um usuário por ID
+ *     summary: Obter detalhes do utilizador e suas permissões
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Detalhes do utilizador
  *   put:
- *     summary: Atualiza um usuário completamente
+ *     summary: Atualizar dados do utilizador
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
- *   patch:
- *     summary: Atualiza campos específicos de um usuário
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               role_id:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Utilizador atualizado
  *   delete:
- *     summary: Remove um usuário
+ *     summary: Eliminar utilizador
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Utilizador eliminado
  */
 router.route('/users/:id')
   .get(userController.getUserById)
   .put(userController.updateUser)
-  .patch(userController.patchUser)
   .delete(userController.deleteUser);
-
-/**
- * @swagger
- * /api/roles:
- *   get:
- *     summary: Lista todas as roles disponíveis
- *     tags: [Roles]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Lista de roles
- *   post:
- *     summary: Cria uma nova role
- *     tags: [Roles]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/RoleInput'
- *     responses:
- *       201:
- *         description: Role criada com sucesso
- */
-router.route('/roles')
-  .get(userController.getRoles)
-  .post(userController.createRole);
-
-/**
- * @swagger
- * /api/roles/{id}:
- *   get:
- *     summary: Obtém uma role por ID
- *     tags: [Roles]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Detalhes da role
- *   put:
- *     summary: Atualiza o nome de uma role
- *     tags: [Roles]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/RoleInput'
- *     responses:
- *       200:
- *         description: Role atualizada
- *   delete:
- *     summary: Deleta uma role por ID
- *     tags: [Roles]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Role removida com sucesso
- */
-router.route('/roles/:id')
-  .get(userController.getRoleById)
-  .put(userController.updateRole)
-  .delete(userController.deleteRole);
 
 module.exports = router;
