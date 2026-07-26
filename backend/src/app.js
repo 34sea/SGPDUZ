@@ -9,6 +9,9 @@ const permissionRoutes = require('./routes/permissionRoutes');
 const userRoutes = require('./routes/userRoutes');
 const academicRoutes = require('./routes/academicRoutes'); 
 const planningRoutes = require('./routes/planningRoutes');
+const lessonRoutes = require('./routes/lessonRoutes');
+const assessmentRoutes = require('./routes/assessmentRoutes');
+const adhocTaskRoutes = require('./routes/adhocTaskRoutes');
 
 const app = express();
 
@@ -25,6 +28,9 @@ app.use('/api/permissions', permissionRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/academic', academicRoutes); 
 app.use('/api', planningRoutes);
+app.use('/api/lessons', lessonRoutes);
+app.use('/api/assessments', assessmentRoutes);
+app.use('/api/adhocTask', adhocTaskRoutes);
 
 
 app.get('/', (req, res) => {
