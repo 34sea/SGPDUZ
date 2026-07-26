@@ -7,7 +7,8 @@ const swaggerSpec = require('./config/swagger');
 const roleRoutes = require('./routes/roleRoutes');
 const permissionRoutes = require('./routes/permissionRoutes');
 const userRoutes = require('./routes/userRoutes');
-const academicRoutes = require('./routes/academicRoutes'); // <-- NOVO
+const academicRoutes = require('./routes/academicRoutes'); 
+const planningRoutes = require('./routes/planningRoutes');
 
 const app = express();
 
@@ -22,7 +23,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/roles', roleRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/academic', academicRoutes); // <-- NOVO PREFIXO DE ROTAS ACADÉMICAS
+app.use('/api/academic', academicRoutes); 
+app.use('/api', planningRoutes);
+
 
 app.get('/', (req, res) => {
   res.json({
