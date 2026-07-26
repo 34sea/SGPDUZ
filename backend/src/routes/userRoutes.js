@@ -38,8 +38,43 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *       401:
  *         description: Credenciais inválidas
  */
-router.post('/users/login', userController.login);
+router.post('/login', userController.login); // Rota pública (/api/users/login)
 
+/**
+ * @swagger
+ * /api/users/register:
+ *   post:
+ *     summary: Registo Público de Novo Utilizador (Auto-Registo)
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Novo Utilizador"
+ *               email:
+ *                 type: string
+ *                 example: "novo.user@unizambeze.ac.mz"
+ *               password:
+ *                 type: string
+ *                 example: "senha123"
+ *     responses:
+ *       201:
+ *         description: Conta criada com sucesso
+ *       400:
+ *         description: Dados inválidos ou e-mail já registado
+ */
+router.post('/register', userController.register); // Rota pública (/api/users/register)
+
+// --- A PARTIR DAQUI TODAS AS ROTAS EXIGEM TOKEN JWT ---
 router.use(authMiddleware);
 
 /**
@@ -85,7 +120,7 @@ router.use(authMiddleware);
  *       201:
  *         description: Utilizador criado
  */
-router.route('/users')
+router.route('/')
   .get(userController.getUsers)
   .post(userController.createUser);
 
@@ -150,7 +185,7 @@ router.route('/users')
  *       200:
  *         description: Utilizador eliminado
  */
-router.route('/users/:id')
+router.route('/:id')
   .get(userController.getUserById)
   .put(userController.updateUser)
   .delete(userController.deleteUser);

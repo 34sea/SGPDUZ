@@ -41,6 +41,40 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.register = async (req, res) => {
+ try {
+    const { name, email, password, role_id } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Nome, email e palavra-passe são obrigatórios.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const [result] = await pool.query(
+      'INSERT INTO users (name, email, password, role_id) VALUES (?, ?, ?, ?)',
+      [name, email, hashedPassword, role_id || null]
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: 'Utilizador criado com sucesso.',
+      data: {
+        id: result.insertId,
+        name,
+        email,
+        role_id: role_id || null
+      }
+    });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ success: false, message: 'Este e-mail já está registado.' });
+    }
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 exports.getUsers = async (req, res) => {
   try {
     const [users] = await pool.query(`

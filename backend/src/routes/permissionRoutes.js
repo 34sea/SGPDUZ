@@ -9,7 +9,7 @@ router.use(authMiddleware);
  * @swagger
  * tags:
  *   name: Permissions
- *   description: Gestão de Permissões do Sistema SGPD
+ *   description: Gestão de Permissões do Sistema SGPDUZ
  */
 
 /**

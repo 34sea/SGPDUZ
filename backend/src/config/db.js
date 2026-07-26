@@ -14,11 +14,11 @@ const pool = mysql.createPool(dbConfig);
 
 pool.getConnection()
   .then(connection => {
-    console.log('Conexão com a base de dados SGPD estabelecida com sucesso.');
+    console.log('Conexão com a base de dados SGPDUZ estabelecida com sucesso.');
     connection.release();
   })
   .catch(err => {
-    console.error('Erro ao conectar à base de dados SGPD:', err.message);
+    console.error('Erro ao conectar à base de dados SGPDUZ:', err.message);
   });
 
 module.exports = pool;
