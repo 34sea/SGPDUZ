@@ -1,32 +1,243 @@
+// .layout-sidebar {
+//     position: fixed;
+//     width: 300px;
+//     height: calc(100vh - 9rem);
+//     z-index: 999;
+//     overflow-y: auto;
+//     user-select: none;
+//     top: 7rem;
+//     left: 2rem;
+//     transition: transform $transitionDuration, left $transitionDuration;
+//     background-color: var(--surface-overlay);
+//     border-radius: $borderRadius;
+//     padding: 0.5rem 1.5rem;
+//     box-shadow: 0px 3px 5px rgba(0, 0, 0, .02), 0px 0px 2px rgba(0, 0, 0, .05), 0px 1px 4px rgba(0, 0, 0, .08);
+// }
+
+// .layout-menu {
+//     margin: 0;
+//     padding: 0;
+//     list-style-type: none;
+//     user-select: none;
+
+//     .layout-root-menuitem {
+//         >.layout-menuitem-root-text {
+//             font-size: .857rem;
+//             text-transform: uppercase;
+//             font-weight: 700;
+//             color: var(--surface-900);
+//             margin: .75rem 0;
+//         }
+
+//         > a {
+//             display: none;
+//         }
+//     }
+
+//     li.active-menuitem {
+//         > a {
+//             .layout-submenu-toggler {
+//                 transform: rotate(-180deg);
+//             }
+//         }
+
+//         > ul {
+//             max-height: auto;
+//         }
+//     }
+
+//     ul {
+//         margin: 0;
+//         padding: 0;
+//         list-style-type: none;
+
+//         a {
+//             display: flex;
+//             align-items: center;
+//             position: relative;
+//             outline: 0 none;
+//             color: var(--text-color);
+//             cursor: pointer;
+//             padding: .75rem 1rem;
+//             border-radius: $borderRadius;
+//             transition: background-color $transitionDuration, box-shadow $transitionDuration;
+
+//             .layout-menuitem-icon {
+//                 margin-right: .5rem;
+//             }
+
+//             .layout-submenu-toggler {
+//                 font-size: 75%;
+//                 margin-left: auto;
+//                 transition: transform $transitionDuration;
+//             }
+
+//             &.rotated-icon {
+//                 .layout-menuitem-icon {
+//                     transform: rotate(90deg);
+//                 }
+//             }
+
+//             &.active-route {
+//                 font-weight: 700;
+//                 color: var(--primary-color);
+//             }
+
+//             &:hover {
+//                 background-color: var(--surface-hover);
+//             }
+
+//             &:focus {
+//                 @include focused-inset();
+//             }
+//         }
+
+//         ul {
+//             overflow: hidden;
+//             max-height: 0;
+//             border-radius: $borderRadius;
+
+//             li {
+//                 a {
+//                     margin-left: 1rem;
+//                 }
+
+//                 li {
+//                     a {
+//                         margin-left: 2rem;
+//                     }
+
+//                     li {
+//                         a {
+//                             margin-left: 2.5rem;
+//                         }
+
+//                         li {
+//                             a {
+//                                 margin-left: 3rem;
+//                             }
+
+//                             li {
+//                                 a {
+//                                     margin-left: 3.5rem;
+//                                 }
+
+//                                 li {
+//                                     a {
+//                                         margin-left: 4rem;
+//                                     }
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
+
+// .layout-submenu-enter-active {
+//     max-height: 1000px !important;
+//     transition: max-height 1s ease-in-out;
+// }
+
+// .layout-submenu-enter-done {
+//     max-height: 1000px !important;
+// }
+
+// .layout-submenu-exit {
+//     max-height: 1000px !important;
+// }
+
+// .layout-submenu-exit-active {
+//     overflow: hidden;
+//     max-height: 0 !important;
+//     transition: max-height 0.45s cubic-bezier(0, 1, 0, 1);
+// }
+
 .layout-sidebar {
     position: fixed;
-    width: 300px;
-    height: calc(100vh - 9rem);
+    width: 255px;
+    height: 100vh;
     z-index: 999;
     overflow-y: auto;
+    overflow-x: hidden;
     user-select: none;
-    top: 7rem;
-    left: 2rem;
-    transition: transform $transitionDuration, left $transitionDuration;
-    background-color: var(--surface-overlay);
-    border-radius: $borderRadius;
-    padding: 0.5rem 1.5rem;
-    box-shadow: 0px 3px 5px rgba(0, 0, 0, .02), 0px 0px 2px rgba(0, 0, 0, .05), 0px 1px 4px rgba(0, 0, 0, .08);
+
+    top: 0;
+    left: 0;
+
+    /* ================================
+       SIDEBAR SIAS
+       ================================ */
+
+    background: #ffffff;
+    border-right: 1px solid #e2e8f0;
+    border-radius: 0;
+
+    padding: 1.25rem 0.85rem;
+
+    box-shadow: none;
+
+    transition:
+        width $transitionDuration,
+        transform $transitionDuration,
+        left $transitionDuration;
+
+    /* Scrollbar */
+
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+
+    &::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
 }
+
+
+/* =========================================
+   MENU
+   ========================================= */
 
 .layout-menu {
     margin: 0;
     padding: 0;
-    list-style-type: none;
+    list-style: none;
     user-select: none;
 
+
+    /* =====================================
+       GRUPOS PRINCIPAIS
+       ===================================== */
+
     .layout-root-menuitem {
-        >.layout-menuitem-root-text {
-            font-size: .857rem;
+
+        > .layout-menuitem-root-text {
+            display: flex;
+            align-items: center;
+
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
             font-weight: 700;
-            color: var(--surface-900);
-            margin: .75rem 0;
+
+            /* Azul institucional discreto */
+            color: #64748b;
+
+            margin: 1.5rem 0.75rem 0.55rem;
+
+            &:first-child {
+                margin-top: 0.5rem;
+            }
         }
 
         > a {
@@ -34,7 +245,13 @@
         }
     }
 
+
+    /* =====================================
+       ITEM ATIVO
+       ===================================== */
+
     li.active-menuitem {
+
         > a {
             .layout-submenu-toggler {
                 transform: rotate(-180deg);
@@ -42,90 +259,261 @@
         }
 
         > ul {
-            max-height: auto;
+            max-height: 1000px;
         }
     }
+
+
+    /* =====================================
+       LISTAS
+       ===================================== */
 
     ul {
         margin: 0;
         padding: 0;
-        list-style-type: none;
+        list-style: none;
 
         a {
             display: flex;
             align-items: center;
+
             position: relative;
-            outline: 0 none;
-            color: var(--text-color);
+
+            min-height: 42px;
+
+            outline: none;
+
+            color: #334155;
+
             cursor: pointer;
-            padding: .75rem 1rem;
-            border-radius: $borderRadius;
-            transition: background-color $transitionDuration, box-shadow $transitionDuration;
+
+            padding: 0.65rem 0.8rem;
+
+            border-radius: 8px;
+
+            font-size: 0.9rem;
+            font-weight: 500;
+
+            transition:
+                background-color $transitionDuration,
+                color $transitionDuration,
+                transform $transitionDuration;
+
+
+            /* =================================
+               ÍCONE
+               ================================= */
 
             .layout-menuitem-icon {
-                margin-right: .5rem;
+                width: 20px;
+                min-width: 20px;
+
+                margin-right: 0.7rem;
+
+                font-size: 1rem;
+
+                color: #64748b;
+
+                transition:
+                    color $transitionDuration,
+                    transform $transitionDuration;
             }
 
+
+            /* =================================
+               SETA SUBMENU
+               ================================= */
+
             .layout-submenu-toggler {
-                font-size: 75%;
                 margin-left: auto;
+
+                font-size: 0.7rem;
+
+                color: #94a3b8;
+
                 transition: transform $transitionDuration;
             }
 
-            &.rotated-icon {
+
+            /* =================================
+               HOVER
+               ================================= */
+
+            &:hover {
+                background: #f1f5f9;
+
+                color: #1e3a8a;
+
+                transform: translateX(2px);
+
                 .layout-menuitem-icon {
-                    transform: rotate(90deg);
+                    color: #1e40af;
                 }
             }
 
+
+            /* =================================
+               ROTA ACTIVA
+               ================================= */
+
             &.active-route {
-                font-weight: 700;
-                color: var(--primary-color);
+
+                /*
+                 * Azul SIAS
+                 * Fundo azul muito suave
+                 */
+
+                background: #eff6ff;
+
+                color: #1d4ed8;
+
+                font-weight: 600;
+
+
+                /* Barra lateral */
+
+                &::before {
+                    content: '';
+
+                    position: absolute;
+
+                    left: -0.85rem;
+
+                    top: 8px;
+                    bottom: 8px;
+
+                    width: 3px;
+
+                    background: #1d4ed8;
+
+                    border-radius: 0 4px 4px 0;
+                }
+
+
+                .layout-menuitem-icon {
+                    color: #1d4ed8;
+                }
             }
 
-            &:hover {
-                background-color: var(--surface-hover);
-            }
 
             &:focus {
                 @include focused-inset();
             }
         }
 
+
+        /* =================================
+           SUBMENUS
+           ================================= */
+
         ul {
             overflow: hidden;
+
             max-height: 0;
-            border-radius: $borderRadius;
+
+            border-radius: 0;
+
+            transition:
+                max-height 0.35s ease;
+
 
             li {
-                a {
-                    margin-left: 1rem;
-                }
 
-                li {
-                    a {
-                        margin-left: 2rem;
+                a {
+                    margin-left: 0.45rem;
+
+                    padding-left: 2.2rem;
+
+                    min-height: 38px;
+
+                    font-size: 0.85rem;
+
+                    color: #64748b;
+
+
+                    /* Indicador */
+
+                    &::before {
+                        content: '';
+
+                        position: absolute;
+
+                        left: 1.2rem;
+
+                        width: 5px;
+                        height: 5px;
+
+                        border-radius: 50%;
+
+                        background: #cbd5e1;
                     }
 
+
+                    &:hover {
+                        color: #1e40af;
+
+                        &::before {
+                            background: #2563eb;
+                        }
+                    }
+
+
+                    &.active-route {
+                        color: #1d4ed8;
+
+                        background: transparent;
+
+                        &::before {
+                            background: #1d4ed8;
+                        }
+                    }
+                }
+
+
+                /* =================================
+                   SEGUNDO NÍVEL
+                   ================================= */
+
+                li {
+
+                    a {
+                        margin-left: 0.8rem;
+                        padding-left: 2.7rem;
+
+                        &::before {
+                            left: 1.7rem;
+                        }
+                    }
+
+
+                    /* =================================
+                       TERCEIRO NÍVEL
+                       ================================= */
+
                     li {
+
                         a {
-                            margin-left: 2.5rem;
+                            margin-left: 1.2rem;
+                            padding-left: 3.2rem;
+
+                            &::before {
+                                left: 2.2rem;
+                            }
                         }
 
+
+                        /* =================================
+                           QUARTO NÍVEL
+                           ================================= */
+
                         li {
+
                             a {
-                                margin-left: 3rem;
-                            }
+                                margin-left: 1.6rem;
+                                padding-left: 3.7rem;
 
-                            li {
-                                a {
-                                    margin-left: 3.5rem;
-                                }
-
-                                li {
-                                    a {
-                                        margin-left: 4rem;
-                                    }
+                                &::before {
+                                    left: 2.7rem;
                                 }
                             }
                         }
@@ -136,9 +524,16 @@
     }
 }
 
+
+/* =========================================
+   ANIMAÇÃO DOS SUBMENUS
+   ========================================= */
+
 .layout-submenu-enter-active {
     max-height: 1000px !important;
-    transition: max-height 1s ease-in-out;
+
+    transition:
+        max-height 0.35s ease;
 }
 
 .layout-submenu-enter-done {
@@ -151,6 +546,45 @@
 
 .layout-submenu-exit-active {
     overflow: hidden;
+
     max-height: 0 !important;
-    transition: max-height 0.45s cubic-bezier(0, 1, 0, 1);
+
+    transition:
+        max-height 0.25s ease;
+}
+
+
+/* =========================================
+   SEPARADOR VISUAL ENTRE GRUPOS
+   ========================================= */
+
+.layout-root-menuitem + .layout-root-menuitem {
+
+    border-top: 1px solid #e2e8f0;
+
+    margin-top: 0.8rem;
+    padding-top: 0.35rem;
+}
+
+
+/* =========================================
+   RESPONSIVO
+   ========================================= */
+
+@media screen and (max-width: 991px) {
+
+    .layout-sidebar {
+        width: 280px;
+
+        transform: translateX(-100%);
+
+        left: 0;
+
+        box-shadow:
+            0 10px 30px rgba(15, 23, 42, 0.12);
+    }
+
+    .layout-sidebar.active {
+        transform: translateX(0);
+    }
 }

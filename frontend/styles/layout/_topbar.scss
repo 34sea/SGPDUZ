@@ -1,51 +1,288 @@
+// .layout-topbar {
+//     position: fixed;
+//     height: 5rem;
+//     z-index: 997;
+//     left: 0;
+//     top: 0;
+//     width: 100%;
+//     padding: 0 2rem;
+//     background-color: var(--surface-card);
+//     transition: left $transitionDuration;
+//     display: flex;
+//     align-items: center;
+//     box-shadow: 0px 3px 5px rgba(0,0,0,.02), 0px 0px 2px rgba(0,0,0,.05), 0px 1px 4px rgba(0,0,0,.08);
+
+//     .layout-topbar-logo {
+//         display: flex;
+//         align-items: center;
+//         color: var(--surface-900);
+//         font-size: 1.5rem;
+//         font-weight: 500;
+//         width: 300px;
+//         border-radius: 12px;
+
+//         img {
+//             height: 2.5rem;
+//             margin-right: .5rem;
+//         }
+
+//         &:focus {
+//             @include focused();
+//         }
+//     }
+
+//     .layout-topbar-button {
+//         display: inline-flex;
+//         justify-content: center;
+//         align-items: center;
+//         position: relative;
+//         color: var(--text-color-secondary);
+//         border-radius: 50%;
+//         width: 3rem;
+//         height: 3rem;
+//         cursor: pointer;
+//         transition: background-color $transitionDuration;
+
+//         &:hover {
+//             color: var(--text-color);
+//             background-color: var(--surface-hover);
+//         }
+
+//         &:focus {
+//             @include focused();
+//         }
+
+//         i {
+//             font-size: 1.5rem;
+//         }
+
+//         span {
+//             font-size: 1rem;
+//             display: none;
+//         }
+//     }
+
+//     .layout-menu-button {
+//         margin-left: 2rem;
+//     }
+
+//     .layout-topbar-menu-button {
+//         display: none;
+
+//         i {
+//             font-size: 1.25rem;
+//         }
+//     }
+
+//     .layout-topbar-menu {
+//         margin: 0 0 0 auto;
+//         padding: 0;
+//         list-style: none;
+//         display: flex;
+
+//         .layout-topbar-button {
+//             margin-left: 1rem;
+//         }
+//     }
+// }
+
+// @media (max-width: 991px) {
+//     .layout-topbar {
+//         justify-content: space-between;
+
+//         .layout-topbar-logo {
+//             width: auto;
+//             order: 2;
+//         }
+
+//         .layout-menu-button {
+//             margin-left: 0;
+//             order: 1;
+//         }
+
+//         .layout-topbar-menu-button {
+//             display: inline-flex;
+//             margin-left: 0;
+//             order: 3;
+//         }
+
+//         .layout-topbar-menu {
+//             margin-left: 0;
+//             position: absolute;
+//             flex-direction: column;
+//             background-color: var(--surface-overlay);
+//             box-shadow: 0px 3px 5px rgba(0,0,0,.02), 0px 0px 2px rgba(0,0,0,.05), 0px 1px 4px rgba(0,0,0,.08);
+//             border-radius: 12px;
+//             padding: 1rem;
+//             right: 2rem;
+//             top: 5rem;
+//             min-width: 15rem;
+//             display: none;
+//             -webkit-animation: scalein 0.15s linear;
+//             animation: scalein 0.15s linear;
+
+//             &.layout-topbar-menu-mobile-active {
+//                 display: block
+//             }
+
+//             .layout-topbar-button {
+//                 margin-left: 0;
+//                 display: flex;
+//                 width: 100%;
+//                 height: auto;
+//                 justify-content: flex-start;
+//                 border-radius: 12px;
+//                 padding: 1rem;
+
+//                 i {
+//                     font-size: 1rem;
+//                     margin-right: .5rem;
+//                 }
+
+//                 span {
+//                     font-weight: medium;
+//                     display: block;
+//                 }
+//             }
+//         }
+//     }
+// }
 .layout-topbar {
     position: fixed;
+
     height: 5rem;
+
     z-index: 997;
+
     left: 0;
     top: 0;
+
     width: 100%;
-    padding: 0 2rem;
-    background-color: var(--surface-card);
-    transition: left $transitionDuration;
+
+    padding: 0 1.5rem;
+
+    background: #ffffff;
+
+    border-bottom: 1px solid #e2e8f0;
+
     display: flex;
     align-items: center;
-    box-shadow: 0px 3px 5px rgba(0,0,0,.02), 0px 0px 2px rgba(0,0,0,.05), 0px 1px 4px rgba(0,0,0,.08);
+
+    box-shadow:
+        0 1px 3px rgba(15, 23, 42, 0.04);
+
+    transition: left $transitionDuration;
+
+
+    /* =========================================
+       LOGO
+    ========================================= */
 
     .layout-topbar-logo {
+
         display: flex;
         align-items: center;
-        color: var(--surface-900);
-        font-size: 1.5rem;
-        font-weight: 500;
-        width: 300px;
-        border-radius: 12px;
 
-        img {
-            height: 2.5rem;
-            margin-right: .5rem;
-        }
+        width: 255px;
+
+        color: #1e293b;
+
+        text-decoration: none;
+
+        border-radius: 10px;
 
         &:focus {
             @include focused();
         }
     }
 
+
+    .layout-topbar-logo-icon {
+
+        width: 40px;
+        height: 40px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        margin-right: 0.75rem;
+
+        border-radius: 10px;
+
+        background: #1d4ed8;
+
+        color: #ffffff;
+
+        box-shadow:
+            0 5px 12px rgba(29, 78, 216, 0.18);
+
+        i {
+            font-size: 1.1rem;
+        }
+    }
+
+
+    .layout-topbar-brand {
+
+        display: flex;
+        flex-direction: column;
+
+        line-height: 1.1;
+    }
+
+
+    .layout-topbar-title {
+
+        font-size: 1.15rem;
+
+        font-weight: 700;
+
+        color: #1e293b;
+    }
+
+
+    .layout-topbar-subtitle {
+
+        margin-top: 0.2rem;
+
+        font-size: 0.68rem;
+
+        color: #64748b;
+
+        white-space: nowrap;
+    }
+
+
+    /* =========================================
+       BOTÕES
+    ========================================= */
+
     .layout-topbar-button {
+
         display: inline-flex;
+
         justify-content: center;
         align-items: center;
+
         position: relative;
-        color: var(--text-color-secondary);
-        border-radius: 50%;
-        width: 3rem;
-        height: 3rem;
+
+        width: 2.75rem;
+        height: 2.75rem;
+
+        color: #64748b;
+
+        border-radius: 9px;
+
         cursor: pointer;
-        transition: background-color $transitionDuration;
+
+        transition:
+            background-color $transitionDuration,
+            color $transitionDuration;
 
         &:hover {
-            color: var(--text-color);
-            background-color: var(--surface-hover);
+            color: #1d4ed8;
+            background: #eff6ff;
         }
 
         &:focus {
@@ -53,96 +290,351 @@
         }
 
         i {
-            font-size: 1.5rem;
-        }
-
-        span {
-            font-size: 1rem;
-            display: none;
+            font-size: 1.2rem;
         }
     }
+
+
+    /* =========================================
+       MENU SIDEBAR
+    ========================================= */
 
     .layout-menu-button {
-        margin-left: 2rem;
+
+        margin-left: 1.5rem;
+
+        &:hover {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
     }
 
+
+    /* =========================================
+       ÁREA DIREITA
+    ========================================= */
+
+    .layout-topbar-actions {
+
+        margin-left: auto;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 0.35rem;
+    }
+
+
+    /* =========================================
+       NOTIFICAÇÕES
+    ========================================= */
+
+    .layout-notification-button {
+
+        position: relative;
+    }
+
+
+    .notification-badge {
+
+        position: absolute;
+
+        top: 3px;
+        right: 3px;
+
+        min-width: 17px;
+        height: 17px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        padding: 0 4px;
+
+        border-radius: 10px;
+
+        background: #1d4ed8;
+
+        color: #ffffff;
+
+        font-size: 0.62rem;
+
+        font-weight: 700;
+
+        border: 2px solid #ffffff;
+    }
+
+
+    /* =========================================
+       SEPARADOR
+    ========================================= */
+
+    .layout-topbar-divider {
+
+        width: 1px;
+
+        height: 32px;
+
+        margin: 0 0.6rem;
+
+        background: #e2e8f0;
+    }
+
+
+    /* =========================================
+       PERFIL
+    ========================================= */
+
+    .layout-user-profile {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 0.7rem;
+
+        padding: 0.35rem 0.6rem;
+
+        border-radius: 10px;
+
+        background: transparent;
+
+        cursor: pointer;
+
+        transition:
+            background-color $transitionDuration;
+
+        &:hover {
+            background: #f8fafc;
+        }
+
+        &:focus {
+            @include focused();
+        }
+    }
+
+
+    /* =========================================
+       AVATAR
+    ========================================= */
+
+    .layout-user-avatar {
+
+        width: 40px;
+        height: 40px;
+
+        flex-shrink: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 50%;
+
+        background: #eff6ff;
+
+        border: 1px solid #bfdbfe;
+
+        color: #1d4ed8;
+
+        font-size: 0.78rem;
+
+        font-weight: 700;
+    }
+
+
+    /* =========================================
+       DADOS DO UTILIZADOR
+    ========================================= */
+
+    .layout-user-info {
+
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        min-width: 130px;
+    }
+
+
+    .layout-user-name {
+
+        color: #334155;
+
+        font-size: 0.85rem;
+
+        font-weight: 600;
+
+        white-space: nowrap;
+    }
+
+
+    .layout-user-email {
+
+        margin-top: 0.15rem;
+
+        color: #64748b;
+
+        font-size: 0.7rem;
+
+        white-space: nowrap;
+    }
+
+
+    /* =========================================
+       SETA
+    ========================================= */
+
+    .layout-user-chevron {
+
+        margin-left: 0.25rem;
+
+        color: #94a3b8;
+
+        font-size: 0.7rem;
+    }
+
+
+    /* =========================================
+       MENU MOBILE
+    ========================================= */
+
     .layout-topbar-menu-button {
+
         display: none;
 
         i {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
         }
     }
+
+
+    /* =========================================
+       MENU DROPDOWN
+    ========================================= */
 
     .layout-topbar-menu {
-        margin: 0 0 0 auto;
-        padding: 0;
-        list-style: none;
-        display: flex;
 
-        .layout-topbar-button {
-            margin-left: 1rem;
+        margin: 0;
+
+        padding: 0.5rem;
+
+        position: absolute;
+
+        right: 1.5rem;
+
+        top: 4.5rem;
+
+        min-width: 250px;
+
+        background: #ffffff;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 12px;
+
+        box-shadow:
+            0 12px 30px rgba(15, 23, 42, 0.10);
+
+        display: none;
+
+        animation: scalein 0.15s linear;
+
+
+        &.layout-topbar-menu-mobile-active {
+            display: block;
         }
     }
-}
 
-@media (max-width: 991px) {
-    .layout-topbar {
-        justify-content: space-between;
 
-        .layout-topbar-logo {
-            width: auto;
-            order: 2;
+    /* =========================================
+       CABEÇALHO DO UTILIZADOR
+    ========================================= */
+
+    .layout-mobile-user {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 0.75rem;
+
+        padding: 0.75rem;
+    }
+
+
+    .layout-profile-divider {
+
+        height: 1px;
+
+        margin: 0.35rem 0;
+
+        background: #e2e8f0;
+    }
+
+
+    /* =========================================
+       ITEMS DO MENU
+    ========================================= */
+
+    .layout-topbar-menu-item {
+
+        width: 100%;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 0.7rem;
+
+        padding: 0.75rem;
+
+        border-radius: 8px;
+
+        color: #475569;
+
+        font-size: 0.88rem;
+
+        text-align: left;
+
+        transition:
+            background-color $transitionDuration,
+            color $transitionDuration;
+
+        &:hover {
+
+            background: #eff6ff;
+
+            color: #1d4ed8;
         }
 
-        .layout-menu-button {
-            margin-left: 0;
-            order: 1;
+        i {
+            width: 20px;
+
+            color: #64748b;
         }
 
-        .layout-topbar-menu-button {
-            display: inline-flex;
-            margin-left: 0;
-            order: 3;
+        &:hover i {
+            color: #1d4ed8;
         }
 
-        .layout-topbar-menu {
-            margin-left: 0;
-            position: absolute;
-            flex-direction: column;
-            background-color: var(--surface-overlay);
-            box-shadow: 0px 3px 5px rgba(0,0,0,.02), 0px 0px 2px rgba(0,0,0,.05), 0px 1px 4px rgba(0,0,0,.08);
-            border-radius: 12px;
-            padding: 1rem;
-            right: 2rem;
-            top: 5rem;
-            min-width: 15rem;
-            display: none;
-            -webkit-animation: scalein 0.15s linear;
-            animation: scalein 0.15s linear;
 
-            &.layout-topbar-menu-mobile-active {
-                display: block
+        &.logout {
+
+            margin-top: 0.25rem;
+
+            color: #dc2626;
+
+            &:hover {
+                background: #fef2f2;
+                color: #dc2626;
             }
 
-            .layout-topbar-button {
-                margin-left: 0;
-                display: flex;
-                width: 100%;
-                height: auto;
-                justify-content: flex-start;
-                border-radius: 12px;
-                padding: 1rem;
-
-                i {
-                    font-size: 1rem;
-                    margin-right: .5rem;
-                }
-
-                span {
-                    font-weight: medium;
-                    display: block;
-                }
+            i {
+                color: #dc2626;
             }
         }
     }
