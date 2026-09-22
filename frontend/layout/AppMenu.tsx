@@ -250,7 +250,7 @@ const AppMenu = () => {
                         {
                             label: 'Lista',
                             icon: 'pi pi-fw pi-list',
-                            to: '/pages/admin/users'
+                            to: '/pages/users/sgpuz/users'
                         },
                         {
                             label: 'Novo Utilizador',
