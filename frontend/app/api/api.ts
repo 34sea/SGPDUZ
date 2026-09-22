@@ -7,7 +7,7 @@ const api = axios.create({
 
 
 // api.interceptors.request.use((config) => {
-//   const token = localStorage.getItem("token-dashboard-SADA-TCC"); 
+//   const token = localStorage.getItem("token-dashboard-SGPD"); 
 //   if (token) {
 //     config.headers.Authorization = `Bearer ${token}`;
 //   }
@@ -17,7 +17,7 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
     try {
         const data = localStorage.getItem(
-            "user-dashboard-SADA-TCC"
+            "user-dashboard-SGPD"
         );
 
         if (data) {

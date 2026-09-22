@@ -20,10 +20,10 @@ export const useAuth = () => {
 
             setToken(result.access_token);
 
-            localStorage.setItem("token-dashboard-SADA-TCC", result);
+            localStorage.setItem("token-dashboard-SGPD", result);
 
             localStorage.setItem(
-                "user-dashboard-SADA-TCC",
+                "user-dashboard-SGPD",
                 JSON.stringify(result)
             );
             // console.log("IR")

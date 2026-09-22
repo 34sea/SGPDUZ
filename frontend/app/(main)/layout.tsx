@@ -6,15 +6,15 @@ interface AppLayoutProps {
 }
 
 export const metadata: Metadata = {
-    title: 'SADA-TCC',
+    title: 'SGPD',
     description: 'The ultimate collection of design-agnostic, flexible and accessible React UI Components.',
     robots: { index: false, follow: false },
     viewport: { initialScale: 1, width: 'device-width' },
     openGraph: {
         type: 'website',
-        title: 'SADA-TCC',
+        title: 'SGPD',
         // url: 'https://sakai.primereact.org/',
-        description: 'SADA-TCC',
+        description: 'SGPD',
         // images: ['https://www.primefaces.org/static/social/sakai-react.png'],
         ttl: 604800
     },

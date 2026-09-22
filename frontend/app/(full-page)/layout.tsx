@@ -7,8 +7,8 @@ interface SimpleLayoutProps {
 }
 
 export const metadata: Metadata = {
-    title: 'SADA-TCC',
-    description: 'SADA-TCC'
+    title: 'SGPD',
+    description: 'SGPD'
 };
 
 export default function SimpleLayout({ children }: SimpleLayoutProps) {
