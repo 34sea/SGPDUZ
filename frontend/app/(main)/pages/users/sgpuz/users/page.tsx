@@ -2,99 +2,108 @@
 
 import React, { useMemo, useState } from "react";
 
-import { Card } from "primereact/card";
-import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
-import { Dropdown } from "primereact/dropdown";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
-import { Tag } from "primereact/tag";
-import { Avatar } from "primereact/avatar";
-import { TabView, TabPanel } from "primereact/tabview";
-import { Dialog } from "primereact/dialog";
-import { InputSwitch } from "primereact/inputswitch";
-import { Divider } from "primereact/divider";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { ProgressBar } from "primereact/progressbar";
-
-import {
-    Users,
-    UserPlus,
-    ShieldCheck,
-    KeyRound,
-    UserCheck,
-    UserX,
-    Search,
-    MoreVertical,
-    Edit3,
-    Trash2,
-    Lock,
-    Unlock,
-    CheckCircle2,
-    XCircle,
-    UsersRound,
-    GraduationCap,
-    Building2,
-    BookOpen,
-    ClipboardCheck,
-    CalendarCheck,
-    Activity,
-    Settings2,
-    BarChart3,
-} from "lucide-react";
-
 import {
     Chart as ChartJS,
     CategoryScale,
     LinearScale,
     BarElement,
-    Title,
+    LineElement,
+    PointElement,
+    ArcElement,
     Tooltip,
     Legend,
+    Filler,
 } from "chart.js";
 
-import { Bar } from "react-chartjs-2";
+import { Bar, Doughnut, Line, Pie } from "react-chartjs-2";
+
+import { Card } from "primereact/card";
+import { Button } from "primereact/button";
+import { Dropdown } from "primereact/dropdown";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+import { Tag } from "primereact/tag";
+import { Divider } from "primereact/divider";
+import { Dialog } from "primereact/dialog";
+import { ProgressBar } from "primereact/progressbar";
+
+import {
+    BarChart3,
+    CalendarDays,
+    CheckCircle2,
+    ClipboardCheck,
+    Clock3,
+    FileBarChart,
+    FileCheck2,
+    FileText,
+    GraduationCap,
+    Layers3,
+    LineChart,
+    PieChart,
+    RefreshCw,
+    TrendingDown,
+    TrendingUp,
+    Users,
+    XCircle,
+} from "lucide-react";
 
 ChartJS.register(
     CategoryScale,
     LinearScale,
     BarElement,
-    Title,
+    LineElement,
+    PointElement,
+    ArcElement,
     Tooltip,
-    Legend
+    Legend,
+    Filler
 );
 
 /* =========================================================
-   TYPES
+   TIPOS
 ========================================================= */
 
-type UserStatus = "Activo" | "Inactivo";
+type ReportType =
+    | "semestral"
+    | "anual"
+    | "docente"
+    | "unidade"
+    | "cumprimento";
 
-interface User {
+type TabType = "relatorios" | "indicadores" | "comparacao";
+
+interface Teacher {
     id: number;
-    nome: string;
-    email: string;
-    contacto: string;
-    perfil: string;
-    departamento: string;
-    curso: string;
-    estado: UserStatus;
-    iniciais: string;
+    name: string;
+    initials: string;
+    course: string;
+    planned: number;
+    realized: number;
+    confirmed: number;
+    evaluations: number;
+    evaluationsOnTime: number;
+    activities: number;
+    activitiesCompleted: number;
+    compliance: number;
 }
 
-
-interface Profile {
+interface CourseUnit {
     id: number;
-    nome: string;
-    descricao: string;
-    utilizadores: number;
-    cor: string;
+    name: string;
+    code: string;
+    teacher: string;
+    planned: number;
+    realized: number;
+    evaluations: number;
+    grades: number;
+    activities: number;
+    compliance: number;
 }
 
-interface Permission {
-    id: number;
-    nome: string;
-    descricao: string;
+interface ReportOption {
+    id: ReportType;
+    title: string;
+    description: string;
     icon: React.ReactNode;
 }
 
@@ -115,701 +124,651 @@ const COLORS = {
     purple: "#7C3AED",
     purpleLight: "#F3E8FF",
 
+    cyan: "#0891B2",
+    cyanLight: "#CFFAFE",
+
     red: "#DC2626",
     redLight: "#FEE2E2",
+
+    pink: "#DB2777",
+    pinkLight: "#FCE7F3",
 
     dark: "#0F172A",
     text: "#334155",
     muted: "#64748B",
     light: "#94A3B8",
-
     border: "#E2E8F0",
     background: "#F8FAFC",
     white: "#FFFFFF",
 };
 
 /* =========================================================
-   MOCK USERS
+   DADOS SIMULADOS
 ========================================================= */
 
-const initialUsers: User[] = [
+const academicPeriods = [
+    {
+        label: "2025 – 1.º Semestre",
+        value: "2025-1",
+    },
+    {
+        label: "2025 – 2.º Semestre",
+        value: "2025-2",
+    },
+    {
+        label: "2026 – 1.º Semestre",
+        value: "2026-1",
+    },
+    {
+        label: "2026 – 2.º Semestre",
+        value: "2026-2",
+    },
+];
+
+const teachers: Teacher[] = [
     {
         id: 1,
-        nome: "John Doe",
-        email: "john.doe@example.com",
-        contacto: "+258 84 000 0001",
-        perfil: "Administrador",
-        departamento: "Engenharia Informática",
-        curso: "Engenharia Informática",
-        estado: "Activo",
-        iniciais: "JD",
+        name: "John Doe",
+        initials: "JD",
+        course: "Engenharia Informática",
+        planned: 96,
+        realized: 92,
+        confirmed: 89,
+        evaluations: 8,
+        evaluationsOnTime: 7,
+        activities: 12,
+        activitiesCompleted: 11,
+        compliance: 96,
     },
     {
         id: 2,
-        nome: "Jane Smith",
-        email: "jane.smith@example.com",
-        contacto: "+258 84 000 0002",
-        perfil: "Docente",
-        departamento: "Engenharia Informática",
-        curso: "Engenharia Informática",
-        estado: "Activo",
-        iniciais: "JS",
+        name: "Jane Smith",
+        initials: "JS",
+        course: "Engenharia Informática",
+        planned: 94,
+        realized: 87,
+        confirmed: 84,
+        evaluations: 7,
+        evaluationsOnTime: 6,
+        activities: 11,
+        activitiesCompleted: 10,
+        compliance: 91,
     },
     {
         id: 3,
-        nome: "Alex Johnson",
-        email: "alex.johnson@example.com",
-        contacto: "+258 84 000 0003",
-        perfil: "Chefe de Curso",
-        departamento: "Engenharia Informática",
-        curso: "Engenharia Informática",
-        estado: "Activo",
-        iniciais: "AJ",
+        name: "Daniel Miller",
+        initials: "DM",
+        course: "Engenharia Informática",
+        planned: 91,
+        realized: 82,
+        confirmed: 80,
+        evaluations: 8,
+        evaluationsOnTime: 7,
+        activities: 10,
+        activitiesCompleted: 9,
+        compliance: 88,
     },
     {
         id: 4,
-        nome: "Emily Brown",
-        email: "emily.brown@example.com",
-        contacto: "+258 84 000 0004",
-        perfil: "Chefe de Departamento",
-        departamento: "Engenharia Informática",
-        curso: "-",
-        estado: "Activo",
-        iniciais: "EB",
+        name: "Sarah Davis",
+        initials: "SD",
+        course: "Engenharia Informática",
+        planned: 89,
+        realized: 76,
+        confirmed: 73,
+        evaluations: 7,
+        evaluationsOnTime: 6,
+        activities: 10,
+        activitiesCompleted: 8,
+        compliance: 82,
     },
     {
         id: 5,
-        nome: "Michael Wilson",
-        email: "michael.wilson@example.com",
-        contacto: "+258 84 000 0005",
-        perfil: "Chefe de Turma",
-        departamento: "Engenharia Informática",
-        curso: "Engenharia Informática",
-        estado: "Inactivo",
-        iniciais: "MW",
+        name: "Olivia Taylor",
+        initials: "OT",
+        course: "Engenharia Informática",
+        planned: 86,
+        realized: 70,
+        confirmed: 67,
+        evaluations: 6,
+        evaluationsOnTime: 5,
+        activities: 9,
+        activitiesCompleted: 7,
+        compliance: 78,
+    },
+];
+
+const courseUnits: CourseUnit[] = [
+    {
+        id: 1,
+        name: "Programação I",
+        code: "INF101",
+        teacher: "John Doe",
+        planned: 40,
+        realized: 39,
+        evaluations: 4,
+        grades: 4,
+        activities: 7,
+        compliance: 96,
     },
     {
-        id: 6,
-        nome: "Sarah Davis",
-        email: "sarah.davis@example.com",
-        contacto: "+258 84 000 0006",
-        perfil: "Subchefe de Turma",
-        departamento: "Engenharia Informática",
-        curso: "Engenharia Informática",
-        estado: "Activo",
-        iniciais: "SD",
+        id: 2,
+        name: "Bases de Dados",
+        code: "INF202",
+        teacher: "Jane Smith",
+        planned: 42,
+        realized: 39,
+        evaluations: 4,
+        grades: 3,
+        activities: 8,
+        compliance: 93,
     },
     {
-        id: 7,
-        nome: "Daniel Miller",
-        email: "daniel.miller@example.com",
-        contacto: "+258 84 000 0007",
-        perfil: "Docente",
-        departamento: "Engenharia Informática",
-        curso: "Engenharia Informática",
-        estado: "Activo",
-        iniciais: "DM",
+        id: 3,
+        name: "Engenharia de Software",
+        code: "INF303",
+        teacher: "Daniel Miller",
+        planned: 44,
+        realized: 39,
+        evaluations: 5,
+        grades: 4,
+        activities: 7,
+        compliance: 89,
     },
     {
-        id: 8,
-        nome: "Olivia Taylor",
-        email: "olivia.taylor@example.com",
-        contacto: "+258 84 000 0008",
-        perfil: "Docente",
-        departamento: "Engenharia Informática",
-        curso: "Engenharia Informática",
-        estado: "Activo",
-        iniciais: "OT",
+        id: 4,
+        name: "Redes de Computadores",
+        code: "INF304",
+        teacher: "Sarah Davis",
+        planned: 40,
+        realized: 34,
+        evaluations: 4,
+        grades: 3,
+        activities: 6,
+        compliance: 85,
     },
     {
-        id: 9,
-        nome: "James Anderson",
-        email: "james.anderson@example.com",
-        contacto: "+258 84 000 0009",
-        perfil: "Chefe de Turma",
-        departamento: "Engenharia Informática",
-        curso: "Engenharia Informática",
-        estado: "Activo",
-        iniciais: "JA",
+        id: 5,
+        name: "Sistemas Operativos",
+        code: "INF305",
+        teacher: "Olivia Taylor",
+        planned: 38,
+        realized: 30,
+        evaluations: 3,
+        grades: 2,
+        activities: 5,
+        compliance: 79,
+    },
+];
+
+const reportOptions: ReportOption[] = [
+    {
+        id: "semestral",
+        title: "Relatório semestral",
+        description:
+            "Resumo completo do desempenho pedagógico de um semestre.",
+        icon: <CalendarDays size={22} />,
     },
     {
-        id: 10,
-        nome: "Sophia Thomas",
-        email: "sophia.thomas@example.com",
-        contacto: "+258 84 000 0010",
-        perfil: "Docente",
-        departamento: "Engenharia Informática",
-        curso: "Engenharia Informática",
-        estado: "Inactivo",
-        iniciais: "ST",
+        id: "anual",
+        title: "Relatório anual",
+        description:
+            "Consolidação dos indicadores pedagógicos do ano lectivo.",
+        icon: <FileBarChart size={22} />,
+    },
+    {
+        id: "docente",
+        title: "Relatório por docente",
+        description:
+            "Acompanhamento individual do cumprimento pedagógico.",
+        icon: <Users size={22} />,
+    },
+    {
+        id: "unidade",
+        title: "Relatório por unidade curricular",
+        description:
+            "Indicadores e actividades associados a uma unidade curricular.",
+        icon: <Layers3 size={22} />,
+    },
+    {
+        id: "cumprimento",
+        title: "Relatório de cumprimento",
+        description:
+            "Análise global do cumprimento pedagógico.",
+        icon: <ClipboardCheck size={22} />,
     },
 ];
 
 /* =========================================================
-   PROFILES
+   COMPONENTE PRINCIPAL
 ========================================================= */
 
-const profiles: Profile[] = [
-    {
-        id: 1,
-        nome: "Administrador",
-        descricao:
-            "Acesso global à plataforma, utilizadores, perfis e configurações.",
-        utilizadores: 2,
-        cor: COLORS.primary,
-    },
-    {
-        id: 2,
-        nome: "Chefe de Departamento",
-        descricao:
-            "Gestão e acompanhamento das actividades académicas do departamento.",
-        utilizadores: 2,
-        cor: COLORS.purple,
-    },
-    {
-        id: 3,
-        nome: "Chefe de Curso",
-        descricao:
-            "Coordenação das actividades pedagógicas e acompanhamento do curso.",
-        utilizadores: 3,
-        cor: COLORS.orange,
-    },
-    {
-        id: 4,
-        nome: "Docente",
-        descricao:
-            "Gestão de aulas, avaliações, actividades e plano analítico.",
-        utilizadores: 12,
-        cor: COLORS.green,
-    },
-    {
-        id: 5,
-        nome: "Chefe de Turma",
-        descricao:
-            "Acompanhamento da turma e confirmação das actividades académicas.",
-        utilizadores: 6,
-        cor: "#0891B2",
-    },
-    {
-        id: 6,
-        nome: "Subchefe de Turma",
-        descricao:
-            "Apoio ao chefe de turma no acompanhamento das actividades.",
-        utilizadores: 4,
-        cor: "#DB2777",
-    },
-];
+export default function ReportsAndIndicators() {
+    const [activeTab, setActiveTab] =
+        useState<TabType>("indicadores");
 
-/* =========================================================
-   PERMISSIONS
-========================================================= */
+    const [selectedPeriod, setSelectedPeriod] =
+        useState<string>("2026-1");
 
-const permissions: Permission[] = [
-    {
-        id: 1,
-        nome: "Plano Analítico",
-        descricao: "Consultar e gerir planos analíticos.",
-        icon: <BookOpen size={18} />,
-    },
-    {
-        id: 2,
-        nome: "Aulas",
-        descricao: "Registar e acompanhar aulas.",
-        icon: <GraduationCap size={18} />,
-    },
-    {
-        id: 3,
-        nome: "Avaliações",
-        descricao: "Gerir avaliações e resultados.",
-        icon: <ClipboardCheck size={18} />,
-    },
-    {
-        id: 4,
-        nome: "Actividades",
-        descricao: "Gerir actividades académicas.",
-        icon: <Activity size={18} />,
-    },
-    {
-        id: 5,
-        nome: "Confirmação de Aulas",
-        descricao: "Confirmar aulas leccionadas.",
-        icon: <CalendarCheck size={18} />,
-    },
-    {
-        id: 6,
-        nome: "Acompanhamento",
-        descricao: "Consultar indicadores e acompanhamento.",
-        icon: <BarChart3 size={18} />,
-    },
-    {
-        id: 7,
-        nome: "Gestão Global",
-        descricao: "Acesso à administração global do sistema.",
-        icon: <Settings2 size={18} />,
-    },
-];
+    const [selectedTeacher, setSelectedTeacher] =
+        useState<string | null>(null);
 
-/* =========================================================
-   COMPONENT
-========================================================= */
+    const [selectedReport, setSelectedReport] =
+        useState<ReportType>("semestral");
 
-export default function UserManagement() {
-    const [users, setUsers] = useState<User[]>(initialUsers);
+    const [selectedPeriod1, setSelectedPeriod1] =
+        useState<string>("2025-2");
 
-    const [activeTab, setActiveTab] = useState(0);
+    const [selectedPeriod2, setSelectedPeriod2] =
+        useState<string>("2026-1");
 
-    const [search, setSearch] = useState("");
-    const [profileFilter, setProfileFilter] = useState<string | null>(null);
-    const [statusFilter, setStatusFilter] = useState<string | null>(null);
+    const [reportDialogVisible, setReportDialogVisible] =
+        useState(false);
 
-    const [userDialog, setUserDialog] = useState(false);
-    const [permissionDialog, setPermissionDialog] = useState(false);
+    const [selectedReportTitle, setSelectedReportTitle] =
+        useState("Relatório semestral");
 
-    const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
-    const [selectedProfile, setSelectedProfile] =
-        useState<string>("Administrador");
-
-    const [permissionState, setPermissionState] = useState<
-        Record<string, boolean>
-    >({
-        "Administrador-Plano Analítico": true,
-        "Administrador-Aulas": true,
-        "Administrador-Avaliações": true,
-        "Administrador-Actividades": true,
-        "Administrador-Confirmação de Aulas": true,
-        "Administrador-Acompanhamento": true,
-        "Administrador-Gestão Global": true,
-
-        "Docente-Plano Analítico": true,
-        "Docente-Aulas": true,
-        "Docente-Avaliações": true,
-        "Docente-Actividades": true,
-        "Docente-Confirmação de Aulas": true,
-        "Docente-Acompanhamento": true,
-        "Docente-Gestão Global": false,
-
-        "Chefe de Curso-Plano Analítico": true,
-        "Chefe de Curso-Aulas": true,
-        "Chefe de Curso-Avaliações": true,
-        "Chefe de Curso-Actividades": true,
-        "Chefe de Curso-Confirmação de Aulas": true,
-        "Chefe de Curso-Acompanhamento": true,
-        "Chefe de Curso-Gestão Global": false,
-
-        "Chefe de Departamento-Plano Analítico": true,
-        "Chefe de Departamento-Aulas": true,
-        "Chefe de Departamento-Avaliações": true,
-        "Chefe de Departamento-Actividades": true,
-        "Chefe de Departamento-Confirmação de Aulas": true,
-        "Chefe de Departamento-Acompanhamento": true,
-        "Chefe de Departamento-Gestão Global": false,
-
-        "Chefe de Turma-Plano Analítico": false,
-        "Chefe de Turma-Aulas": true,
-        "Chefe de Turma-Avaliações": true,
-        "Chefe de Turma-Actividades": true,
-        "Chefe de Turma-Confirmação de Aulas": true,
-        "Chefe de Turma-Acompanhamento": true,
-        "Chefe de Turma-Gestão Global": false,
-
-        "Subchefe de Turma-Plano Analítico": false,
-        "Subchefe de Turma-Aulas": true,
-        "Subchefe de Turma-Avaliações": false,
-        "Subchefe de Turma-Actividades": true,
-        "Subchefe de Turma-Confirmação de Aulas": true,
-        "Subchefe de Turma-Acompanhamento": true,
-        "Subchefe de Turma-Gestão Global": false,
-    });
-
-    /* =====================================================
-       DERIVED DATA
-    ===================================================== */
-
-    const filteredUsers = useMemo(() => {
-        return users.filter((user) => {
-            const matchesSearch =
-                !search ||
-                user.nome.toLowerCase().includes(search.toLowerCase()) ||
-                user.email.toLowerCase().includes(search.toLowerCase()) ||
-                user.contacto.toLowerCase().includes(search.toLowerCase());
-
-            const matchesProfile =
-                !profileFilter || user.perfil === profileFilter;
-
-            const matchesStatus =
-                !statusFilter || user.estado === statusFilter;
-
-            return matchesSearch && matchesProfile && matchesStatus;
-        });
-    }, [users, search, profileFilter, statusFilter]);
-
-    const totalUsers = users.length;
-
-    const activeUsers = users.filter(
-        (user) => user.estado === "Activo"
-    ).length;
-
-    const inactiveUsers = users.filter(
-        (user) => user.estado === "Inactivo"
-    ).length;
-
-    /* =====================================================
-       CHART
-    ===================================================== */
-
-  const profileChartData = {
-    labels: profiles.map((profile) => profile.nome),
-
-    datasets: [
+    const teacherOptions = [
         {
-            label: "Utilizadores",
+            label: "Todos os docentes",
+            value: null,
+        },
+        ...teachers.map((teacher) => ({
+            label: teacher.name,
+            value: teacher.name,
+        })),
+    ];
 
-            data: profiles.map((profile) => profile.utilizadores),
+    /* =====================================================
+       GRÁFICO 1 - CUMPRIMENTO POR DOCENTE
+    ===================================================== */
 
-            backgroundColor: [
-                "#1D4ED8", // Administrador
-                "#7C3AED", // Chefe de Departamento
-                "#D97706", // Chefe de Curso
-                "#16A34A", // Docente
-                "#0891B2", // Chefe de Turma
-                "#DB2777", // Subchefe de Turma
+    const teacherChartData = useMemo(() => {
+        const filteredTeachers = selectedTeacher
+            ? teachers.filter(
+                  (teacher) => teacher.name === selectedTeacher
+              )
+            : teachers;
+
+        return {
+            labels: filteredTeachers.map(
+                (teacher) => teacher.name
+            ),
+            datasets: [
+                {
+                    label: "Cumprimento",
+                    data: filteredTeachers.map(
+                        (teacher) => teacher.compliance
+                    ),
+                    backgroundColor: [
+                        "#1D4ED8",
+                        "#7C3AED",
+                        "#0891B2",
+                        "#16A34A",
+                        "#D97706",
+                    ],
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    barThickness: 28,
+                },
             ],
+        };
+    }, [selectedTeacher]);
 
-            borderColor: [
-                "#1E40AF",
-                "#6D28D9",
-                "#B45309",
-                "#15803D",
-                "#0E7490",
-                "#BE185D",
-            ],
+    /* =====================================================
+       GRÁFICO 2 - EVOLUÇÃO SEMESTRAL
+    ===================================================== */
 
-            borderWidth: 1,
-            borderRadius: 6,
-            borderSkipped: false,
-            barThickness: 34,
-        },
-    ],
-};
-   const profileChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-
-    plugins: {
-        legend: {
-            display: false,
-        },
-        tooltip: {
-            backgroundColor: "#0F172A",
-            titleColor: "#FFFFFF",
-            bodyColor: "#FFFFFF",
-            padding: 10,
-            displayColors: true,
-        },
-    },
-
-    scales: {
-        x: {
-            grid: {
-                display: false,
+    const evolutionChartData = {
+        labels: [
+            "2025 – 1.º",
+            "2025 – 2.º",
+            "2026 – 1.º",
+            "2026 – 2.º",
+        ],
+        datasets: [
+            {
+                label: "Aulas realizadas",
+                data: [84, 89, 93, 95],
+                borderColor: COLORS.primary,
+                backgroundColor: "rgba(29, 78, 216, 0.10)",
+                fill: true,
+                tension: 0.35,
+                pointRadius: 4,
+                pointHoverRadius: 6,
             },
-            ticks: {
-                color: "#64748B",
-                font: {
-                    size: 11,
+            {
+                label: "Avaliações no prazo",
+                data: [72, 79, 86, 89],
+                borderColor: COLORS.green,
+                backgroundColor: "rgba(22, 163, 74, 0.08)",
+                fill: true,
+                tension: 0.35,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+            },
+            {
+                label: "Actividades concluídas",
+                data: [69, 76, 84, 87],
+                borderColor: COLORS.purple,
+                backgroundColor: "rgba(124, 58, 237, 0.08)",
+                fill: true,
+                tension: 0.35,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+            },
+        ],
+    };
+
+    /* =====================================================
+       GRÁFICO 3 - DISTRIBUIÇÃO DAS AULAS
+    ===================================================== */
+
+    const lessonsChartData = {
+        labels: [
+            "Realizadas",
+            "Confirmadas",
+            "Pendentes",
+            "Não realizadas",
+        ],
+        datasets: [
+            {
+                data: [93, 91, 5, 2],
+                backgroundColor: [
+                    "#1D4ED8",
+                    "#16A34A",
+                    "#D97706",
+                    "#DC2626",
+                ],
+                borderWidth: 0,
+                hoverOffset: 8,
+            },
+        ],
+    };
+
+    /* =====================================================
+       GRÁFICO 4 - AVALIAÇÕES
+    ===================================================== */
+
+    const evaluationChartData = {
+        labels: [
+            "Dentro do prazo",
+            "Fora do prazo",
+            "Pendentes",
+        ],
+        datasets: [
+            {
+                data: [86, 14, 7],
+                backgroundColor: [
+                    "#16A34A",
+                    "#DC2626",
+                    "#D97706",
+                ],
+                borderWidth: 0,
+                hoverOffset: 8,
+            },
+        ],
+    };
+
+    /* =====================================================
+       GRÁFICO 5 - COMPARAÇÃO
+    ===================================================== */
+
+    const comparisonChartData = {
+        labels: [
+            "Aulas",
+            "Confirmações",
+            "Avaliações",
+            "Pautas",
+            "Actividades",
+            "Docentes",
+        ],
+        datasets: [
+            {
+                label:
+                    academicPeriods.find(
+                        (period) =>
+                            period.value === selectedPeriod1
+                    )?.label || selectedPeriod1,
+                data: [89, 85, 79, 68, 76, 81],
+                backgroundColor: "rgba(29, 78, 216, 0.85)",
+                borderRadius: 7,
+            },
+            {
+                label:
+                    academicPeriods.find(
+                        (period) =>
+                            period.value === selectedPeriod2
+                    )?.label || selectedPeriod2,
+                data: [93, 91, 86, 75, 84, 88],
+                backgroundColor: "rgba(124, 58, 237, 0.85)",
+                borderRadius: 7,
+            },
+        ],
+    };
+
+    /* =====================================================
+       GRÁFICO 6 - UNIDADES CURRICULARES
+    ===================================================== */
+
+    const courseChartData = {
+        labels: courseUnits.map(
+            (course) => course.name
+        ),
+        datasets: [
+            {
+                label: "Cumprimento",
+                data: courseUnits.map(
+                    (course) => course.compliance
+                ),
+                backgroundColor: "rgba(8, 145, 178, 0.85)",
+                borderRadius: 7,
+            },
+        ],
+    };
+
+    /* =====================================================
+       OPÇÕES DOS GRÁFICOS
+    ===================================================== */
+
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: "bottom" as const,
+                labels: {
+                    usePointStyle: true,
+                    padding: 18,
+                    font: {
+                        size: 12,
+                    },
                 },
             },
         },
+    };
 
-        y: {
-            beginAtZero: true,
-            ticks: {
-                stepSize: 1,
-                color: "#64748B",
-                font: {
-                    size: 11,
+    const barOptions = {
+        ...commonOptions,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: (value: string | number) =>
+                        `${value}%`,
+                },
+                grid: {
+                    color: "#E2E8F0",
                 },
             },
-            grid: {
-                color: "#E2E8F0",
-            },
-            border: {
-                display: false,
+            x: {
+                grid: {
+                    display: false,
+                },
             },
         },
-    },
-};
-
-    /* =====================================================
-       ACTIONS
-    ===================================================== */
-
-    const openCreateUser = () => {
-        setSelectedUser(null);
-        setUserDialog(true);
     };
 
-    const openEditUser = (user: User) => {
-        setSelectedUser(user);
-        setUserDialog(true);
-    };
-
-    const toggleUserStatus = (user: User) => {
-        const newStatus =
-            user.estado === "Activo" ? "Inactivo" : "Activo";
-
-        setUsers((current) =>
-            current.map((item) =>
-                item.id === user.id
-                    ? {
-                          ...item,
-                          estado: newStatus,
-                      }
-                    : item
-            )
-        );
-    };
-
-    const deleteUser = (user: User) => {
-        confirmDialog({
-            message: `Tem certeza que deseja remover ${user.nome}?`,
-            header: "Remover utilizador",
-            icon: <Trash2 size={24} />,
-            acceptLabel: "Remover",
-            rejectLabel: "Cancelar",
-            acceptClassName: "p-button-danger",
-            accept: () => {
-                setUsers((current) =>
-                    current.filter((item) => item.id !== user.id)
-                );
+    const lineOptions = {
+        ...commonOptions,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: (value: string | number) =>
+                        `${value}%`,
+                },
+                grid: {
+                    color: "#E2E8F0",
+                },
             },
-        });
+            x: {
+                grid: {
+                    display: false,
+                },
+            },
+        },
     };
 
-    const saveUser = () => {
-        if (selectedUser) {
-            setUsers((current) =>
-                current.map((item) =>
-                    item.id === selectedUser.id
-                        ? selectedUser
-                        : item
-                )
-            );
-        }
-
-        setUserDialog(false);
+    const horizontalBarOptions = {
+        ...commonOptions,
+        indexAxis: "y" as const,
+        scales: {
+            x: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: (value: string | number) =>
+                        `${value}%`,
+                },
+                grid: {
+                    color: "#E2E8F0",
+                },
+            },
+            y: {
+                grid: {
+                    display: false,
+                },
+            },
+        },
     };
 
-    /* =====================================================
-       TABLE TEMPLATES
-    ===================================================== */
-
-    const userTemplate = (user: User) => {
-        return (
-            <div className="flex align-items-center gap-3">
-                <Avatar
-                    label={user.iniciais}
-                    shape="circle"
-                    style={{
-                        background: COLORS.primaryLight,
-                        color: COLORS.primary,
-                        fontWeight: 700,
-                    }}
-                />
-
-                <div>
-                    <div
-                        style={{
-                            fontWeight: 700,
-                            color: COLORS.dark,
-                            marginBottom: "3px",
-                        }}
-                    >
-                        {user.nome}
-                    </div>
-
-                    <div
-                        style={{
-                            fontSize: "0.82rem",
-                            color: COLORS.muted,
-                        }}
-                    >
-                        {user.email}
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-    const profileTemplate = (user: User) => {
-        const profile = profiles.find(
-            (item) => item.nome === user.perfil
-        );
-
-        return (
-            <Tag
-                value={user.perfil}
-                style={{
-                    background: `${profile?.cor || COLORS.primary}12`,
-                    color: profile?.cor || COLORS.primary,
-                    border: `1px solid ${
-                        profile?.cor || COLORS.primary
-                    }25`,
-                    fontWeight: 600,
-                }}
-            />
-        );
-    };
-
-    const statusTemplate = (user: User) => {
-        return (
-            <Tag
-                value={user.estado}
-                icon={
-                    user.estado === "Activo" ? (
-                        <CheckCircle2 size={13} />
-                    ) : (
-                        <XCircle size={13} />
-                    )
-                }
-                severity={
-                    user.estado === "Activo"
-                        ? "success"
-                        : "danger"
-                }
-            />
-        );
-    };
-
-    const actionsTemplate = (user: User) => {
-        return (
-            <div className="flex justify-content-end gap-1">
-                <Button
-                    icon={<Edit3 size={16} />}
-                    rounded
-                    text
-                    severity="secondary"
-                    tooltip="Editar"
-                    onClick={() => openEditUser(user)}
-                />
-
-                <Button
-                    icon={
-                        user.estado === "Activo" ? (
-                            <Lock size={16} />
-                        ) : (
-                            <Unlock size={16} />
-                        )
-                    }
-                    rounded
-                    text
-                    severity={
-                        user.estado === "Activo"
-                            ? "warning"
-                            : "success"
-                    }
-                    tooltip={
-                        user.estado === "Activo"
-                            ? "Desactivar"
-                            : "Activar"
-                    }
-                    onClick={() => toggleUserStatus(user)}
-                />
-
-                <Button
-                    icon={<Trash2 size={16} />}
-                    rounded
-                    text
-                    severity="danger"
-                    tooltip="Remover"
-                    onClick={() => deleteUser(user)}
-                />
-            </div>
-        );
+    const doughnutOptions = {
+        ...commonOptions,
+        cutout: "68%",
     };
 
     /* =====================================================
-       KPI CARD
+       FUNÇÕES
     ===================================================== */
 
-    const KpiCard = ({
-        title,
-        value,
-        description,
-        icon,
-        background,
-        color,
-    }: {
-        title: string;
-        value: number;
-        description: string;
-        icon: React.ReactNode;
-        background: string;
-        color: string;
-    }) => {
-        return (
-            <Card
+    const openReport = (
+        reportId: ReportType,
+        title: string
+    ) => {
+        setSelectedReport(reportId);
+        setSelectedReportTitle(title);
+        setReportDialogVisible(true);
+    };
+
+    const getComplianceSeverity = (
+        value: number
+    ): "success" | "warning" | "danger" => {
+        if (value >= 90) return "success";
+        if (value >= 80) return "warning";
+        return "danger";
+    };
+
+    const teacherBody = (row: Teacher) => (
+        <div className="flex align-items-center gap-2">
+            <div
                 style={{
-                    height: "100%",
-                    border: `1px solid ${COLORS.border}`,
-                    boxShadow: "none",
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background: COLORS.primaryLight,
+                    color: COLORS.primary,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                    fontSize: 12,
                 }}
             >
-                <div className="flex align-items-start justify-content-between">
-                    <div>
-                        <div
-                            style={{
-                                color: COLORS.muted,
-                                fontSize: "0.82rem",
-                                fontWeight: 600,
-                                marginBottom: "8px",
-                            }}
-                        >
-                            {title}
-                        </div>
+                {row.initials}
+            </div>
 
-                        <div
-                            style={{
-                                color: COLORS.dark,
-                                fontSize: "1.8rem",
-                                fontWeight: 800,
-                                lineHeight: 1,
-                            }}
-                        >
-                            {value}
-                        </div>
-
-                        <div
-                            style={{
-                                color: COLORS.light,
-                                fontSize: "0.75rem",
-                                marginTop: "8px",
-                            }}
-                        >
-                            {description}
-                        </div>
-                    </div>
-
-                    <div
-                        className="flex align-items-center justify-content-center"
-                        style={{
-                            width: "42px",
-                            height: "42px",
-                            borderRadius: "10px",
-                            background,
-                            color,
-                        }}
-                    >
-                        {icon}
-                    </div>
+            <div>
+                <div
+                    style={{
+                        fontWeight: 600,
+                        color: COLORS.dark,
+                    }}
+                >
+                    {row.name}
                 </div>
-            </Card>
-        );
-    };
+
+                <div
+                    style={{
+                        fontSize: 12,
+                        color: COLORS.muted,
+                    }}
+                >
+                    {row.course}
+                </div>
+            </div>
+        </div>
+    );
+
+    const complianceBody = (row: Teacher) => (
+        <div
+            style={{
+                minWidth: 130,
+            }}
+        >
+            <div className="flex justify-content-between mb-2">
+                <span
+                    style={{
+                        fontSize: 12,
+                        color: COLORS.muted,
+                    }}
+                >
+                    Cumprimento
+                </span>
+
+                <strong>{row.compliance}%</strong>
+            </div>
+
+            <ProgressBar
+                value={row.compliance}
+                showValue={false}
+                style={{
+                    height: 7,
+                    borderRadius: 10,
+                }}
+            />
+        </div>
+    );
+
+    const statusBody = (row: Teacher) => (
+        <Tag
+            value={
+                row.compliance >= 90
+                    ? "Excelente"
+                    : row.compliance >= 80
+                    ? "Regular"
+                    : "Atenção"
+            }
+            severity={getComplianceSeverity(
+                row.compliance
+            )}
+        />
+    );
 
     /* =====================================================
-       MAIN
+       RENDER
     ===================================================== */
 
     return (
@@ -821,1703 +780,1773 @@ export default function UserManagement() {
                 padding: "1.25rem",
                 boxSizing: "border-box",
                 background: COLORS.background,
-                minHeight: "100%",
+                minHeight: "100vh",
             }}
         >
-            <ConfirmDialog />
-
             {/* =================================================
                 HEADER
             ================================================= */}
 
             <div
-                className="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3"
-                style={{
-                    marginBottom: "1.25rem",
-                }}
+                className="flex justify-content-between align-items-center flex-wrap gap-3 mb-4"
             >
                 <div>
                     <div
-                        className="flex align-items-center gap-2"
-                        style={{
-                            color: COLORS.primary,
-                            fontSize: "0.8rem",
-                            fontWeight: 700,
-                            marginBottom: "6px",
-                        }}
+                        className="flex align-items-center gap-2 mb-2"
                     >
-                        <ShieldCheck size={17} />
-                        ADMINISTRAÇÃO DO SISTEMA
-                    </div>
+                        <div
+                            style={{
+                                width: 42,
+                                height: 42,
+                                borderRadius: 12,
+                                background:
+                                    COLORS.primaryLight,
+                                color: COLORS.primary,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                        >
+                            <BarChart3 size={22} />
+                        </div>
 
-                    <h1
-                        style={{
-                            margin: 0,
-                            color: COLORS.dark,
-                            fontSize: "1.7rem",
-                            fontWeight: 800,
-                        }}
-                    >
-                        Utilizadores, Perfis e Permissões
-                    </h1>
+                        <h1
+                            style={{
+                                margin: 0,
+                                color: COLORS.dark,
+                                fontSize: 25,
+                                fontWeight: 700,
+                            }}
+                        >
+                            Relatórios e Indicadores
+                        </h1>
+                    </div>
 
                     <p
                         style={{
-                            margin: "6px 0 0",
+                            margin: 0,
                             color: COLORS.muted,
-                            fontSize: "0.9rem",
+                            fontSize: 14,
                         }}
                     >
-                        Controle as contas, perfis de acesso e
-                        permissões do sistema pedagógico.
+                        Análise do desempenho pedagógico,
+                        indicadores e comparação entre
+                        períodos lectivos.
                     </p>
                 </div>
 
-                <Button
-                    label="Novo utilizador"
-                    icon={<UserPlus size={17} />}
-                    onClick={openCreateUser}
-                    style={{
-                        background: COLORS.primary,
-                        border: "none",
-                        padding: "0.75rem 1rem",
-                    }}
-                />
+                <div className="flex gap-2">
+                    <Button
+                        label="Actualizar"
+                        icon={<RefreshCw size={16} />}
+                        severity="secondary"
+                        outlined
+                        onClick={() => {}}
+                    />
+
+                    <Button
+                        label="Gerar relatório"
+                        icon={<FileText size={16} />}
+                        onClick={() =>
+                            openReport(
+                                selectedReport,
+                                selectedReportTitle
+                            )
+                        }
+                    />
+                </div>
             </div>
 
             {/* =================================================
-                KPIS
+                FILTROS
             ================================================= */}
 
-            <div className="grid">
-                <div className="col-12 sm:col-6 xl:col-3">
-                    <KpiCard
-                        title="Total de utilizadores"
-                        value={totalUsers}
-                        description="Contas registadas"
-                        icon={<Users size={21} />}
-                        background={COLORS.primaryLight}
-                        color={COLORS.primary}
-                    />
-                </div>
+            <Card
+                className="mb-4"
+                style={{
+                    border: `1px solid ${COLORS.border}`,
+                    boxShadow: "none",
+                }}
+            >
+                <div className="grid">
+                    <div className="col-12 md:col-4">
+                        <label
+                            className="block mb-2"
+                            style={{
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: COLORS.text,
+                            }}
+                        >
+                            Período lectivo
+                        </label>
 
-                <div className="col-12 sm:col-6 xl:col-3">
-                    <KpiCard
-                        title="Contas activas"
-                        value={activeUsers}
-                        description="Utilizadores com acesso"
-                        icon={<UserCheck size={21} />}
-                        background={COLORS.greenLight}
-                        color={COLORS.green}
-                    />
-                </div>
+                        <Dropdown
+                            value={selectedPeriod}
+                            options={academicPeriods}
+                            optionLabel="label"
+                            optionValue="value"
+                            onChange={(e) =>
+                                setSelectedPeriod(e.value)
+                            }
+                            className="w-full"
+                        />
+                    </div>
 
-                <div className="col-12 sm:col-6 xl:col-3">
-                    <KpiCard
-                        title="Contas inactivas"
-                        value={inactiveUsers}
-                        description="Acesso temporariamente bloqueado"
-                        icon={<UserX size={21} />}
-                        background={COLORS.orangeLight}
-                        color={COLORS.orange}
-                    />
-                </div>
+                    <div className="col-12 md:col-4">
+                        <label
+                            className="block mb-2"
+                            style={{
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: COLORS.text,
+                            }}
+                        >
+                            Docente
+                        </label>
 
-                <div className="col-12 sm:col-6 xl:col-3">
-                    <KpiCard
-                        title="Perfis de acesso"
-                        value={profiles.length}
-                        description="Perfis configurados"
-                        icon={<KeyRound size={21} />}
-                        background={COLORS.purpleLight}
-                        color={COLORS.purple}
-                    />
+                        <Dropdown
+                            value={selectedTeacher}
+                            options={teacherOptions}
+                            onChange={(e) =>
+                                setSelectedTeacher(e.value)
+                            }
+                            placeholder="Todos os docentes"
+                            className="w-full"
+                        />
+                    </div>
+
+                    <div className="col-12 md:col-4">
+                        <label
+                            className="block mb-2"
+                            style={{
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: COLORS.text,
+                            }}
+                        >
+                            Tipo de relatório
+                        </label>
+
+                        <Dropdown
+                            value={selectedReport}
+                            options={reportOptions.map(
+                                (report) => ({
+                                    label: report.title,
+                                    value: report.id,
+                                })
+                            )}
+                            onChange={(e) =>
+                                setSelectedReport(e.value)
+                            }
+                            className="w-full"
+                        />
+                    </div>
                 </div>
+            </Card>
+
+            {/* =================================================
+                KPIs
+            ================================================= */}
+
+            <div className="grid mb-4">
+                <KpiCard
+                    title="Aulas realizadas"
+                    value="93%"
+                    subtitle="do planeado"
+                    icon={<GraduationCap size={20} />}
+                    iconBg={COLORS.primaryLight}
+                    iconColor={COLORS.primary}
+                    trend="+4,5%"
+                    positive
+                />
+
+                <KpiCard
+                    title="Aulas confirmadas"
+                    value="91%"
+                    subtitle="das aulas realizadas"
+                    icon={<CheckCircle2 size={20} />}
+                    iconBg={COLORS.greenLight}
+                    iconColor={COLORS.green}
+                    trend="+6,2%"
+                    positive
+                />
+
+                <KpiCard
+                    title="Avaliações no prazo"
+                    value="86%"
+                    subtitle="dentro do prazo"
+                    icon={<Clock3 size={20} />}
+                    iconBg={COLORS.orangeLight}
+                    iconColor={COLORS.orange}
+                    trend="+7,1%"
+                    positive
+                />
+
+                <KpiCard
+                    title="Pautas entregues"
+                    value="75%"
+                    subtitle="do total previsto"
+                    icon={<FileCheck2 size={20} />}
+                    iconBg={COLORS.purpleLight}
+                    iconColor={COLORS.purple}
+                    trend="+5,8%"
+                    positive
+                />
+
+                <KpiCard
+                    title="Actividades concluídas"
+                    value="84%"
+                    subtitle="dentro do prazo"
+                    icon={<ClipboardCheck size={20} />}
+                    iconBg={COLORS.cyanLight}
+                    iconColor={COLORS.cyan}
+                    trend="+8,4%"
+                    positive
+                />
+
+                <KpiCard
+                    title="Cumprimento docente"
+                    value="88%"
+                    subtitle="indicador global"
+                    icon={<Users size={20} />}
+                    iconBg={COLORS.pinkLight}
+                    iconColor={COLORS.pink}
+                    trend="+5,3%"
+                    positive
+                />
             </div>
 
             {/* =================================================
                 TABS
             ================================================= */}
 
-            <Card
+            <div
+                className="flex gap-2 mb-4 flex-wrap"
                 style={{
-                    marginTop: "1rem",
-                    border: `1px solid ${COLORS.border}`,
-                    boxShadow: "none",
+                    borderBottom: `1px solid ${COLORS.border}`,
+                    paddingBottom: 12,
                 }}
             >
-                <TabView
-                    activeIndex={activeTab}
-                    onTabChange={(event) =>
-                        setActiveTab(event.index)
+                <TabButton
+                    active={activeTab === "indicadores"}
+                    icon={<BarChart3 size={17} />}
+                    label="Indicadores"
+                    onClick={() =>
+                        setActiveTab("indicadores")
                     }
-                >
-                    {/* =========================================
-                        TAB UTILIZADORES
-                    ========================================= */}
+                />
 
-                    <TabPanel
-                        header="Utilizadores"
-                        leftIcon={<Users size={16} className="mr-2" />}
-                    >
-                        {/* =====================================
-                            CHART + SUMMARY
-                        ===================================== */}
+                <TabButton
+                    active={activeTab === "relatorios"}
+                    icon={<FileBarChart size={17} />}
+                    label="Relatórios"
+                    onClick={() =>
+                        setActiveTab("relatorios")
+                    }
+                />
 
-                        <div className="grid mb-3">
-                            <div className="col-12 lg:col-8">
+                <TabButton
+                    active={activeTab === "comparacao"}
+                    icon={<LineChart size={17} />}
+                    label="Comparar semestres"
+                    onClick={() =>
+                        setActiveTab("comparacao")
+                    }
+                />
+            </div>
+
+            {/* =================================================
+                RELATÓRIOS
+            ================================================= */}
+
+            {activeTab === "relatorios" && (
+                <div>
+                    <SectionTitle
+                        icon={<FileBarChart size={20} />}
+                        title="Relatórios pedagógicos"
+                        description="Seleccione o tipo de relatório que pretende consultar ou gerar."
+                    />
+
+                    <div className="grid mb-4">
+                        {reportOptions.map((report) => (
+                            <div
+                                key={report.id}
+                                className="col-12 md:col-6 lg:col-4"
+                            >
                                 <div
+                                    onClick={() =>
+                                        openReport(
+                                            report.id,
+                                            report.title
+                                        )
+                                    }
                                     style={{
+                                        height: "100%",
+                                        padding: "1.25rem",
+                                        background:
+                                            COLORS.white,
                                         border: `1px solid ${COLORS.border}`,
-                                        borderRadius: "10px",
-                                        padding: "1rem",
-                                        height: "340px",
-                                        background: COLORS.white,
+                                        borderRadius: 12,
+                                        cursor: "pointer",
+                                        transition:
+                                            "all .2s ease",
                                     }}
                                 >
-                                    <div className="flex justify-content-between align-items-start mb-3">
-                                        <div>
-                                            <div
-                                                style={{
-                                                    fontSize: "1rem",
-                                                    fontWeight: 700,
-                                                    color: COLORS.dark,
-                                                }}
-                                            >
-                                                Distribuição por perfil
-                                            </div>
-
-                                            <div
-                                                style={{
-                                                    fontSize: "0.78rem",
-                                                    color: COLORS.muted,
-                                                    marginTop: "4px",
-                                                }}
-                                            >
-                                                Número de utilizadores
-                                                associados a cada perfil.
-                                            </div>
+                                    <div
+                                        className="flex justify-content-between align-items-start mb-3"
+                                    >
+                                        <div
+                                            style={{
+                                                width: 44,
+                                                height: 44,
+                                                borderRadius: 11,
+                                                display: "flex",
+                                                alignItems:
+                                                    "center",
+                                                justifyContent:
+                                                    "center",
+                                                background:
+                                                    COLORS.primaryLight,
+                                                color:
+                                                    COLORS.primary,
+                                            }}
+                                        >
+                                            {report.icon}
                                         </div>
+
+                                        <i
+                                            className="pi pi-arrow-up-right"
+                                            style={{
+                                                color:
+                                                    COLORS.light,
+                                            }}
+                                        />
+                                    </div>
+
+                                    <h3
+                                        style={{
+                                            margin:
+                                                "0 0 8px",
+                                            color:
+                                                COLORS.dark,
+                                            fontSize: 16,
+                                        }}
+                                    >
+                                        {report.title}
+                                    </h3>
+
+                                    <p
+                                        style={{
+                                            margin: 0,
+                                            color:
+                                                COLORS.muted,
+                                            fontSize: 13,
+                                            lineHeight: 1.6,
+                                        }}
+                                    >
+                                        {report.description}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="grid">
+                        <div className="col-12 lg:col-8">
+                            <Card
+                                title="Pré-visualização do relatório"
+                                style={{
+                                    border: `1px solid ${COLORS.border}`,
+                                    boxShadow: "none",
+                                }}
+                            >
+                                <div className="grid">
+                                    <MetricPreview
+                                        label="Aulas planeadas"
+                                        value="412"
+                                        icon={
+                                            <CalendarDays
+                                                size={18}
+                                            />
+                                        }
+                                    />
+
+                                    <MetricPreview
+                                        label="Aulas realizadas"
+                                        value="383"
+                                        icon={
+                                            <CheckCircle2
+                                                size={18}
+                                            />
+                                        }
+                                    />
+
+                                    <MetricPreview
+                                        label="Avaliações"
+                                        value="36"
+                                        icon={
+                                            <ClipboardCheck
+                                                size={18}
+                                            />
+                                        }
+                                    />
+
+                                    <MetricPreview
+                                        label="Pautas"
+                                        value="18"
+                                        icon={
+                                            <FileCheck2
+                                                size={18}
+                                            />
+                                        }
+                                    />
+                                </div>
+
+                                <Divider />
+
+                                <div className="flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong
+                                            style={{
+                                                color:
+                                                    COLORS.dark,
+                                            }}
+                                        >
+                                            {selectedReportTitle}
+                                        </strong>
 
                                         <div
                                             style={{
-                                                width: "34px",
-                                                height: "34px",
-                                                borderRadius: "8px",
-                                                background:
-                                                    COLORS.primaryLight,
-                                                color: COLORS.primary,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent:
-                                                    "center",
+                                                fontSize: 12,
+                                                color:
+                                                    COLORS.muted,
+                                                marginTop: 4,
                                             }}
                                         >
-                                            <BarChart3 size={18} />
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        style={{
-                                            height: "250px",
-                                        }}
-                                    >
-                                        <Bar
-                                            data={profileChartData}
-                                            options={
-                                                profileChartOptions
+                                            Período:{" "}
+                                            {
+                                                academicPeriods.find(
+                                                    (p) =>
+                                                        p.value ===
+                                                        selectedPeriod
+                                                )?.label
                                             }
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="col-12 lg:col-4">
-                                <div
-                                    style={{
-                                        border: `1px solid ${COLORS.border}`,
-                                        borderRadius: "10px",
-                                        padding: "1rem",
-                                        height: "340px",
-                                        background: COLORS.white,
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            fontSize: "1rem",
-                                            fontWeight: 700,
-                                            color: COLORS.dark,
-                                        }}
-                                    >
-                                        Estado das contas
-                                    </div>
-
-                                    <div
-                                        style={{
-                                            fontSize: "0.78rem",
-                                            color: COLORS.muted,
-                                            marginTop: "4px",
-                                        }}
-                                    >
-                                        Visão rápida do acesso actual.
-                                    </div>
-
-                                    <Divider />
-
-                                    <div
-                                        className="flex align-items-center justify-content-between"
-                                        style={{
-                                            padding: "0.75rem 0",
-                                        }}
-                                    >
-                                        <div className="flex align-items-center gap-2">
-                                            <div
-                                                style={{
-                                                    width: "10px",
-                                                    height: "10px",
-                                                    borderRadius: "50%",
-                                                    background:
-                                                        COLORS.green,
-                                                }}
-                                            />
-
-                                            <span
-                                                style={{
-                                                    color: COLORS.text,
-                                                    fontSize:
-                                                        "0.85rem",
-                                                }}
-                                            >
-                                                Activos
-                                            </span>
                                         </div>
-
-                                        <strong
-                                            style={{
-                                                color: COLORS.dark,
-                                            }}
-                                        >
-                                            {activeUsers}
-                                        </strong>
                                     </div>
 
-                                    <ProgressBar
-                                        value={
-                                            totalUsers
-                                                ? (activeUsers /
-                                                      totalUsers) *
-                                                  100
-                                                : 0
-                                        }
-                                        showValue={false}
-                                        style={{
-                                            height: "7px",
-                                        }}
-                                    />
-
-                                    <div
-                                        className="flex align-items-center justify-content-between"
-                                        style={{
-                                            padding: "1rem 0 0.75rem",
-                                        }}
-                                    >
-                                        <div className="flex align-items-center gap-2">
-                                            <div
-                                                style={{
-                                                    width: "10px",
-                                                    height: "10px",
-                                                    borderRadius: "50%",
-                                                    background:
-                                                        COLORS.red,
-                                                }}
+                                    <Button
+                                        label="Gerar"
+                                        icon={
+                                            <FileText
+                                                size={16}
                                             />
-
-                                            <span
-                                                style={{
-                                                    color: COLORS.text,
-                                                    fontSize:
-                                                        "0.85rem",
-                                                }}
-                                            >
-                                                Inactivos
-                                            </span>
-                                        </div>
-
-                                        <strong
-                                            style={{
-                                                color: COLORS.dark,
-                                            }}
-                                        >
-                                            {inactiveUsers}
-                                        </strong>
-                                    </div>
-
-                                    <ProgressBar
-                                        value={
-                                            totalUsers
-                                                ? (inactiveUsers /
-                                                      totalUsers) *
-                                                  100
-                                                : 0
                                         }
-                                        showValue={false}
-                                        style={{
-                                            height: "7px",
-                                        }}
-                                        color={COLORS.red}
-                                    />
-
-                                    <div
-                                        style={{
-                                            marginTop: "1.5rem",
-                                            padding: "0.85rem",
-                                            background:
-                                                COLORS.primaryLight,
-                                            borderRadius: "8px",
-                                            color: COLORS.primary,
-                                            fontSize: "0.8rem",
-                                            lineHeight: 1.5,
-                                        }}
-                                    >
-                                        <strong>
-                                            Perfis configurados:
-                                        </strong>{" "}
-                                        {profiles.length} perfis
-                                        diferentes estão disponíveis
-                                        no sistema.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* =====================================
-                            TABLE TOOLBAR
-                        ===================================== */}
-
-                        <div
-                            className="flex flex-column lg:flex-row lg:align-items-center lg:justify-content-between gap-3"
-                            style={{
-                                padding: "1rem 0",
-                            }}
-                        >
-                            <div>
-                                <div
-                                    style={{
-                                        fontSize: "1.05rem",
-                                        fontWeight: 700,
-                                        color: COLORS.dark,
-                                    }}
-                                >
-                                    Lista de utilizadores
-                                </div>
-
-                                <div
-                                    style={{
-                                        color: COLORS.muted,
-                                        fontSize: "0.78rem",
-                                        marginTop: "3px",
-                                    }}
-                                >
-                                    Consulte e administre as contas
-                                    registadas.
-                                </div>
-                            </div>
-
-                            <div className="flex flex-column md:flex-row gap-2">
-                                <span className="p-input-icon-left">
-                                    <Search
-                                        size={16}
-                                        style={{
-                                            position: "absolute",
-                                            top: "50%",
-                                            left: "0.75rem",
-                                            transform:
-                                                "translateY(-50%)",
-                                            color: COLORS.light,
-                                        }}
-                                    />
-
-                                    <InputText
-                                        value={search}
-                                        onChange={(event) =>
-                                            setSearch(
-                                                event.target.value
+                                        onClick={() =>
+                                            openReport(
+                                                selectedReport,
+                                                selectedReportTitle
                                             )
                                         }
-                                        placeholder="Pesquisar utilizador..."
-                                        style={{
-                                            paddingLeft: "2.4rem",
-                                            minWidth: "240px",
-                                        }}
                                     />
-                                </span>
-
-                                <Dropdown
-                                    value={profileFilter}
-                                    options={profiles.map(
-                                        (profile) => profile.nome
-                                    )}
-                                    onChange={(event) =>
-                                        setProfileFilter(
-                                            event.value
-                                        )
-                                    }
-                                    placeholder="Perfil"
-                                    showClear
-                                    style={{
-                                        minWidth: "190px",
-                                    }}
-                                />
-
-                                <Dropdown
-                                    value={statusFilter}
-                                    options={[
-                                        "Activo",
-                                        "Inactivo",
-                                    ]}
-                                    onChange={(event) =>
-                                        setStatusFilter(
-                                            event.value
-                                        )
-                                    }
-                                    placeholder="Estado"
-                                    showClear
-                                    style={{
-                                        minWidth: "140px",
-                                    }}
-                                />
-                            </div>
+                                </div>
+                            </Card>
                         </div>
 
-                        {/* =====================================
-                            USERS TABLE
-                        ===================================== */}
+                        <div className="col-12 lg:col-4">
+                            <Card
+                                title="Conteúdo incluído"
+                                style={{
+                                    height: "100%",
+                                    border: `1px solid ${COLORS.border}`,
+                                    boxShadow: "none",
+                                }}
+                            >
+                                <ReportContent
+                                    text="Resumo de aulas"
+                                />
 
+                                <ReportContent
+                                    text="Indicadores de avaliações"
+                                />
+
+                                <ReportContent
+                                    text="Pautas finais"
+                                />
+
+                                <ReportContent
+                                    text="Actividades pedagógicas"
+                                />
+
+                                <ReportContent
+                                    text="Cumprimento docente"
+                                />
+
+                                <ReportContent
+                                    text="Observações e ocorrências"
+                                />
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* =================================================
+                INDICADORES
+            ================================================= */}
+
+            {activeTab === "indicadores" && (
+                <div>
+                    <SectionTitle
+                        icon={<BarChart3 size={20} />}
+                        title="Indicadores pedagógicos"
+                        description="Visão geral do desempenho pedagógico no período seleccionado."
+                    />
+
+                    {/* PRIMEIRA LINHA DE GRÁFICOS */}
+
+                    <div className="grid mb-4">
+                        <div className="col-12 lg:col-8">
+                            <Card
+                                title="Cumprimento por docente"
+                                subTitle="Percentagem de cumprimento das actividades pedagógicas"
+                                style={{
+                                    border: `1px solid ${COLORS.border}`,
+                                    boxShadow: "none",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        height: 340,
+                                    }}
+                                >
+                                    <Bar
+                                        data={teacherChartData}
+                                        options={
+                                            barOptions
+                                        }
+                                    />
+                                </div>
+                            </Card>
+                        </div>
+
+                        <div className="col-12 lg:col-4">
+                            <Card
+                                title="Distribuição das aulas"
+                                subTitle="Estado das aulas no período"
+                                style={{
+                                    height: "100%",
+                                    border: `1px solid ${COLORS.border}`,
+                                    boxShadow: "none",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        height: 280,
+                                        display: "flex",
+                                        justifyContent:
+                                            "center",
+                                    }}
+                                >
+                                    <Doughnut
+                                        data={
+                                            lessonsChartData
+                                        }
+                                        options={
+                                            doughnutOptions
+                                        }
+                                    />
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+
+                    {/* SEGUNDA LINHA */}
+
+                    <div className="grid mb-4">
+                        <div className="col-12 lg:col-8">
+                            <Card
+                                title="Evolução dos indicadores"
+                                subTitle="Comparação da evolução dos principais indicadores pedagógicos"
+                                style={{
+                                    border: `1px solid ${COLORS.border}`,
+                                    boxShadow: "none",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        height: 330,
+                                    }}
+                                >
+                                    <Line
+                                        data={
+                                            evolutionChartData
+                                        }
+                                        options={
+                                            lineOptions
+                                        }
+                                    />
+                                </div>
+                            </Card>
+                        </div>
+
+                        <div className="col-12 lg:col-4">
+                            <Card
+                                title="Avaliações"
+                                subTitle="Cumprimento dos prazos"
+                                style={{
+                                    height: "100%",
+                                    border: `1px solid ${COLORS.border}`,
+                                    boxShadow: "none",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        height: 280,
+                                    }}
+                                >
+                                    <Pie
+                                        data={
+                                            evaluationChartData
+                                        }
+                                        options={
+                                            doughnutOptions
+                                        }
+                                    />
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+
+                    {/* TERCEIRA LINHA */}
+
+                    <div className="grid mb-4">
+                        <div className="col-12 lg:col-7">
+                            <Card
+                                title="Cumprimento por unidade curricular"
+                                subTitle="Percentagem de execução pedagógica"
+                                style={{
+                                    border: `1px solid ${COLORS.border}`,
+                                    boxShadow: "none",
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        height: 340,
+                                    }}
+                                >
+                                    <Bar
+                                        data={
+                                            courseChartData
+                                        }
+                                        options={
+                                            horizontalBarOptions
+                                        }
+                                    />
+                                </div>
+                            </Card>
+                        </div>
+
+                        <div className="col-12 lg:col-5">
+                            <Card
+                                title="Resumo dos indicadores"
+                                style={{
+                                    border: `1px solid ${COLORS.border}`,
+                                    boxShadow: "none",
+                                }}
+                            >
+                                <IndicatorRow
+                                    label="Aulas realizadas"
+                                    value={93}
+                                    color={
+                                        COLORS.primary
+                                    }
+                                />
+
+                                <IndicatorRow
+                                    label="Aulas confirmadas"
+                                    value={91}
+                                    color={
+                                        COLORS.green
+                                    }
+                                />
+
+                                <IndicatorRow
+                                    label="Avaliações no prazo"
+                                    value={86}
+                                    color={
+                                        COLORS.orange
+                                    }
+                                />
+
+                                <IndicatorRow
+                                    label="Pautas entregues"
+                                    value={75}
+                                    color={
+                                        COLORS.purple
+                                    }
+                                />
+
+                                <IndicatorRow
+                                    label="Actividades concluídas"
+                                    value={84}
+                                    color={
+                                        COLORS.cyan
+                                    }
+                                />
+
+                                <IndicatorRow
+                                    label="Cumprimento docente"
+                                    value={88}
+                                    color={
+                                        COLORS.pink
+                                    }
+                                />
+                            </Card>
+                        </div>
+                    </div>
+
+                    {/* TABELA */}
+
+                    <Card
+                        title="Cumprimento pedagógico por docente"
+                        subTitle="Detalhamento dos principais indicadores"
+                        style={{
+                            border: `1px solid ${COLORS.border}`,
+                            boxShadow: "none",
+                        }}
+                    >
                         <DataTable
-                            value={filteredUsers}
+                            value={teachers}
                             paginator
-                            rows={6}
-                            rowsPerPageOptions={[6, 10, 20]}
-                            responsiveLayout="scroll"
-                            emptyMessage="Nenhum utilizador encontrado."
+                            rows={5}
                             stripedRows
-                            size="small"
-                            tableStyle={{
-                                minWidth: "950px",
-                            }}
+                            responsiveLayout="scroll"
+                            emptyMessage="Nenhum docente encontrado."
                         >
                             <Column
-                                header="Utilizador"
-                                body={userTemplate}
+                                field="name"
+                                header="Docente"
+                                body={teacherBody}
                                 style={{
-                                    minWidth: "260px",
+                                    minWidth: 230,
                                 }}
                             />
 
                             <Column
-                                field="contacto"
-                                header="Contacto"
+                                field="planned"
+                                header="Aulas planeadas"
                                 style={{
-                                    minWidth: "160px",
+                                    minWidth: 140,
                                 }}
                             />
 
                             <Column
-                                header="Perfil"
-                                body={profileTemplate}
+                                field="realized"
+                                header="Realizadas"
                                 style={{
-                                    minWidth: "190px",
+                                    minWidth: 120,
                                 }}
                             />
 
                             <Column
-                                field="departamento"
-                                header="Departamento"
+                                field="confirmed"
+                                header="Confirmadas"
                                 style={{
-                                    minWidth: "180px",
+                                    minWidth: 120,
                                 }}
                             />
 
                             <Column
-                                field="curso"
-                                header="Curso"
+                                field="evaluationsOnTime"
+                                header="Avaliações no prazo"
                                 style={{
-                                    minWidth: "170px",
+                                    minWidth: 160,
+                                }}
+                            />
+
+                            <Column
+                                field="activitiesCompleted"
+                                header="Actividades"
+                                style={{
+                                    minWidth: 130,
+                                }}
+                            />
+
+                            <Column
+                                field="compliance"
+                                header="Cumprimento"
+                                body={complianceBody}
+                                style={{
+                                    minWidth: 180,
                                 }}
                             />
 
                             <Column
                                 header="Estado"
-                                body={statusTemplate}
+                                body={statusBody}
                                 style={{
-                                    width: "120px",
-                                }}
-                            />
-
-                            <Column
-                                header="Acções"
-                                body={actionsTemplate}
-                                align="right"
-                                style={{
-                                    width: "150px",
+                                    minWidth: 130,
                                 }}
                             />
                         </DataTable>
-                    </TabPanel>
+                    </Card>
+                </div>
+            )}
 
-                    {/* =========================================
-                        TAB PERFIS
-                    ========================================= */}
+            {/* =================================================
+                COMPARAÇÃO
+            ================================================= */}
 
-                    <TabPanel
-                        header="Perfis"
-                        leftIcon={
-                            <ShieldCheck
-                                size={16}
-                                className="mr-2"
-                            />
-                        }
+            {activeTab === "comparacao" && (
+                <div>
+                    <SectionTitle
+                        icon={<LineChart size={20} />}
+                        title="Comparação entre semestres"
+                        description="Seleccione dois períodos lectivos para analisar a evolução dos indicadores."
+                    />
+
+                    <Card
+                        className="mb-4"
+                        style={{
+                            border: `1px solid ${COLORS.border}`,
+                            boxShadow: "none",
+                        }}
                     >
-                        <div
-                            className="flex flex-column lg:flex-row gap-4"
-                            style={{
-                                minHeight: "500px",
-                            }}
-                        >
-                            {/* PROFILE LIST */}
-
-                            <div
-                                style={{
-                                    width: "100%",
-                                    maxWidth: "340px",
-                                }}
-                            >
-                                <div
+                        <div className="grid align-items-end">
+                            <div className="col-12 md:col-5">
+                                <label
+                                    className="block mb-2"
                                     style={{
-                                        marginBottom: "1rem",
+                                        fontSize: 13,
+                                        fontWeight: 600,
                                     }}
                                 >
-                                    <div
-                                        style={{
-                                            fontWeight: 700,
-                                            color: COLORS.dark,
-                                        }}
-                                    >
-                                        Perfis disponíveis
-                                    </div>
+                                    Primeiro período
+                                </label>
 
-                                    <div
-                                        style={{
-                                            fontSize: "0.78rem",
-                                            color: COLORS.muted,
-                                            marginTop: "4px",
-                                        }}
-                                    >
-                                        Seleccione um perfil para
-                                        consultar a configuração.
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-column gap-2">
-                                    {profiles.map((profile) => (
-                                        <div
-                                            key={profile.id}
-                                            onClick={() =>
-                                                setSelectedProfile(
-                                                    profile.nome
-                                                )
-                                            }
-                                            style={{
-                                                padding: "0.9rem",
-                                                borderRadius: "10px",
-                                                border: `1px solid ${
-                                                    selectedProfile ===
-                                                    profile.nome
-                                                        ? profile.cor
-                                                        : COLORS.border
-                                                }`,
-                                                background:
-                                                    selectedProfile ===
-                                                    profile.nome
-                                                        ? `${profile.cor}08`
-                                                        : COLORS.white,
-                                                cursor: "pointer",
-                                                transition:
-                                                    "all .2s",
-                                            }}
-                                        >
-                                            <div className="flex align-items-center gap-3">
-                                                <div
-                                                    style={{
-                                                        width: "38px",
-                                                        height: "38px",
-                                                        borderRadius:
-                                                            "9px",
-                                                        display: "flex",
-                                                        alignItems:
-                                                            "center",
-                                                        justifyContent:
-                                                            "center",
-                                                        background: `${profile.cor}12`,
-                                                        color: profile.cor,
-                                                        flexShrink: 0,
-                                                    }}
-                                                >
-                                                    <ShieldCheck
-                                                        size={19}
-                                                    />
-                                                </div>
-
-                                                <div
-                                                    style={{
-                                                        minWidth: 0,
-                                                        flex: 1,
-                                                    }}
-                                                >
-                                                    <div
-                                                        style={{
-                                                            fontWeight: 700,
-                                                            color: COLORS.dark,
-                                                            fontSize:
-                                                                "0.87rem",
-                                                        }}
-                                                    >
-                                                        {
-                                                            profile.nome
-                                                        }
-                                                    </div>
-
-                                                    <div
-                                                        style={{
-                                                            fontSize:
-                                                                "0.72rem",
-                                                            color: COLORS.muted,
-                                                            marginTop:
-                                                                "3px",
-                                                        }}
-                                                    >
-                                                        {
-                                                            profile.utilizadores
-                                                        }{" "}
-                                                        utilizadores
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* PROFILE DETAIL */}
-
-                            {(() => {
-                                const profile =
-                                    profiles.find(
-                                        (item) =>
-                                            item.nome ===
-                                            selectedProfile
-                                    );
-
-                                if (!profile) return null;
-
-                                return (
-                                    <div
-                                        style={{
-                                            flex: 1,
-                                            border: `1px solid ${COLORS.border}`,
-                                            borderRadius: "12px",
-                                            background:
-                                                COLORS.white,
-                                            padding: "1.5rem",
-                                        }}
-                                    >
-                                        <div className="flex flex-column md:flex-row md:align-items-start md:justify-content-between gap-3">
-                                            <div className="flex align-items-center gap-3">
-                                                <div
-                                                    style={{
-                                                        width: "54px",
-                                                        height: "54px",
-                                                        borderRadius:
-                                                            "12px",
-                                                        background: `${profile.cor}12`,
-                                                        color: profile.cor,
-                                                        display:
-                                                            "flex",
-                                                        alignItems:
-                                                            "center",
-                                                        justifyContent:
-                                                            "center",
-                                                    }}
-                                                >
-                                                    <ShieldCheck
-                                                        size={26}
-                                                    />
-                                                </div>
-
-                                                <div>
-                                                    <h2
-                                                        style={{
-                                                            margin: 0,
-                                                            color: COLORS.dark,
-                                                            fontSize:
-                                                                "1.25rem",
-                                                        }}
-                                                    >
-                                                        {
-                                                            profile.nome
-                                                        }
-                                                    </h2>
-
-                                                    <div
-                                                        style={{
-                                                            marginTop:
-                                                                "5px",
-                                                            color: COLORS.muted,
-                                                            fontSize:
-                                                                "0.82rem",
-                                                        }}
-                                                    >
-                                                        {
-                                                            profile.descricao
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <Button
-                                                label="Configurar permissões"
-                                                icon={
-                                                    <Settings2
-                                                        size={16}
-                                                    />
-                                                }
-                                                outlined
-                                                onClick={() =>
-                                                    setPermissionDialog(
-                                                        true
-                                                    )
-                                                }
-                                            />
-                                        </div>
-
-                                        <Divider />
-
-                                        <div className="grid">
-                                            <div className="col-12 md:col-4">
-                                                <div
-                                                    style={{
-                                                        background:
-                                                            COLORS.background,
-                                                        borderRadius:
-                                                            "10px",
-                                                        padding:
-                                                            "1rem",
-                                                    }}
-                                                >
-                                                    <div
-                                                        style={{
-                                                            color: COLORS.muted,
-                                                            fontSize:
-                                                                "0.75rem",
-                                                        }}
-                                                    >
-                                                        Utilizadores
-                                                    </div>
-
-                                                    <div
-                                                        style={{
-                                                            fontSize:
-                                                                "1.5rem",
-                                                            fontWeight:
-                                                                800,
-                                                            color: COLORS.dark,
-                                                            marginTop:
-                                                                "5px",
-                                                        }}
-                                                    >
-                                                        {
-                                                            profile.utilizadores
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="col-12 md:col-4">
-                                                <div
-                                                    style={{
-                                                        background:
-                                                            COLORS.background,
-                                                        borderRadius:
-                                                            "10px",
-                                                        padding:
-                                                            "1rem",
-                                                    }}
-                                                >
-                                                    <div
-                                                        style={{
-                                                            color: COLORS.muted,
-                                                            fontSize:
-                                                                "0.75rem",
-                                                        }}
-                                                    >
-                                                        Permissões
-                                                    </div>
-
-                                                    <div
-                                                        style={{
-                                                            fontSize:
-                                                                "1.5rem",
-                                                            fontWeight:
-                                                                800,
-                                                            color: COLORS.dark,
-                                                            marginTop:
-                                                                "5px",
-                                                        }}
-                                                    >
-                                                        {
-                                                            permissions.filter(
-                                                                (
-                                                                    permission
-                                                                ) =>
-                                                                    permissionState[
-                                                                        `${profile.nome}-${permission.nome}`
-                                                                    ]
-                                                            ).length
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="col-12 md:col-4">
-                                                <div
-                                                    style={{
-                                                        background:
-                                                            COLORS.background,
-                                                        borderRadius:
-                                                            "10px",
-                                                        padding:
-                                                            "1rem",
-                                                    }}
-                                                >
-                                                    <div
-                                                        style={{
-                                                            color: COLORS.muted,
-                                                            fontSize:
-                                                                "0.75rem",
-                                                        }}
-                                                    >
-                                                        Estado
-                                                    </div>
-
-                                                    <div
-                                                        className="flex align-items-center gap-2"
-                                                        style={{
-                                                            marginTop:
-                                                                "10px",
-                                                        }}
-                                                    >
-                                                        <CheckCircle2
-                                                            size={17}
-                                                            color={
-                                                                COLORS.green
-                                                            }
-                                                        />
-
-                                                        <strong
-                                                            style={{
-                                                                color: COLORS.green,
-                                                            }}
-                                                        >
-                                                            Activo
-                                                        </strong>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <Divider />
-
-                                        <div>
-                                            <div
-                                                style={{
-                                                    fontWeight: 700,
-                                                    color: COLORS.dark,
-                                                    marginBottom:
-                                                        "1rem",
-                                                }}
-                                            >
-                                                Permissões atribuídas
-                                            </div>
-
-                                            <div className="grid">
-                                                {permissions.map(
-                                                    (
-                                                        permission
-                                                    ) => {
-                                                        const enabled =
-                                                            permissionState[
-                                                                `${profile.nome}-${permission.nome}`
-                                                            ] ??
-                                                            false;
-
-                                                        return (
-                                                            <div
-                                                                key={
-                                                                    permission.id
-                                                                }
-                                                                className="col-12 md:col-6"
-                                                            >
-                                                                <div
-                                                                    className="flex align-items-center justify-content-between gap-3"
-                                                                    style={{
-                                                                        padding:
-                                                                            "0.85rem",
-                                                                        border: `1px solid ${COLORS.border}`,
-                                                                        borderRadius:
-                                                                            "9px",
-                                                                    }}
-                                                                >
-                                                                    <div className="flex align-items-center gap-3">
-                                                                        <div
-                                                                            style={{
-                                                                                width: "35px",
-                                                                                height: "35px",
-                                                                                borderRadius:
-                                                                                    "8px",
-                                                                                background:
-                                                                                    enabled
-                                                                                        ? COLORS.greenLight
-                                                                                        : COLORS.background,
-                                                                                color:
-                                                                                    enabled
-                                                                                        ? COLORS.green
-                                                                                        : COLORS.light,
-                                                                                display:
-                                                                                    "flex",
-                                                                                alignItems:
-                                                                                    "center",
-                                                                                justifyContent:
-                                                                                    "center",
-                                                                            }}
-                                                                        >
-                                                                            {
-                                                                                permission.icon
-                                                                            }
-                                                                        </div>
-
-                                                                        <div>
-                                                                            <div
-                                                                                style={{
-                                                                                    fontSize:
-                                                                                        "0.82rem",
-                                                                                    fontWeight:
-                                                                                        700,
-                                                                                    color: COLORS.dark,
-                                                                                }}
-                                                                            >
-                                                                                {
-                                                                                    permission.nome
-                                                                                }
-                                                                            </div>
-
-                                                                            <div
-                                                                                style={{
-                                                                                    fontSize:
-                                                                                        "0.7rem",
-                                                                                    color: COLORS.muted,
-                                                                                    marginTop:
-                                                                                        "2px",
-                                                                                }}
-                                                                            >
-                                                                                {
-                                                                                    permission.descricao
-                                                                                }
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <InputSwitch
-                                                                        checked={
-                                                                            enabled
-                                                                        }
-                                                                        onChange={(
-                                                                            event
-                                                                        ) =>
-                                                                            setPermissionState(
-                                                                                (
-                                                                                    current
-                                                                                ) => ({
-                                                                                    ...current,
-                                                                                    [`${profile.nome}-${permission.nome}`]:
-                                                                                        event.value,
-                                                                                })
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    }
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-                        </div>
-                    </TabPanel>
-
-                    {/* =========================================
-                        TAB PERMISSÕES
-                    ========================================= */}
-
-                    <TabPanel
-                        header="Permissões"
-                        leftIcon={
-                            <KeyRound
-                                size={16}
-                                className="mr-2"
-                            />
-                        }
-                    >
-                        <div>
-                            <div
-                                className="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3"
-                                style={{
-                                    marginBottom: "1.25rem",
-                                }}
-                            >
-                                <div>
-                                    <div
-                                        style={{
-                                            fontWeight: 700,
-                                            fontSize: "1.05rem",
-                                            color: COLORS.dark,
-                                        }}
-                                    >
-                                        Matriz de permissões
-                                    </div>
-
-                                    <div
-                                        style={{
-                                            fontSize: "0.78rem",
-                                            color: COLORS.muted,
-                                            marginTop: "4px",
-                                        }}
-                                    >
-                                        Configure as funcionalidades
-                                        disponíveis para cada perfil.
-                                    </div>
-                                </div>
-
-                                <Button
-                                    label="Guardar alterações"
-                                    icon={
-                                        <CheckCircle2
-                                            size={16}
-                                        />
+                                <Dropdown
+                                    value={
+                                        selectedPeriod1
                                     }
-                                    onClick={() => {
-                                        confirmDialog({
-                                            message:
-                                                "As configurações de permissões foram actualizadas.",
-                                            header: "Permissões",
-                                            icon: (
-                                                <CheckCircle2
-                                                    size={24}
-                                                />
-                                            ),
-                                            acceptLabel: "OK",
-                                            rejectClassName:
-                                                "hidden",
-                                        });
-                                    }}
+                                    options={
+                                        academicPeriods
+                                    }
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    onChange={(e) =>
+                                        setSelectedPeriod1(
+                                            e.value
+                                        )
+                                    }
+                                    className="w-full"
                                 />
                             </div>
 
                             <div
-                                style={{
-                                    overflowX: "auto",
-                                    border: `1px solid ${COLORS.border}`,
-                                    borderRadius: "10px",
-                                }}
+                                className="col-12 md:col-2 flex justify-content-center align-items-center"
                             >
-                                <table
+                                <div
                                     style={{
-                                        width: "100%",
-                                        minWidth: "1100px",
-                                        borderCollapse:
-                                            "collapse",
+                                        width: 42,
+                                        height: 42,
+                                        borderRadius:
+                                            "50%",
+                                        background:
+                                            COLORS.primaryLight,
+                                        color:
+                                            COLORS.primary,
+                                        display:
+                                            "flex",
+                                        alignItems:
+                                            "center",
+                                        justifyContent:
+                                            "center",
                                     }}
                                 >
-                                    <thead>
-                                        <tr
-                                            style={{
-                                                background:
-                                                    COLORS.background,
-                                            }}
-                                        >
-                                            <th
-                                                style={{
-                                                    textAlign:
-                                                        "left",
-                                                    padding:
-                                                        "1rem",
-                                                    borderBottom: `1px solid ${COLORS.border}`,
-                                                    minWidth:
-                                                        "230px",
-                                                    color: COLORS.dark,
-                                                    fontSize:
-                                                        "0.8rem",
-                                                }}
-                                            >
-                                                Perfil
-                                            </th>
+                                    <span
+                                        style={{
+                                            fontWeight: 700,
+                                        }}
+                                    >
+                                        VS
+                                    </span>
+                                </div>
+                            </div>
 
-                                            {permissions.map(
-                                                (
-                                                    permission
-                                                ) => (
-                                                    <th
-                                                        key={
-                                                            permission.id
-                                                        }
-                                                        style={{
-                                                            padding:
-                                                                "0.8rem",
-                                                            borderBottom: `1px solid ${COLORS.border}`,
-                                                            color: COLORS.dark,
-                                                            fontSize:
-                                                                "0.72rem",
-                                                            textAlign:
-                                                                "center",
-                                                            minWidth:
-                                                                "110px",
-                                                        }}
-                                                    >
-                                                        <div
-                                                            className="flex flex-column align-items-center gap-2"
-                                                        >
-                                                            {
-                                                                permission.icon
-                                                            }
+                            <div className="col-12 md:col-5">
+                                <label
+                                    className="block mb-2"
+                                    style={{
+                                        fontSize: 13,
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    Segundo período
+                                </label>
 
-                                                            <span>
-                                                                {
-                                                                    permission.nome
-                                                                }
-                                                            </span>
-                                                        </div>
-                                                    </th>
-                                                )
-                                            )}
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-                                        {profiles.map(
-                                            (profile) => (
-                                                <tr
-                                                    key={
-                                                        profile.id
-                                                    }
-                                                    style={{
-                                                        borderBottom: `1px solid ${COLORS.border}`,
-                                                    }}
-                                                >
-                                                    <td
-                                                        style={{
-                                                            padding:
-                                                                "0.9rem 1rem",
-                                                        }}
-                                                    >
-                                                        <div className="flex align-items-center gap-3">
-                                                            <div
-                                                                style={{
-                                                                    width: "36px",
-                                                                    height: "36px",
-                                                                    borderRadius:
-                                                                        "8px",
-                                                                    background: `${profile.cor}12`,
-                                                                    color: profile.cor,
-                                                                    display:
-                                                                        "flex",
-                                                                    alignItems:
-                                                                        "center",
-                                                                    justifyContent:
-                                                                        "center",
-                                                                }}
-                                                            >
-                                                                <ShieldCheck
-                                                                    size={
-                                                                        18
-                                                                    }
-                                                                />
-                                                            </div>
-
-                                                            <div>
-                                                                <div
-                                                                    style={{
-                                                                        fontWeight:
-                                                                            700,
-                                                                        fontSize:
-                                                                            "0.82rem",
-                                                                        color: COLORS.dark,
-                                                                    }}
-                                                                >
-                                                                    {
-                                                                        profile.nome
-                                                                    }
-                                                                </div>
-
-                                                                <div
-                                                                    style={{
-                                                                        fontSize:
-                                                                            "0.7rem",
-                                                                        color: COLORS.muted,
-                                                                    }}
-                                                                >
-                                                                    {
-                                                                        profile.utilizadores
-                                                                    }{" "}
-                                                                    utilizadores
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-
-                                                    {permissions.map(
-                                                        (
-                                                            permission
-                                                        ) => {
-                                                            const key = `${profile.nome}-${permission.nome}`;
-
-                                                            const enabled =
-                                                                permissionState[
-                                                                    key
-                                                                ] ??
-                                                                false;
-
-                                                            return (
-                                                                <td
-                                                                    key={
-                                                                        permission.id
-                                                                    }
-                                                                    style={{
-                                                                        padding:
-                                                                            "0.9rem",
-                                                                        textAlign:
-                                                                            "center",
-                                                                    }}
-                                                                >
-                                                                    <InputSwitch
-                                                                        checked={
-                                                                            enabled
-                                                                        }
-                                                                        onChange={(
-                                                                            event
-                                                                        ) =>
-                                                                            setPermissionState(
-                                                                                (
-                                                                                    current
-                                                                                ) => ({
-                                                                                    ...current,
-                                                                                    [key]:
-                                                                                        event.value,
-                                                                                })
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                </td>
-                                                            );
-                                                        }
-                                                    )}
-                                                </tr>
-                                            )
-                                        )}
-                                    </tbody>
-                                </table>
+                                <Dropdown
+                                    value={
+                                        selectedPeriod2
+                                    }
+                                    options={
+                                        academicPeriods
+                                    }
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    onChange={(e) =>
+                                        setSelectedPeriod2(
+                                            e.value
+                                        )
+                                    }
+                                    className="w-full"
+                                />
                             </div>
                         </div>
-                    </TabPanel>
-                </TabView>
-            </Card>
+                    </Card>
+
+                    {/* GRÁFICO COMPARATIVO */}
+
+                    <Card
+                        title="Comparação dos indicadores"
+                        subTitle="Valores percentuais simulados"
+                        className="mb-4"
+                        style={{
+                            border: `1px solid ${COLORS.border}`,
+                            boxShadow: "none",
+                        }}
+                    >
+                        <div
+                            style={{
+                                height: 390,
+                            }}
+                        >
+                            <Bar
+                                data={
+                                    comparisonChartData
+                                }
+                                options={{
+                                    ...barOptions,
+                                    scales: {
+                                        ...barOptions.scales,
+                                        y: {
+                                            ...barOptions
+                                                .scales
+                                                .y,
+                                            max: 100,
+                                        },
+                                    },
+                                }}
+                            />
+                        </div>
+                    </Card>
+
+                    {/* RESUMO DA COMPARAÇÃO */}
+
+                    <div className="grid mb-4">
+                        <ComparisonCard
+                            title="Aulas realizadas"
+                            first={89}
+                            second={93}
+                            positive
+                        />
+
+                        <ComparisonCard
+                            title="Aulas confirmadas"
+                            first={85}
+                            second={91}
+                            positive
+                        />
+
+                        <ComparisonCard
+                            title="Avaliações no prazo"
+                            first={79}
+                            second={86}
+                            positive
+                        />
+
+                        <ComparisonCard
+                            title="Pautas entregues"
+                            first={68}
+                            second={75}
+                            positive
+                        />
+
+                        <ComparisonCard
+                            title="Actividades concluídas"
+                            first={76}
+                            second={84}
+                            positive
+                        />
+
+                        <ComparisonCard
+                            title="Cumprimento docente"
+                            first={81}
+                            second={88}
+                            positive
+                        />
+                    </div>
+
+                    {/* ANÁLISE */}
+
+                    <Card
+                        title="Análise comparativa"
+                        style={{
+                            border: `1px solid ${COLORS.border}`,
+                            boxShadow: "none",
+                        }}
+                    >
+                        <div className="grid">
+                            <AnalysisBox
+                                title="Evolução das aulas"
+                                value="+4 p.p."
+                                description="A percentagem de aulas realizadas aumentou entre os períodos seleccionados."
+                                icon={
+                                    <TrendingUp
+                                        size={21}
+                                    />
+                                }
+                                color={
+                                    COLORS.green
+                                }
+                                background={
+                                    COLORS.greenLight
+                                }
+                            />
+
+                            <AnalysisBox
+                                title="Avaliações"
+                                value="+7 p.p."
+                                description="Observa-se uma melhoria no cumprimento dos prazos de avaliação."
+                                icon={
+                                    <TrendingUp
+                                        size={21}
+                                    />
+                                }
+                                color={
+                                    COLORS.primary
+                                }
+                                background={
+                                    COLORS.primaryLight
+                                }
+                            />
+
+                            <AnalysisBox
+                                title="Pautas"
+                                value="+7 p.p."
+                                description="A entrega de pautas apresenta crescimento no segundo período."
+                                icon={
+                                    <FileCheck2
+                                        size={21}
+                                    />
+                                }
+                                color={
+                                    COLORS.purple
+                                }
+                                background={
+                                    COLORS.purpleLight
+                                }
+                            />
+
+                            <AnalysisBox
+                                title="Actividades"
+                                value="+8 p.p."
+                                description="O indicador de conclusão das actividades também apresenta evolução."
+                                icon={
+                                    <ClipboardCheck
+                                        size={21}
+                                    />
+                                }
+                                color={
+                                    COLORS.orange
+                                }
+                                background={
+                                    COLORS.orangeLight
+                                }
+                            />
+                        </div>
+                    </Card>
+                </div>
+            )}
 
             {/* =================================================
-                USER DIALOG
+                DIALOG RELATÓRIO
             ================================================= */}
 
             <Dialog
-                visible={userDialog}
-                onHide={() => setUserDialog(false)}
-                header={
-                    selectedUser
-                        ? "Editar utilizador"
-                        : "Novo utilizador"
+                visible={reportDialogVisible}
+                onHide={() =>
+                    setReportDialogVisible(false)
                 }
+                header={selectedReportTitle}
                 modal
                 style={{
-                    width: "650px",
+                    width: "620px",
                     maxWidth: "95vw",
                 }}
-                footer={
+            >
+                <div>
+                    <div
+                        style={{
+                            padding: "1rem",
+                            borderRadius: 10,
+                            background:
+                                COLORS.primaryLight,
+                            marginBottom: "1.25rem",
+                        }}
+                    >
+                        <div
+                            className="flex align-items-center gap-2"
+                        >
+                            <FileText
+                                size={20}
+                                color={
+                                    COLORS.primary
+                                }
+                            />
+
+                            <div>
+                                <strong
+                                    style={{
+                                        color:
+                                            COLORS.dark,
+                                    }}
+                                >
+                                    Configuração do relatório
+                                </strong>
+
+                                <div
+                                    style={{
+                                        fontSize: 12,
+                                        color:
+                                            COLORS.muted,
+                                        marginTop: 3,
+                                    }}
+                                >
+                                    Os dados apresentados
+                                    são simulados.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid">
+                        <div className="col-12 md:col-6">
+                            <ReportDialogMetric
+                                label="Período"
+                                value={
+                                    academicPeriods.find(
+                                        (period) =>
+                                            period.value ===
+                                            selectedPeriod
+                                    )?.label ||
+                                    selectedPeriod
+                                }
+                            />
+                        </div>
+
+                        <div className="col-12 md:col-6">
+                            <ReportDialogMetric
+                                label="Tipo"
+                                value={
+                                    selectedReportTitle
+                                }
+                            />
+                        </div>
+
+                        <div className="col-12 md:col-6">
+                            <ReportDialogMetric
+                                label="Aulas"
+                                value="383 realizadas"
+                            />
+                        </div>
+
+                        <div className="col-12 md:col-6">
+                            <ReportDialogMetric
+                                label="Cumprimento"
+                                value="88%"
+                            />
+                        </div>
+                    </div>
+
+                    <Divider />
+
                     <div className="flex justify-content-end gap-2">
                         <Button
                             label="Cancelar"
-                            outlined
                             severity="secondary"
+                            outlined
                             onClick={() =>
-                                setUserDialog(false)
+                                setReportDialogVisible(
+                                    false
+                                )
                             }
                         />
 
                         <Button
-                            label={
-                                selectedUser
-                                    ? "Guardar alterações"
-                                    : "Criar utilizador"
+                            label="Gerar relatório"
+                            icon={
+                                <FileText
+                                    size={16}
+                                />
                             }
-                            icon={<CheckCircle2 size={16} />}
-                            onClick={saveUser}
-                        />
-                    </div>
-                }
-            >
-                <div className="grid">
-                    <div className="col-12 md:col-6">
-                        <label
-                            className="block mb-2"
-                            style={{
-                                fontWeight: 600,
-                                fontSize: "0.82rem",
-                            }}
-                        >
-                            Nome completo
-                        </label>
-
-                        <InputText
-                            value={selectedUser?.nome || ""}
-                            onChange={(event) =>
-                                setSelectedUser(
-                                    (current) =>
-                                        ({
-                                            ...(current ||
-                                                initialUsers[0]),
-                                            nome: event.target
-                                                .value,
-                                        } as User)
+                            onClick={() =>
+                                setReportDialogVisible(
+                                    false
                                 )
                             }
-                            placeholder="Ex.: John Doe"
-                            className="w-full"
                         />
-                    </div>
-
-                    <div className="col-12 md:col-6">
-                        <label
-                            className="block mb-2"
-                            style={{
-                                fontWeight: 600,
-                                fontSize: "0.82rem",
-                            }}
-                        >
-                            E-mail
-                        </label>
-
-                        <InputText
-                            value={selectedUser?.email || ""}
-                            onChange={(event) =>
-                                setSelectedUser(
-                                    (current) =>
-                                        ({
-                                            ...(current ||
-                                                initialUsers[0]),
-                                            email: event.target
-                                                .value,
-                                        } as User)
-                                )
-                            }
-                            placeholder="john.doe@example.com"
-                            className="w-full"
-                        />
-                    </div>
-
-                    <div className="col-12 md:col-6">
-                        <label
-                            className="block mb-2"
-                            style={{
-                                fontWeight: 600,
-                                fontSize: "0.82rem",
-                            }}
-                        >
-                            Contacto
-                        </label>
-
-                        <InputText
-                            value={
-                                selectedUser?.contacto || ""
-                            }
-                            onChange={(event) =>
-                                setSelectedUser(
-                                    (current) =>
-                                        ({
-                                            ...(current ||
-                                                initialUsers[0]),
-                                            contacto:
-                                                event.target
-                                                    .value,
-                                        } as User)
-                                )
-                            }
-                            placeholder="+258 84 000 0000"
-                            className="w-full"
-                        />
-                    </div>
-
-                    <div className="col-12 md:col-6">
-                        <label
-                            className="block mb-2"
-                            style={{
-                                fontWeight: 600,
-                                fontSize: "0.82rem",
-                            }}
-                        >
-                            Perfil
-                        </label>
-
-                        <Dropdown
-                            value={selectedUser?.perfil}
-                            options={profiles.map(
-                                (profile) => profile.nome
-                            )}
-                            onChange={(event) =>
-                                setSelectedUser(
-                                    (current) =>
-                                        ({
-                                            ...(current ||
-                                                initialUsers[0]),
-                                            perfil: event.value,
-                                        } as User)
-                                )
-                            }
-                            placeholder="Seleccione o perfil"
-                            className="w-full"
-                        />
-                    </div>
-
-                    <div className="col-12 md:col-6">
-                        <label
-                            className="block mb-2"
-                            style={{
-                                fontWeight: 600,
-                                fontSize: "0.82rem",
-                            }}
-                        >
-                            Departamento
-                        </label>
-
-                        <InputText
-                            value={
-                                selectedUser?.departamento ||
-                                ""
-                            }
-                            onChange={(event) =>
-                                setSelectedUser(
-                                    (current) =>
-                                        ({
-                                            ...(current ||
-                                                initialUsers[0]),
-                                            departamento:
-                                                event.target
-                                                    .value,
-                                        } as User)
-                                )
-                            }
-                            placeholder="Departamento"
-                            className="w-full"
-                        />
-                    </div>
-
-                    <div className="col-12 md:col-6">
-                        <label
-                            className="block mb-2"
-                            style={{
-                                fontWeight: 600,
-                                fontSize: "0.82rem",
-                            }}
-                        >
-                            Curso
-                        </label>
-
-                        <InputText
-                            value={
-                                selectedUser?.curso || ""
-                            }
-                            onChange={(event) =>
-                                setSelectedUser(
-                                    (current) =>
-                                        ({
-                                            ...(current ||
-                                                initialUsers[0]),
-                                            curso: event.target
-                                                .value,
-                                        } as User)
-                                )
-                            }
-                            placeholder="Curso"
-                            className="w-full"
-                        />
-                    </div>
-
-                    <div className="col-12">
-                        <Divider />
-
-                        <div className="flex align-items-center justify-content-between">
-                            <div>
-                                <div
-                                    style={{
-                                        fontWeight: 600,
-                                        color: COLORS.dark,
-                                    }}
-                                >
-                                    Conta activa
-                                </div>
-
-                                <div
-                                    style={{
-                                        fontSize: "0.75rem",
-                                        color: COLORS.muted,
-                                        marginTop: "3px",
-                                    }}
-                                >
-                                    Permitir que o utilizador
-                                    aceda ao sistema.
-                                </div>
-                            </div>
-
-                            <InputSwitch
-                                checked={
-                                    selectedUser?.estado ===
-                                    "Activo"
-                                }
-                                onChange={(event) =>
-                                    setSelectedUser(
-                                        (current) =>
-                                            ({
-                                                ...(current ||
-                                                    initialUsers[0]),
-                                                estado: event.value
-                                                    ? "Activo"
-                                                    : "Inactivo",
-                                            } as User)
-                                    )
-                                }
-                            />
-                        </div>
                     </div>
                 </div>
             </Dialog>
+        </div>
+    );
+}
 
-            {/* =================================================
-                PERMISSION DIALOG
-            ================================================= */}
+/* =========================================================
+   COMPONENTES AUXILIARES
+========================================================= */
 
-            <Dialog
-                visible={permissionDialog}
-                onHide={() =>
-                    setPermissionDialog(false)
-                }
-                header={`Permissões — ${selectedProfile}`}
-                modal
+interface KpiCardProps {
+    title: string;
+    value: string;
+    subtitle: string;
+    icon: React.ReactNode;
+    iconBg: string;
+    iconColor: string;
+    trend: string;
+    positive: boolean;
+}
+
+function KpiCard({
+    title,
+    value,
+    subtitle,
+    icon,
+    iconBg,
+    iconColor,
+    trend,
+    positive,
+}: KpiCardProps) {
+    return (
+        <div className="col-12 sm:col-6 lg:col-4 xl:col-2">
+            <div
                 style={{
-                    width: "600px",
-                    maxWidth: "95vw",
+                    background: COLORS.white,
+                    border: `1px solid ${COLORS.border}`,
+                    borderRadius: 12,
+                    padding: "1rem",
+                    height: "100%",
                 }}
             >
-                <div className="flex flex-column gap-2">
-                    {permissions.map((permission) => {
-                        const key = `${selectedProfile}-${permission.nome}`;
+                <div
+                    className="flex justify-content-between align-items-start"
+                >
+                    <div
+                        style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 10,
+                            background: iconBg,
+                            color: iconColor,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        {icon}
+                    </div>
 
-                        return (
-                            <div
-                                key={permission.id}
-                                className="flex align-items-center justify-content-between"
-                                style={{
-                                    padding: "0.9rem",
-                                    border: `1px solid ${COLORS.border}`,
-                                    borderRadius: "9px",
-                                }}
-                            >
-                                <div className="flex align-items-center gap-3">
-                                    <div
-                                        style={{
-                                            width: "38px",
-                                            height: "38px",
-                                            borderRadius: "8px",
-                                            background:
-                                                COLORS.primaryLight,
-                                            color: COLORS.primary,
-                                            display: "flex",
-                                            alignItems:
-                                                "center",
-                                            justifyContent:
-                                                "center",
-                                        }}
-                                    >
-                                        {permission.icon}
-                                    </div>
-
-                                    <div>
-                                        <div
-                                            style={{
-                                                fontWeight: 700,
-                                                color: COLORS.dark,
-                                                fontSize:
-                                                    "0.85rem",
-                                            }}
-                                        >
-                                            {
-                                                permission.nome
-                                            }
-                                        </div>
-
-                                        <div
-                                            style={{
-                                                color: COLORS.muted,
-                                                fontSize:
-                                                    "0.72rem",
-                                                marginTop:
-                                                    "3px",
-                                            }}
-                                        >
-                                            {
-                                                permission.descricao
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <InputSwitch
-                                    checked={
-                                        permissionState[
-                                            key
-                                        ] ?? false
-                                    }
-                                    onChange={(event) =>
-                                        setPermissionState(
-                                            (current) => ({
-                                                ...current,
-                                                [key]:
-                                                    event.value,
-                                            })
-                                        )
-                                    }
-                                />
-                            </div>
-                        );
-                    })}
+                    <span
+                        style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: positive
+                                ? COLORS.green
+                                : COLORS.red,
+                            background: positive
+                                ? COLORS.greenLight
+                                : COLORS.redLight,
+                            padding:
+                                "4px 7px",
+                            borderRadius: 20,
+                        }}
+                    >
+                        {trend}
+                    </span>
                 </div>
-            </Dialog>
+
+                <div
+                    style={{
+                        marginTop: "1rem",
+                    }}
+                >
+                    <div
+                        style={{
+                            fontSize: 24,
+                            fontWeight: 700,
+                            color: COLORS.dark,
+                        }}
+                    >
+                        {value}
+                    </div>
+
+                    <div
+                        style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: COLORS.text,
+                            marginTop: 4,
+                        }}
+                    >
+                        {title}
+                    </div>
+
+                    <div
+                        style={{
+                            fontSize: 11,
+                            color: COLORS.muted,
+                            marginTop: 3,
+                        }}
+                    >
+                        {subtitle}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function SectionTitle({
+    icon,
+    title,
+    description,
+}: {
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+}) {
+    return (
+        <div className="mb-4">
+            <div
+                className="flex align-items-center gap-2"
+            >
+                <span
+                    style={{
+                        color: COLORS.primary,
+                    }}
+                >
+                    {icon}
+                </span>
+
+                <h2
+                    style={{
+                        margin: 0,
+                        fontSize: 19,
+                        color: COLORS.dark,
+                    }}
+                >
+                    {title}
+                </h2>
+            </div>
+
+            <p
+                style={{
+                    margin: "6px 0 0",
+                    color: COLORS.muted,
+                    fontSize: 13,
+                }}
+            >
+                {description}
+            </p>
+        </div>
+    );
+}
+
+function TabButton({
+    active,
+    icon,
+    label,
+    onClick,
+}: {
+    active: boolean;
+    icon: React.ReactNode;
+    label: string;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            style={{
+                border: "none",
+                cursor: "pointer",
+                padding:
+                    "0.7rem 1rem",
+                borderRadius: 8,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 13,
+                fontWeight: active ? 600 : 500,
+                color: active
+                    ? COLORS.primary
+                    : COLORS.muted,
+                background: active
+                    ? COLORS.primaryLight
+                    : "transparent",
+            }}
+        >
+            {icon}
+            {label}
+        </button>
+    );
+}
+
+function MetricPreview({
+    label,
+    value,
+    icon,
+}: {
+    label: string;
+    value: string;
+    icon: React.ReactNode;
+}) {
+    return (
+        <div className="col-12 sm:col-6">
+            <div
+                style={{
+                    padding: "1rem",
+                    border: `1px solid ${COLORS.border}`,
+                    borderRadius: 10,
+                }}
+            >
+                <div
+                    className="flex align-items-center gap-2"
+                >
+                    <span
+                        style={{
+                            color: COLORS.primary,
+                        }}
+                    >
+                        {icon}
+                    </span>
+
+                    <span
+                        style={{
+                            color: COLORS.muted,
+                            fontSize: 12,
+                        }}
+                    >
+                        {label}
+                    </span>
+                </div>
+
+                <div
+                    style={{
+                        fontSize: 23,
+                        fontWeight: 700,
+                        color: COLORS.dark,
+                        marginTop: 8,
+                    }}
+                >
+                    {value}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ReportContent({
+    text,
+}: {
+    text: string;
+}) {
+    return (
+        <div
+            className="flex align-items-center gap-2 mb-3"
+        >
+            <CheckCircle2
+                size={16}
+                color={COLORS.green}
+            />
+
+            <span
+                style={{
+                    color: COLORS.text,
+                    fontSize: 13,
+                }}
+            >
+                {text}
+            </span>
+        </div>
+    );
+}
+
+function IndicatorRow({
+    label,
+    value,
+    color,
+}: {
+    label: string;
+    value: number;
+    color: string;
+}) {
+    return (
+        <div className="mb-4">
+            <div
+                className="flex justify-content-between mb-2"
+            >
+                <span
+                    style={{
+                        fontSize: 13,
+                        color: COLORS.text,
+                    }}
+                >
+                    {label}
+                </span>
+
+                <strong
+                    style={{
+                        fontSize: 13,
+                        color: COLORS.dark,
+                    }}
+                >
+                    {value}%
+                </strong>
+            </div>
+
+            <div
+                style={{
+                    width: "100%",
+                    height: 8,
+                    borderRadius: 10,
+                    background:
+                        COLORS.background,
+                    overflow: "hidden",
+                }}
+            >
+                <div
+                    style={{
+                        width: `${value}%`,
+                        height: "100%",
+                        background: color,
+                        borderRadius: 10,
+                    }}
+                />
+            </div>
+        </div>
+    );
+}
+
+function ComparisonCard({
+    title,
+    first,
+    second,
+    positive,
+}: {
+    title: string;
+    first: number;
+    second: number;
+    positive: boolean;
+}) {
+    const difference = second - first;
+
+    return (
+        <div className="col-12 sm:col-6 lg:col-4">
+            <div
+                style={{
+                    background: COLORS.white,
+                    border: `1px solid ${COLORS.border}`,
+                    borderRadius: 12,
+                    padding: "1.1rem",
+                }}
+            >
+                <div
+                    style={{
+                        color: COLORS.muted,
+                        fontSize: 12,
+                        marginBottom: 8,
+                    }}
+                >
+                    {title}
+                </div>
+
+                <div className="flex align-items-end justify-content-between">
+                    <div>
+                        <div
+                            style={{
+                                fontSize: 25,
+                                fontWeight: 700,
+                                color: COLORS.dark,
+                            }}
+                        >
+                            {second}%
+                        </div>
+
+                        <div
+                            style={{
+                                fontSize: 11,
+                                color: COLORS.muted,
+                            }}
+                        >
+                            período actual
+                        </div>
+                    </div>
+
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems:
+                                "center",
+                            gap: 4,
+                            color: positive
+                                ? COLORS.green
+                                : COLORS.red,
+                            fontWeight: 700,
+                            fontSize: 13,
+                        }}
+                    >
+                        {positive ? (
+                            <TrendingUp
+                                size={15}
+                            />
+                        ) : (
+                            <TrendingDown
+                                size={15}
+                            />
+                        )}
+
+                        {difference > 0
+                            ? "+"
+                            : ""}
+                        {difference} p.p.
+                    </div>
+                </div>
+
+                <div
+                    style={{
+                        marginTop: 12,
+                        fontSize: 12,
+                        color: COLORS.muted,
+                    }}
+                >
+                    Período anterior:{" "}
+                    <strong>
+                        {first}%
+                    </strong>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function AnalysisBox({
+    title,
+    value,
+    description,
+    icon,
+    color,
+    background,
+}: {
+    title: string;
+    value: string;
+    description: string;
+    icon: React.ReactNode;
+    color: string;
+    background: string;
+}) {
+    return (
+        <div className="col-12 md:col-6">
+            <div
+                style={{
+                    padding: "1rem",
+                    borderRadius: 11,
+                    background,
+                    height: "100%",
+                }}
+            >
+                <div
+                    className="flex justify-content-between align-items-center mb-2"
+                >
+                    <div
+                        style={{
+                            color,
+                        }}
+                    >
+                        {icon}
+                    </div>
+
+                    <strong
+                        style={{
+                            color,
+                            fontSize: 18,
+                        }}
+                    >
+                        {value}
+                    </strong>
+                </div>
+
+                <div
+                    style={{
+                        fontWeight: 700,
+                        color: COLORS.dark,
+                        fontSize: 14,
+                    }}
+                >
+                    {title}
+                </div>
+
+                <p
+                    style={{
+                        margin:
+                            "6px 0 0",
+                        fontSize: 12,
+                        color: COLORS.muted,
+                        lineHeight: 1.5,
+                    }}
+                >
+                    {description}
+                </p>
+            </div>
+        </div>
+    );
+}
+
+function ReportDialogMetric({
+    label,
+    value,
+}: {
+    label: string;
+    value: string;
+}) {
+    return (
+        <div
+            style={{
+                border: `1px solid ${COLORS.border}`,
+                borderRadius: 9,
+                padding: "0.85rem",
+            }}
+        >
+            <div
+                style={{
+                    fontSize: 11,
+                    color: COLORS.muted,
+                    marginBottom: 5,
+                }}
+            >
+                {label}
+            </div>
+
+            <div
+                style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: COLORS.dark,
+                }}
+            >
+                {value}
+            </div>
         </div>
     );
 }
