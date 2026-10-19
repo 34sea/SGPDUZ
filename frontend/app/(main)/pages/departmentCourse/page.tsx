@@ -38,7 +38,7 @@ import {
     updateCourse,
     deleteCourse,
     getUsersList,
-} from "@/app/api/academic/academicService"; // Ajuste o caminho do import se necessário
+} from "@/app/api/academic/academicService";
 
 /* =========================================================
    CORES
@@ -157,10 +157,30 @@ export default function DepartmentCourseManagement() {
         });
     }, [courses, courseSearch, courseStatus, courseDepartment]);
 
-    const userOptions = users.map((u) => ({
-        label: u.name || u.nome,
-        value: u.id,
-    }));
+    // Opções de utilizadores filtradas por papéis (ADMIN permitido em ambos + CHEFE_DEPARTAMENTO ou CHEFE_CURSO)
+    const departmentHeadOptions = useMemo(() => {
+        return users
+            .filter((u) => {
+                const role = (u.role_name || u.perfil || "").toUpperCase();
+                return role === "ADMIN" || role === "CHEFE_DEPARTAMENTO";
+            })
+            .map((u) => ({
+                label: u.name || u.nome,
+                value: u.id,
+            }));
+    }, [users]);
+
+    const courseHeadOptions = useMemo(() => {
+        return users
+            .filter((u) => {
+                const role = (u.role_name || u.perfil || "").toUpperCase();
+                return role === "ADMIN" || role === "CHEFE_CURSO";
+            })
+            .map((u) => ({
+                label: u.name || u.nome,
+                value: u.id,
+            }));
+    }, [users]);
 
     const departmentOptions = [
         { label: "Todos os departamentos", value: null },
@@ -466,7 +486,7 @@ export default function DepartmentCourseManagement() {
                     </div>
                     <div>
                         <label className="block mb-1 font-semibold text-sm">Chefe de Departamento</label>
-                        <Dropdown value={departmentForm.head_user_id} options={userOptions} onChange={(e) => setDepartmentForm((p) => ({ ...p, head_user_id: e.value }))} placeholder="Selecionar docente responsável" className="w-full" showClear />
+                        <Dropdown value={departmentForm.head_user_id} options={departmentHeadOptions} onChange={(e) => setDepartmentForm((p) => ({ ...p, head_user_id: e.value }))} placeholder="Selecionar chefe de departamento" className="w-full" showClear />
                     </div>
                     <Divider />
                     <div className="flex justify-content-end gap-2">
@@ -493,7 +513,7 @@ export default function DepartmentCourseManagement() {
                     </div>
                     <div>
                         <label className="block mb-1 font-semibold text-sm">Chefe de Curso</label>
-                        <Dropdown value={courseForm.head_user_id} options={userOptions} onChange={(e) => setCourseForm((p) => ({ ...p, head_user_id: e.value }))} placeholder="Selecionar responsável" className="w-full" showClear />
+                        <Dropdown value={courseForm.head_user_id} options={courseHeadOptions} onChange={(e) => setCourseForm((p) => ({ ...p, head_user_id: e.value }))} placeholder="Selecionar chefe de curso" className="w-full" showClear />
                     </div>
                     <Divider />
                     <div className="flex justify-content-end gap-2">

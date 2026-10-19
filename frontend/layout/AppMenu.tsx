@@ -204,108 +204,6 @@ const AppMenu = () => {
             ]
         },
 
-
-        // =========================================================
-        // RELATÓRIOS
-        // =========================================================
-        {
-            label: 'Relatórios',
-            icon: 'pi pi-fw pi-chart-bar',
-            items: [
-
-                {
-                    label: 'Relatórios',
-                    icon: 'pi pi-fw pi-file-pdf',
-                    to: '/pages/reports'
-                },
-
-                {
-                    label: 'Indicadores',
-                    icon: 'pi pi-fw pi-chart-pie',
-                    to: '/pages/reports/indicators'
-                },
-
-                {
-                    label: 'Comparar Semestres',
-                    icon: 'pi pi-fw pi-chart-line',
-                    to: '/pages/reports/comparison'
-                }
-
-            ]
-        },
-
-
-        // =========================================================
-        // ADMINISTRAÇÃO
-        // =========================================================
-        {
-            label: 'Administração',
-            icon: 'pi pi-fw pi-cog',
-            items: [
-
-                {
-                    label: 'Utilizadores',
-                    icon: 'pi pi-fw pi-users',
-                    items: [
-                        {
-                            label: 'Lista',
-                            icon: 'pi pi-fw pi-list',
-                            to: '/pages/users/sgpuz/users'
-                        }
-                    ]
-                },
-
-                {
-                    label: 'Perfis e Permissões',
-                    icon: 'pi pi-fw pi-shield',
-                    items: [
-                        {
-                            label: 'Perfis',
-                            icon: 'pi pi-fw pi-id-card',
-                            to: '/pages/users/sgpuz/profiles'
-                        },
-                        {
-                            label: 'Permissões',
-                            icon: 'pi pi-fw pi-key',
-                            to: '/pages/users/sgpuz/permitions'
-                        }
-                    ]
-                },
-
-                {
-                    label: 'Departamentos',
-                    icon: 'pi pi-fw pi-building',
-                    to: '/pages/departmentCourse'
-                },
-
-                // {
-                //     label: 'Cursos',
-                //     icon: 'pi pi-fw pi-graduation-cap',
-                //     to: '/pages/admin/courses'
-                // },
-
-                {
-                    label: 'Unidades Curriculares',
-                    icon: 'pi pi-fw pi-book',
-                    to: '/pages/admin/subjects'
-                },
-
-                {
-                    label: 'Turmas',
-                    icon: 'pi pi-fw pi-users',
-                    to: '/pages/admin/classes'
-                },
-
-                {
-                    label: 'Docentes',
-                    icon: 'pi pi-fw pi-user',
-                    to: '/pages/admin/teachers'
-                }
-
-            ]
-        },
-
-
         // =========================================================
         // CALENDÁRIO ACADÉMICO
         // =========================================================
@@ -337,33 +235,70 @@ const AppMenu = () => {
 
 
         // =========================================================
-        // CONFIGURAÇÕES
+        // ADMINISTRAÇÃO
         // =========================================================
         {
-            label: 'Configurações',
+            label: 'Administração',
             icon: 'pi pi-fw pi-cog',
             items: [
 
+                
+
                 {
-                    label: 'Configurações Gerais',
-                    icon: 'pi pi-fw pi-sliders-h',
-                    to: '/pages/settings'
+                    label: 'Departamentos',
+                    icon: 'pi pi-fw pi-building',
+                    to: '/pages/departmentCourse'
                 },
 
                 {
-                    label: 'Notificações',
-                    icon: 'pi pi-fw pi-bell',
-                    to: '/pages/settings/notifications'
+                    label: 'Cursos',
+                    icon: 'pi pi-fw pi-graduation-cap',
+                    to: '/pages/admin/courses'
                 },
 
                 {
-                    label: 'Integrações',
-                    icon: 'pi pi-fw pi-link',
-                    to: '/pages/settings/integrations'
-                }
+                    label: 'Unidades Curriculares',
+                    icon: 'pi pi-fw pi-book',
+                    to: '/pages/pedagogical'
+                },
+
+                {
+                    label: 'Aulas',
+                    icon: 'pi pi-fw pi-users',
+                    to: '/pages/classesValidation'
+                },
+
+                {
+                    label: 'Utilizadores',
+                    icon: 'pi pi-fw pi-users',
+                    items: [
+                        {
+                            label: 'Lista',
+                            icon: 'pi pi-fw pi-list',
+                            to: '/pages/users/sgpuz/users'
+                        }
+                    ]
+                },
+
+                {
+                    label: 'Perfis e Permissões',
+                    icon: 'pi pi-fw pi-shield',
+                    items: [
+                        {
+                            label: 'Perfis',
+                            icon: 'pi pi-fw pi-id-card',
+                            to: '/pages/users/sgpuz/profiles'
+                        },
+                        {
+                            label: 'Permissões',
+                            icon: 'pi pi-fw pi-key',
+                            to: '/pages/users/sgpuz/permitions'
+                        }
+                    ]
+                },
 
             ]
-        }
+        },
 
     ];
 

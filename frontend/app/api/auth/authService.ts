@@ -19,7 +19,7 @@ export const login = async (data: LoginData) => {
 export function getUserFromStorage() {
   try {
     const data = localStorage.getItem("user-dashboard-SGPD");
-    console.log(`Dados: ${data}`)
+    // console.log(`Dados: ${data}`)
     // Valida se o item não existe ou se foi salvo como string "null"/"undefined"
     if (!data || data === "undefined" || data === "null") return null;
 
