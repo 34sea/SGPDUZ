@@ -44,7 +44,7 @@ router.use(authMiddleware);
  *       201:
  *         description: Permissão criada com sucesso
  */
-router.route('/permissions')
+router.route('/')
   .get(permissionController.getPermissions)
   .post(permissionController.createPermission);
 
@@ -68,7 +68,11 @@ router.route('/permissions')
  *       404:
  *         description: Permissão não encontrada
  */
-router.route('/permissions/:id')
+router.route('/:id')
+  .delete(permissionController.deletePermission);
+
+router.route('/:id')
+  .put(permissionController.updatePermission)
   .delete(permissionController.deletePermission);
 
 module.exports = router;

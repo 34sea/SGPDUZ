@@ -251,11 +251,6 @@ const AppMenu = () => {
                             label: 'Lista',
                             icon: 'pi pi-fw pi-list',
                             to: '/pages/users/sgpuz/users'
-                        },
-                        {
-                            label: 'Novo Utilizador',
-                            icon: 'pi pi-fw pi-user-plus',
-                            to: '/pages/admin/users/new'
                         }
                     ]
                 },
@@ -267,12 +262,12 @@ const AppMenu = () => {
                         {
                             label: 'Perfis',
                             icon: 'pi pi-fw pi-id-card',
-                            to: '/pages/admin/roles'
+                            to: '/pages/users/sgpuz/profiles'
                         },
                         {
                             label: 'Permissões',
                             icon: 'pi pi-fw pi-key',
-                            to: '/pages/admin/permissions'
+                            to: '/pages/users/sgpuz/permitions'
                         }
                     ]
                 },
@@ -280,14 +275,14 @@ const AppMenu = () => {
                 {
                     label: 'Departamentos',
                     icon: 'pi pi-fw pi-building',
-                    to: '/pages/admin/departments'
+                    to: '/pages/departmentCourse'
                 },
 
-                {
-                    label: 'Cursos',
-                    icon: 'pi pi-fw pi-graduation-cap',
-                    to: '/pages/admin/courses'
-                },
+                // {
+                //     label: 'Cursos',
+                //     icon: 'pi pi-fw pi-graduation-cap',
+                //     to: '/pages/admin/courses'
+                // },
 
                 {
                     label: 'Unidades Curriculares',

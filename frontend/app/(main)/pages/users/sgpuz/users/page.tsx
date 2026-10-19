@@ -1,140 +1,87 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Card } from "primereact/card";
+import { Button } from "primereact/button";
+import { InputText } from "primereact/inputtext";
+import { Dropdown } from "primereact/dropdown";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+import { Tag } from "primereact/tag";
+import { Avatar } from "primereact/avatar";
+import { TabView, TabPanel } from "primereact/tabview";
+import { Dialog } from "primereact/dialog";
+import { InputSwitch } from "primereact/inputswitch";
+import { Divider } from "primereact/divider";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { ProgressBar } from "primereact/progressbar";
+import { ProgressSpinner } from "primereact/progressspinner";
+import { InputTextarea } from "primereact/inputtextarea";
+
+import {
+    Users,
+    UserPlus,
+    ShieldCheck,
+    KeyRound,
+    UserCheck,
+    UserX,
+    Search,
+    Edit3,
+    Trash2,
+    Lock,
+    Unlock,
+    CheckCircle2,
+    XCircle,
+    GraduationCap,
+    BookOpen,
+    ClipboardCheck,
+    CalendarCheck,
+    Activity,
+    Settings2,
+    BarChart3,
+    Shield,
+} from "lucide-react";
 
 import {
     Chart as ChartJS,
     CategoryScale,
     LinearScale,
     BarElement,
-    LineElement,
-    PointElement,
-    ArcElement,
+    Title,
     Tooltip,
     Legend,
-    Filler,
 } from "chart.js";
 
-import { Bar, Doughnut, Line, Pie } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
+import { 
+    getUsers, 
+    getRoles, 
+    getPermissions, 
+    createUser, 
+    updateUser, 
+    deleteUser, 
+    createRole, 
+    updateRole, 
+    deleteRole, 
+    syncRolePermissions,
+    User, 
+    Role, 
+    Permission 
+} from "@/app/api/users/userService";
 
-import { Card } from "primereact/card";
-import { Button } from "primereact/button";
-import { Dropdown } from "primereact/dropdown";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
-import { Tag } from "primereact/tag";
-import { Divider } from "primereact/divider";
-import { Dialog } from "primereact/dialog";
-import { ProgressBar } from "primereact/progressbar";
-
-import {
-    BarChart3,
-    CalendarDays,
-    CheckCircle2,
-    ClipboardCheck,
-    Clock3,
-    FileBarChart,
-    FileCheck2,
-    FileText,
-    GraduationCap,
-    Layers3,
-    LineChart,
-    PieChart,
-    RefreshCw,
-    TrendingDown,
-    TrendingUp,
-    Users,
-    XCircle,
-} from "lucide-react";
-
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    LineElement,
-    PointElement,
-    ArcElement,
-    Tooltip,
-    Legend,
-    Filler
-);
-
-/* =========================================================
-   TIPOS
-========================================================= */
-
-type ReportType =
-    | "semestral"
-    | "anual"
-    | "docente"
-    | "unidade"
-    | "cumprimento";
-
-type TabType = "relatorios" | "indicadores" | "comparacao";
-
-interface Teacher {
-    id: number;
-    name: string;
-    initials: string;
-    course: string;
-    planned: number;
-    realized: number;
-    confirmed: number;
-    evaluations: number;
-    evaluationsOnTime: number;
-    activities: number;
-    activitiesCompleted: number;
-    compliance: number;
-}
-
-interface CourseUnit {
-    id: number;
-    name: string;
-    code: string;
-    teacher: string;
-    planned: number;
-    realized: number;
-    evaluations: number;
-    grades: number;
-    activities: number;
-    compliance: number;
-}
-
-interface ReportOption {
-    id: ReportType;
-    title: string;
-    description: string;
-    icon: React.ReactNode;
-}
-
-/* =========================================================
-   CORES
-========================================================= */
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const COLORS = {
     primary: "#1D4ED8",
     primaryLight: "#EFF6FF",
-
     green: "#16A34A",
     greenLight: "#DCFCE7",
-
     orange: "#D97706",
     orangeLight: "#FEF3C7",
-
     purple: "#7C3AED",
     purpleLight: "#F3E8FF",
-
-    cyan: "#0891B2",
-    cyanLight: "#CFFAFE",
-
     red: "#DC2626",
-    redLight: "#FEE2E2",
-
-    pink: "#DB2777",
-    pinkLight: "#FCE7F3",
-
     dark: "#0F172A",
-    text: "#334155",
     muted: "#64748B",
     light: "#94A3B8",
     border: "#E2E8F0",
@@ -142,2411 +89,585 @@ const COLORS = {
     white: "#FFFFFF",
 };
 
-/* =========================================================
-   DADOS SIMULADOS
-========================================================= */
+const getPermissionIcon = (name: string) => {
+    const upper = name.toUpperCase();
+    if (upper.includes("PLANO")) return <BookOpen size={18} />;
+    if (upper.includes("AULA")) return <GraduationCap size={18} />;
+    if (upper.includes("AVALIAC")) return <ClipboardCheck size={18} />;
+    if (upper.includes("ACTIV")) return <Activity size={18} />;
+    if (upper.includes("CONFIRM")) return <CalendarCheck size={18} />;
+    if (upper.includes("ACOMPANH")) return <BarChart3 size={18} />;
+    return <Settings2 size={18} />;
+};
 
-const academicPeriods = [
-    {
-        label: "2025 – 1.º Semestre",
-        value: "2025-1",
-    },
-    {
-        label: "2025 – 2.º Semestre",
-        value: "2025-2",
-    },
-    {
-        label: "2026 – 1.º Semestre",
-        value: "2026-1",
-    },
-    {
-        label: "2026 – 2.º Semestre",
-        value: "2026-2",
-    },
-];
+interface UserFormatted extends User {
+    nome: string;
+    contacto: string;
+    perfil: string;
+    departamento: string;
+    curso: string;
+    estado: "Activo" | "Inactivo";
+    iniciais: string;
+}
 
-const teachers: Teacher[] = [
-    {
-        id: 1,
-        name: "John Doe",
-        initials: "JD",
-        course: "Engenharia Informática",
-        planned: 96,
-        realized: 92,
-        confirmed: 89,
-        evaluations: 8,
-        evaluationsOnTime: 7,
-        activities: 12,
-        activitiesCompleted: 11,
-        compliance: 96,
-    },
-    {
-        id: 2,
-        name: "Jane Smith",
-        initials: "JS",
-        course: "Engenharia Informática",
-        planned: 94,
-        realized: 87,
-        confirmed: 84,
-        evaluations: 7,
-        evaluationsOnTime: 6,
-        activities: 11,
-        activitiesCompleted: 10,
-        compliance: 91,
-    },
-    {
-        id: 3,
-        name: "Daniel Miller",
-        initials: "DM",
-        course: "Engenharia Informática",
-        planned: 91,
-        realized: 82,
-        confirmed: 80,
-        evaluations: 8,
-        evaluationsOnTime: 7,
-        activities: 10,
-        activitiesCompleted: 9,
-        compliance: 88,
-    },
-    {
-        id: 4,
-        name: "Sarah Davis",
-        initials: "SD",
-        course: "Engenharia Informática",
-        planned: 89,
-        realized: 76,
-        confirmed: 73,
-        evaluations: 7,
-        evaluationsOnTime: 6,
-        activities: 10,
-        activitiesCompleted: 8,
-        compliance: 82,
-    },
-    {
-        id: 5,
-        name: "Olivia Taylor",
-        initials: "OT",
-        course: "Engenharia Informática",
-        planned: 86,
-        realized: 70,
-        confirmed: 67,
-        evaluations: 6,
-        evaluationsOnTime: 5,
-        activities: 9,
-        activitiesCompleted: 7,
-        compliance: 78,
-    },
-];
+export default function UserManagement() {
+    const [rawUsers, setRawUsers] = useState<User[]>([]);
+    const [roles, setRoles] = useState<Role[]>([]);
+    const [permissions, setPermissions] = useState<Permission[]>([]);
+    
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-const courseUnits: CourseUnit[] = [
-    {
-        id: 1,
-        name: "Programação I",
-        code: "INF101",
-        teacher: "John Doe",
-        planned: 40,
-        realized: 39,
-        evaluations: 4,
-        grades: 4,
-        activities: 7,
-        compliance: 96,
-    },
-    {
-        id: 2,
-        name: "Bases de Dados",
-        code: "INF202",
-        teacher: "Jane Smith",
-        planned: 42,
-        realized: 39,
-        evaluations: 4,
-        grades: 3,
-        activities: 8,
-        compliance: 93,
-    },
-    {
-        id: 3,
-        name: "Engenharia de Software",
-        code: "INF303",
-        teacher: "Daniel Miller",
-        planned: 44,
-        realized: 39,
-        evaluations: 5,
-        grades: 4,
-        activities: 7,
-        compliance: 89,
-    },
-    {
-        id: 4,
-        name: "Redes de Computadores",
-        code: "INF304",
-        teacher: "Sarah Davis",
-        planned: 40,
-        realized: 34,
-        evaluations: 4,
-        grades: 3,
-        activities: 6,
-        compliance: 85,
-    },
-    {
-        id: 5,
-        name: "Sistemas Operativos",
-        code: "INF305",
-        teacher: "Olivia Taylor",
-        planned: 38,
-        realized: 30,
-        evaluations: 3,
-        grades: 2,
-        activities: 5,
-        compliance: 79,
-    },
-];
+    const [activeTab, setActiveTab] = useState(0);
+    const [search, setSearch] = useState("");
+    const [profileFilter, setProfileFilter] = useState<string | null>(null);
+    const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
-const reportOptions: ReportOption[] = [
-    {
-        id: "semestral",
-        title: "Relatório semestral",
-        description:
-            "Resumo completo do desempenho pedagógico de um semestre.",
-        icon: <CalendarDays size={22} />,
-    },
-    {
-        id: "anual",
-        title: "Relatório anual",
-        description:
-            "Consolidação dos indicadores pedagógicos do ano lectivo.",
-        icon: <FileBarChart size={22} />,
-    },
-    {
-        id: "docente",
-        title: "Relatório por docente",
-        description:
-            "Acompanhamento individual do cumprimento pedagógico.",
-        icon: <Users size={22} />,
-    },
-    {
-        id: "unidade",
-        title: "Relatório por unidade curricular",
-        description:
-            "Indicadores e actividades associados a uma unidade curricular.",
-        icon: <Layers3 size={22} />,
-    },
-    {
-        id: "cumprimento",
-        title: "Relatório de cumprimento",
-        description:
-            "Análise global do cumprimento pedagógico.",
-        icon: <ClipboardCheck size={22} />,
-    },
-];
+    // Modais Utilizadores
+    const [userDialog, setUserDialog] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<Partial<UserFormatted> | null>(null);
+    const [userPassword, setUserPassword] = useState("");
 
-/* =========================================================
-   COMPONENTE PRINCIPAL
-========================================================= */
+    // Modais Perfis (Roles)
+    const [roleDialog, setRoleDialog] = useState(false);
+    const [selectedRole, setSelectedRole] = useState<Partial<Role> | null>(null);
+    const [selectedProfileId, setSelectedProfileId] = useState<number | null>(null);
 
-export default function ReportsAndIndicators() {
-    const [activeTab, setActiveTab] =
-        useState<TabType>("indicadores");
+    // Gestão de Permissões por Perfil (Matriz/Estado)
+    const [rolePermissionsState, setRolePermissionsState] = useState<Record<number, number[]>>({});
+    const [permissionDialog, setPermissionDialog] = useState(false);
 
-    const [selectedPeriod, setSelectedPeriod] =
-        useState<string>("2026-1");
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const [usersRes, rolesRes, permissionsRes] = await Promise.all([
+                getUsers(),
+                getRoles(),
+                getPermissions()
+            ]);
+            setRawUsers(usersRes);
+            setRoles(rolesRes);
+            setPermissions(permissionsRes);
 
-    const [selectedTeacher, setSelectedTeacher] =
-        useState<string | null>(null);
+            if (rolesRes.length > 0 && !selectedProfileId) {
+                setSelectedProfileId(rolesRes[0].id);
+            }
 
-    const [selectedReport, setSelectedReport] =
-        useState<ReportType>("semestral");
+            setError(null);
+        } catch (err: any) {
+            setError(err.message || "Erro ao conectar com a API.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    const [selectedPeriod1, setSelectedPeriod1] =
-        useState<string>("2025-2");
+    useEffect(() => {
+        loadData();
+    }, []);
 
-    const [selectedPeriod2, setSelectedPeriod2] =
-        useState<string>("2026-1");
+    const formattedUsers: UserFormatted[] = useMemo(() => {
+        return rawUsers.map((u: any) => {
+            const name = u.name || u.nome || "Utilizador";
+            const nomeParts = name.trim().split(" ");
+            const iniciais = nomeParts.length > 1
+                ? `${nomeParts[0][0]}${nomeParts[nomeParts.length - 1][0]}`.toUpperCase()
+                : name.substring(0, 2).toUpperCase();
 
-    const [reportDialogVisible, setReportDialogVisible] =
-        useState(false);
+            const roleObj = roles.find((r) => r.id === u.role_id);
+            const perfilNome = u.role_name || roleObj?.name || "Administrador";
 
-    const [selectedReportTitle, setSelectedReportTitle] =
-        useState("Relatório semestral");
+            return {
+                ...u,
+                nome: name,
+                contacto: u.contacto || "+258 84 000 0000",
+                perfil: perfilNome,
+                departamento: u.departamento || "Engenharia Informática",
+                curso: u.curso || "Engenharia Informática",
+                estado: u.estado || "Activo",
+                iniciais,
+            };
+        });
+    }, [rawUsers, roles]);
 
-    const teacherOptions = [
-        {
-            label: "Todos os docentes",
-            value: null,
-        },
-        ...teachers.map((teacher) => ({
-            label: teacher.name,
-            value: teacher.name,
-        })),
-    ];
+    const profilesSummary = useMemo(() => {
+        const colorsList = [COLORS.primary, COLORS.purple, COLORS.orange, COLORS.green, "#0891B2", "#DB2777"];
+        return roles.map((r, index) => {
+            const count = formattedUsers.filter((u) => u.perfil === r.name || u.role_id === r.id).length;
+            return {
+                ...r,
+                utilizadores: count,
+                cor: r.color || colorsList[index % colorsList.length],
+            };
+        });
+    }, [roles, formattedUsers]);
 
-    /* =====================================================
-       GRÁFICO 1 - CUMPRIMENTO POR DOCENTE
-    ===================================================== */
+    const filteredUsers = useMemo(() => {
+        return formattedUsers.filter((user) => {
+            const matchesSearch = !search || user.nome.toLowerCase().includes(search.toLowerCase()) || user.email.toLowerCase().includes(search.toLowerCase());
+            const matchesProfile = !profileFilter || user.perfil === profileFilter;
+            const matchesStatus = !statusFilter || user.estado === statusFilter;
+            return matchesSearch && matchesProfile && matchesStatus;
+        });
+    }, [formattedUsers, search, profileFilter, statusFilter]);
 
-    const teacherChartData = useMemo(() => {
-        const filteredTeachers = selectedTeacher
-            ? teachers.filter(
-                  (teacher) => teacher.name === selectedTeacher
-              )
-            : teachers;
+    const totalUsers = formattedUsers.length;
+    const activeUsers = formattedUsers.filter((u) => u.estado === "Activo").length;
+    const inactiveUsers = formattedUsers.filter((u) => u.estado === "Inactivo").length;
 
-        return {
-            labels: filteredTeachers.map(
-                (teacher) => teacher.name
-            ),
-            datasets: [
-                {
-                    label: "Cumprimento",
-                    data: filteredTeachers.map(
-                        (teacher) => teacher.compliance
-                    ),
-                    backgroundColor: [
-                        "#1D4ED8",
-                        "#7C3AED",
-                        "#0891B2",
-                        "#16A34A",
-                        "#D97706",
-                    ],
-                    borderRadius: 8,
-                    borderSkipped: false,
-                    barThickness: 28,
-                },
-            ],
-        };
-    }, [selectedTeacher]);
-
-    /* =====================================================
-       GRÁFICO 2 - EVOLUÇÃO SEMESTRAL
-    ===================================================== */
-
-    const evolutionChartData = {
-        labels: [
-            "2025 – 1.º",
-            "2025 – 2.º",
-            "2026 – 1.º",
-            "2026 – 2.º",
-        ],
+    const profileChartData = {
+        labels: profilesSummary.map((p) => p.name),
         datasets: [
             {
-                label: "Aulas realizadas",
-                data: [84, 89, 93, 95],
-                borderColor: COLORS.primary,
-                backgroundColor: "rgba(29, 78, 216, 0.10)",
-                fill: true,
-                tension: 0.35,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-            },
-            {
-                label: "Avaliações no prazo",
-                data: [72, 79, 86, 89],
-                borderColor: COLORS.green,
-                backgroundColor: "rgba(22, 163, 74, 0.08)",
-                fill: true,
-                tension: 0.35,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-            },
-            {
-                label: "Actividades concluídas",
-                data: [69, 76, 84, 87],
-                borderColor: COLORS.purple,
-                backgroundColor: "rgba(124, 58, 237, 0.08)",
-                fill: true,
-                tension: 0.35,
-                pointRadius: 4,
-                pointHoverRadius: 6,
+                label: "Utilizadores",
+                data: profilesSummary.map((p) => p.utilizadores),
+                backgroundColor: profilesSummary.map((p) => p.cor),
+                borderRadius: 6,
+                barThickness: 34,
             },
         ],
     };
 
-    /* =====================================================
-       GRÁFICO 3 - DISTRIBUIÇÃO DAS AULAS
-    ===================================================== */
-
-    const lessonsChartData = {
-        labels: [
-            "Realizadas",
-            "Confirmadas",
-            "Pendentes",
-            "Não realizadas",
-        ],
-        datasets: [
-            {
-                data: [93, 91, 5, 2],
-                backgroundColor: [
-                    "#1D4ED8",
-                    "#16A34A",
-                    "#D97706",
-                    "#DC2626",
-                ],
-                borderWidth: 0,
-                hoverOffset: 8,
-            },
-        ],
-    };
-
-    /* =====================================================
-       GRÁFICO 4 - AVALIAÇÕES
-    ===================================================== */
-
-    const evaluationChartData = {
-        labels: [
-            "Dentro do prazo",
-            "Fora do prazo",
-            "Pendentes",
-        ],
-        datasets: [
-            {
-                data: [86, 14, 7],
-                backgroundColor: [
-                    "#16A34A",
-                    "#DC2626",
-                    "#D97706",
-                ],
-                borderWidth: 0,
-                hoverOffset: 8,
-            },
-        ],
-    };
-
-    /* =====================================================
-       GRÁFICO 5 - COMPARAÇÃO
-    ===================================================== */
-
-    const comparisonChartData = {
-        labels: [
-            "Aulas",
-            "Confirmações",
-            "Avaliações",
-            "Pautas",
-            "Actividades",
-            "Docentes",
-        ],
-        datasets: [
-            {
-                label:
-                    academicPeriods.find(
-                        (period) =>
-                            period.value === selectedPeriod1
-                    )?.label || selectedPeriod1,
-                data: [89, 85, 79, 68, 76, 81],
-                backgroundColor: "rgba(29, 78, 216, 0.85)",
-                borderRadius: 7,
-            },
-            {
-                label:
-                    academicPeriods.find(
-                        (period) =>
-                            period.value === selectedPeriod2
-                    )?.label || selectedPeriod2,
-                data: [93, 91, 86, 75, 84, 88],
-                backgroundColor: "rgba(124, 58, 237, 0.85)",
-                borderRadius: 7,
-            },
-        ],
-    };
-
-    /* =====================================================
-       GRÁFICO 6 - UNIDADES CURRICULARES
-    ===================================================== */
-
-    const courseChartData = {
-        labels: courseUnits.map(
-            (course) => course.name
-        ),
-        datasets: [
-            {
-                label: "Cumprimento",
-                data: courseUnits.map(
-                    (course) => course.compliance
-                ),
-                backgroundColor: "rgba(8, 145, 178, 0.85)",
-                borderRadius: 7,
-            },
-        ],
-    };
-
-    /* =====================================================
-       OPÇÕES DOS GRÁFICOS
-    ===================================================== */
-
-    const commonOptions = {
+    const profileChartOptions = {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: "bottom" as const,
-                labels: {
-                    usePointStyle: true,
-                    padding: 18,
-                    font: {
-                        size: 12,
-                    },
-                },
-            },
-        },
-    };
-
-    const barOptions = {
-        ...commonOptions,
+        plugins: { legend: { display: false } },
         scales: {
-            y: {
-                beginAtZero: true,
-                max: 100,
-                ticks: {
-                    callback: (value: string | number) =>
-                        `${value}%`,
-                },
-                grid: {
-                    color: "#E2E8F0",
-                },
-            },
-            x: {
-                grid: {
-                    display: false,
-                },
-            },
+            x: { grid: { display: false }, ticks: { color: "#64748B", font: { size: 11 } } },
+            y: { beginAtZero: true, ticks: { stepSize: 1, color: "#64748B" }, grid: { color: "#E2E8F0" } },
         },
     };
 
-    const lineOptions = {
-        ...commonOptions,
-        scales: {
-            y: {
-                beginAtZero: true,
-                max: 100,
-                ticks: {
-                    callback: (value: string | number) =>
-                        `${value}%`,
-                },
-                grid: {
-                    color: "#E2E8F0",
-                },
-            },
-            x: {
-                grid: {
-                    display: false,
-                },
-            },
-        },
+    // Ações de Utilizadores
+    const openCreateUser = () => {
+        setSelectedUser({ nome: "", email: "", contacto: "", departamento: "", curso: "", role_id: roles[0]?.id || null, estado: "Activo" });
+        setUserPassword("");
+        setUserDialog(true);
     };
 
-    const horizontalBarOptions = {
-        ...commonOptions,
-        indexAxis: "y" as const,
-        scales: {
-            x: {
-                beginAtZero: true,
-                max: 100,
-                ticks: {
-                    callback: (value: string | number) =>
-                        `${value}%`,
-                },
-                grid: {
-                    color: "#E2E8F0",
-                },
-            },
-            y: {
-                grid: {
-                    display: false,
-                },
-            },
-        },
+    const openEditUser = (user: UserFormatted) => {
+        setSelectedUser(user);
+        setUserPassword("");
+        setUserDialog(true);
     };
 
-    const doughnutOptions = {
-        ...commonOptions,
-        cutout: "68%",
-    };
-
-    /* =====================================================
-       FUNÇÕES
-    ===================================================== */
-
-    const openReport = (
-        reportId: ReportType,
-        title: string
-    ) => {
-        setSelectedReport(reportId);
-        setSelectedReportTitle(title);
-        setReportDialogVisible(true);
-    };
-
-    const getComplianceSeverity = (
-        value: number
-    ): "success" | "warning" | "danger" => {
-        if (value >= 90) return "success";
-        if (value >= 80) return "warning";
-        return "danger";
-    };
-
-    const teacherBody = (row: Teacher) => (
-        <div className="flex align-items-center gap-2">
-            <div
-                style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "50%",
-                    background: COLORS.primaryLight,
-                    color: COLORS.primary,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 700,
-                    fontSize: 12,
-                }}
-            >
-                {row.initials}
-            </div>
-
-            <div>
-                <div
-                    style={{
-                        fontWeight: 600,
-                        color: COLORS.dark,
-                    }}
-                >
-                    {row.name}
-                </div>
-
-                <div
-                    style={{
-                        fontSize: 12,
-                        color: COLORS.muted,
-                    }}
-                >
-                    {row.course}
-                </div>
-            </div>
-        </div>
-    );
-
-    const complianceBody = (row: Teacher) => (
-        <div
-            style={{
-                minWidth: 130,
-            }}
-        >
-            <div className="flex justify-content-between mb-2">
-                <span
-                    style={{
-                        fontSize: 12,
-                        color: COLORS.muted,
-                    }}
-                >
-                    Cumprimento
-                </span>
-
-                <strong>{row.compliance}%</strong>
-            </div>
-
-            <ProgressBar
-                value={row.compliance}
-                showValue={false}
-                style={{
-                    height: 7,
-                    borderRadius: 10,
-                }}
-            />
-        </div>
-    );
-
-    const statusBody = (row: Teacher) => (
-        <Tag
-            value={
-                row.compliance >= 90
-                    ? "Excelente"
-                    : row.compliance >= 80
-                    ? "Regular"
-                    : "Atenção"
+    const handleSaveUser = async () => {
+        if (!selectedUser) return;
+        try {
+            if (selectedUser.id) {
+                await updateUser(selectedUser.id, {
+                    name: selectedUser.nome,
+                    email: selectedUser.email,
+                    contacto: selectedUser.contacto,
+                    departamento: selectedUser.departamento,
+                    curso: selectedUser.curso,
+                    role_id: selectedUser.role_id,
+                    estado: selectedUser.estado,
+                    ...(userPassword ? { password: userPassword } : {}),
+                });
+            } else {
+                await createUser({
+                    name: selectedUser.nome,
+                    email: selectedUser.email,
+                    contacto: selectedUser.contacto,
+                    departamento: selectedUser.departamento,
+                    curso: selectedUser.curso,
+                    role_id: selectedUser.role_id,
+                    estado: selectedUser.estado || "Activo",
+                    password: userPassword || "123456",
+                });
             }
-            severity={getComplianceSeverity(
-                row.compliance
-            )}
-        />
+            setUserDialog(false);
+            loadData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Erro ao guardar utilizador.");
+        }
+    };
+
+    const handleDeleteUser = (user: UserFormatted) => {
+        confirmDialog({
+            message: `Tem certeza que deseja remover ${user.nome}?`,
+            header: "Remover utilizador",
+            icon: <Trash2 size={24} />,
+            acceptLabel: "Remover",
+            rejectLabel: "Cancelar",
+            acceptClassName: "p-button-danger",
+            accept: async () => {
+                await deleteUser(user.id);
+                loadData();
+            },
+        });
+    };
+
+    const toggleUserStatus = async (user: UserFormatted) => {
+        try {
+            const novoEstado = user.estado === "Activo" ? "Inactivo" : "Activo";
+            await updateUser(user.id, { estado: novoEstado });
+            loadData();
+        } catch (err) {
+            alert("Erro ao alterar o estado do utilizador.");
+        }
+    };
+
+    // Ações de Perfis (Roles)
+    const openCreateRole = () => {
+        setSelectedRole({ name: "", description: "" });
+        setRoleDialog(true);
+    };
+
+    const openEditRole = (role: Role) => {
+        setSelectedRole(role);
+        setRoleDialog(true);
+    };
+
+    const handleSaveRole = async () => {
+        if (!selectedRole || !selectedRole.name) return;
+        try {
+            if (selectedRole.id) {
+                await updateRole(selectedRole.id, { name: selectedRole.name, description: selectedRole.description });
+            } else {
+                await createRole({ name: selectedRole.name, description: selectedRole.description });
+            }
+            setRoleDialog(false);
+            loadData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Erro ao guardar perfil.");
+        }
+    };
+
+    const handleDeleteRole = (role: Role) => {
+        confirmDialog({
+            message: `Tem certeza que deseja remover o perfil ${role.name}?`,
+            header: "Remover perfil",
+            icon: <Trash2 size={24} />,
+            acceptLabel: "Remover",
+            rejectLabel: "Cancelar",
+            acceptClassName: "p-button-danger",
+            accept: async () => {
+                await deleteRole(role.id);
+                loadData();
+            },
+        });
+    };
+
+    // Sincronizar Permissões com a API
+    const handleSyncPermissions = async (roleId: number, permissionIds: number[]) => {
+        try {
+            await syncRolePermissions(roleId, permissionIds);
+            confirmDialog({
+                message: "Permissões do perfil atualizadas com sucesso na base de dados.",
+                header: "Sucesso",
+                icon: <CheckCircle2 size={24} />,
+                acceptLabel: "OK",
+                rejectClassName: "hidden",
+            });
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Erro ao sincronizar permissões.");
+        }
+    };
+
+    const userTemplate = (user: UserFormatted) => (
+        <div className="flex align-items-center gap-3">
+            <Avatar label={user.iniciais} shape="circle" style={{ background: COLORS.primaryLight, color: COLORS.primary, fontWeight: 700 }} />
+            <div>
+                <div style={{ fontWeight: 700, color: COLORS.dark, marginBottom: "3px" }}>{user.nome}</div>
+                <div style={{ fontSize: "0.82rem", color: COLORS.muted }}>{user.email}</div>
+            </div>
+        </div>
     );
 
-    /* =====================================================
-       RENDER
-    ===================================================== */
+    const profileTemplate = (user: UserFormatted) => {
+        const prof = profilesSummary.find((p) => p.name === user.perfil);
+        return <Tag value={user.perfil} style={{ background: `${prof?.cor || COLORS.primary}12`, color: prof?.cor || COLORS.primary, fontWeight: 600 }} />;
+    };
+
+    const statusTemplate = (user: UserFormatted) => (
+        <Tag value={user.estado} icon={user.estado === "Activo" ? <CheckCircle2 size={13} /> : <XCircle size={13} />} severity={user.estado === "Activo" ? "success" : "danger"} />
+    );
+
+    const actionsTemplate = (user: UserFormatted) => (
+        <div className="flex justify-content-end gap-1">
+            <Button icon={<Edit3 size={16} />} rounded text severity="secondary" onClick={() => openEditUser(user)} tooltip="Editar" />
+            <Button icon={user.estado === "Activo" ? <Lock size={16} /> : <Unlock size={16} />} rounded text severity={user.estado === "Activo" ? "warning" : "success"} onClick={() => toggleUserStatus(user)} />
+            <Button icon={<Trash2 size={16} />} rounded text severity="danger" onClick={() => handleDeleteUser(user)} tooltip="Remover" />
+        </div>
+    );
+
+    if (loading && rawUsers.length === 0) {
+        return (
+            <div className="flex align-items-center justify-content-center min-h-screen">
+                <ProgressSpinner />
+            </div>
+        );
+    }
+
+    const activeProfile = profilesSummary.find((p) => p.id === selectedProfileId) || profilesSummary[0];
 
     return (
-        <div
-            style={{
-                width: "100%",
-                maxWidth: "none",
-                margin: 0,
-                padding: "1.25rem",
-                boxSizing: "border-box",
-                background: COLORS.background,
-                minHeight: "100vh",
-            }}
-        >
-            {/* =================================================
-                HEADER
-            ================================================= */}
+        <div style={{ width: "100%", padding: "1.25rem", background: COLORS.background, minHeight: "100vh" }}>
+            <ConfirmDialog />
 
-            <div
-                className="flex justify-content-between align-items-center flex-wrap gap-3 mb-4"
-            >
+            {error && <div style={{ color: COLORS.red, marginBottom: "1rem", fontWeight: 600 }}>Erro: {error}</div>}
+
+            {/* HEADER */}
+            <div className="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-4">
                 <div>
-                    <div
-                        className="flex align-items-center gap-2 mb-2"
-                    >
-                        <div
-                            style={{
-                                width: 42,
-                                height: 42,
-                                borderRadius: 12,
-                                background:
-                                    COLORS.primaryLight,
-                                color: COLORS.primary,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                            }}
-                        >
-                            <BarChart3 size={22} />
+                    <div className="flex align-items-center gap-2" style={{ color: COLORS.primary, fontSize: "0.8rem", fontWeight: 700, marginBottom: "6px" }}>
+                        <ShieldCheck size={17} /> ADMINISTRAÇÃO DO SISTEMA
+                    </div>
+                    <h1 style={{ margin: 0, color: COLORS.dark, fontSize: "1.7rem", fontWeight: 800 }}>Utilizadores, Perfis e Permissões</h1>
+                    <p style={{ margin: "6px 0 0", color: COLORS.muted, fontSize: "0.9rem" }}>Controle as contas, perfis de acesso e permissões da plataforma.</p>
+                </div>
+            </div>
+
+            {/* KPIS */}
+            <div className="grid">
+                <div className="col-12 sm:col-6 xl:col-3">
+                    <Card style={{ border: `1px solid ${COLORS.border}`, boxShadow: "none" }}>
+                        <div className="flex justify-content-between align-items-start">
+                            <div>
+                                <div style={{ color: COLORS.muted, fontSize: "0.82rem", fontWeight: 600 }}>Total de utilizadores</div>
+                                <div style={{ color: COLORS.dark, fontSize: "1.8rem", fontWeight: 800, marginTop: "8px" }}>{totalUsers}</div>
+                            </div>
+                            <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: COLORS.primaryLight, color: COLORS.primary, display: "flex", alignItems: "center", justifyContent: "center" }}><Users size={21} /></div>
+                        </div>
+                    </Card>
+                </div>
+                <div className="col-12 sm:col-6 xl:col-3">
+                    <Card style={{ border: `1px solid ${COLORS.border}`, boxShadow: "none" }}>
+                        <div className="flex justify-content-between align-items-start">
+                            <div>
+                                <div style={{ color: COLORS.muted, fontSize: "0.82rem", fontWeight: 600 }}>Contas activas</div>
+                                <div style={{ color: COLORS.dark, fontSize: "1.8rem", fontWeight: 800, marginTop: "8px" }}>{activeUsers}</div>
+                            </div>
+                            <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: COLORS.greenLight, color: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center" }}><UserCheck size={21} /></div>
+                        </div>
+                    </Card>
+                </div>
+                <div className="col-12 sm:col-6 xl:col-3">
+                    <Card style={{ border: `1px solid ${COLORS.border}`, boxShadow: "none" }}>
+                        <div className="flex justify-content-between align-items-start">
+                            <div>
+                                <div style={{ color: COLORS.muted, fontSize: "0.82rem", fontWeight: 600 }}>Contas inactivas</div>
+                                <div style={{ color: COLORS.dark, fontSize: "1.8rem", fontWeight: 800, marginTop: "8px" }}>{inactiveUsers}</div>
+                            </div>
+                            <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: COLORS.orangeLight, color: COLORS.orange, display: "flex", alignItems: "center", justifyContent: "center" }}><UserX size={21} /></div>
+                        </div>
+                    </Card>
+                </div>
+                <div className="col-12 sm:col-6 xl:col-3">
+                    <Card style={{ border: `1px solid ${COLORS.border}`, boxShadow: "none" }}>
+                        <div className="flex justify-content-between align-items-start">
+                            <div>
+                                <div style={{ color: COLORS.muted, fontSize: "0.82rem", fontWeight: 600 }}>Perfis de acesso</div>
+                                <div style={{ color: COLORS.dark, fontSize: "1.8rem", fontWeight: 800, marginTop: "8px" }}>{roles.length}</div>
+                            </div>
+                            <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: COLORS.purpleLight, color: COLORS.purple, display: "flex", alignItems: "center", justifyContent: "center" }}><KeyRound size={21} /></div>
+                        </div>
+                    </Card>
+                </div>
+            </div>
+
+            {/* TABS */}
+            <Card style={{ marginTop: "1rem", border: `1px solid ${COLORS.border}`, boxShadow: "none" }}>
+                <TabView activeIndex={activeTab} onTabChange={(e) => setActiveTab(e.index)}>
+                    
+                    {/* TAB UTILIZADORES */}
+                    <TabPanel header="Utilizadores" leftIcon={<Users size={16} className="mr-2" />}>
+                        <div className="flex justify-content-end mb-3">
+                            <Button label="Novo utilizador" icon={<UserPlus size={17} />} onClick={openCreateUser} style={{ background: COLORS.primary, border: "none" }} />
+                        </div>
+                        <div className="grid mb-3">
+                            <div className="col-12 lg:col-8">
+                                <div style={{ border: `1px solid ${COLORS.border}`, borderRadius: "10px", padding: "1rem", height: "340px", background: COLORS.white }}>
+                                    <div style={{ fontSize: "1rem", fontWeight: 700, color: COLORS.dark, marginBottom: "1rem" }}>Distribuição por perfil</div>
+                                    <div style={{ height: "250px" }}>
+                                        <Bar data={profileChartData} options={profileChartOptions} />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="col-12 lg:col-4">
+                                <div style={{ border: `1px solid ${COLORS.border}`, borderRadius: "10px", padding: "1rem", height: "340px", background: COLORS.white }}>
+                                    <div style={{ fontSize: "1rem", fontWeight: 700, color: COLORS.dark }}>Estado das contas</div>
+                                    <Divider />
+                                    <div className="flex justify-content-between mb-2"><span className="text-sm">Activos</span><strong>{activeUsers}</strong></div>
+                                    <ProgressBar value={totalUsers ? (activeUsers / totalUsers) * 100 : 0} showValue={false} style={{ height: "7px" }} />
+                                    <div className="flex justify-content-between mt-3 mb-2"><span className="text-sm">Inactivos</span><strong>{inactiveUsers}</strong></div>
+                                    <ProgressBar value={totalUsers ? (inactiveUsers / totalUsers) * 100 : 0} showValue={false} style={{ height: "7px" }} color={COLORS.red} />
+                                </div>
+                            </div>
                         </div>
 
-                        <h1
-                            style={{
-                                margin: 0,
-                                color: COLORS.dark,
-                                fontSize: 25,
-                                fontWeight: 700,
-                            }}
-                        >
-                            Relatórios e Indicadores
-                        </h1>
-                    </div>
+                        <div className="flex flex-column md:flex-row gap-2 mb-3">
+                            <span className="p-input-icon-left">
+                                <Search size={16} style={{ position: "absolute", top: "50%", left: "0.75rem", transform: "translateY(-50%)" }} />
+                                <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Pesquisar utilizador..." style={{ paddingLeft: "2.4rem", minWidth: "240px" }} />
+                            </span>
+                            <Dropdown value={profileFilter} options={profilesSummary.map((p) => p.name)} onChange={(e) => setProfileFilter(e.value)} placeholder="Perfil" showClear style={{ minWidth: "170px" }} />
+                            <Dropdown value={statusFilter} options={["Activo", "Inactivo"]} onChange={(e) => setStatusFilter(e.value)} placeholder="Estado" showClear style={{ minWidth: "140px" }} />
+                        </div>
 
-                    <p
-                        style={{
-                            margin: 0,
-                            color: COLORS.muted,
-                            fontSize: 14,
-                        }}
-                    >
-                        Análise do desempenho pedagógico,
-                        indicadores e comparação entre
-                        períodos lectivos.
-                    </p>
-                </div>
+                        <DataTable value={filteredUsers} paginator rows={6} responsiveLayout="scroll" stripedRows size="small" emptyMessage="Nenhum utilizador encontrado.">
+                            <Column header="Utilizador" body={userTemplate} style={{ minWidth: "260px" }} />
+                            <Column field="contacto" header="Contacto" />
+                            <Column header="Perfil" body={profileTemplate} />
+                            <Column field="departamento" header="Departamento" />
+                            <Column field="curso" header="Curso" />
+                            <Column header="Estado" body={statusTemplate} />
+                            <Column header="Acções" body={actionsTemplate} align="right" />
+                        </DataTable>
+                    </TabPanel>
 
-                <div className="flex gap-2">
-                    <Button
-                        label="Actualizar"
-                        icon={<RefreshCw size={16} />}
-                        severity="secondary"
-                        outlined
-                        onClick={() => {}}
-                    />
-
-                    <Button
-                        label="Gerar relatório"
-                        icon={<FileText size={16} />}
-                        onClick={() =>
-                            openReport(
-                                selectedReport,
-                                selectedReportTitle
-                            )
-                        }
-                    />
-                </div>
-            </div>
-
-            {/* =================================================
-                FILTROS
-            ================================================= */}
-
-            <Card
-                className="mb-4"
-                style={{
-                    border: `1px solid ${COLORS.border}`,
-                    boxShadow: "none",
-                }}
-            >
-                <div className="grid">
-                    <div className="col-12 md:col-4">
-                        <label
-                            className="block mb-2"
-                            style={{
-                                fontSize: 13,
-                                fontWeight: 600,
-                                color: COLORS.text,
-                            }}
-                        >
-                            Período lectivo
-                        </label>
-
-                        <Dropdown
-                            value={selectedPeriod}
-                            options={academicPeriods}
-                            optionLabel="label"
-                            optionValue="value"
-                            onChange={(e) =>
-                                setSelectedPeriod(e.value)
-                            }
-                            className="w-full"
-                        />
-                    </div>
-
-                    <div className="col-12 md:col-4">
-                        <label
-                            className="block mb-2"
-                            style={{
-                                fontSize: 13,
-                                fontWeight: 600,
-                                color: COLORS.text,
-                            }}
-                        >
-                            Docente
-                        </label>
-
-                        <Dropdown
-                            value={selectedTeacher}
-                            options={teacherOptions}
-                            onChange={(e) =>
-                                setSelectedTeacher(e.value)
-                            }
-                            placeholder="Todos os docentes"
-                            className="w-full"
-                        />
-                    </div>
-
-                    <div className="col-12 md:col-4">
-                        <label
-                            className="block mb-2"
-                            style={{
-                                fontSize: 13,
-                                fontWeight: 600,
-                                color: COLORS.text,
-                            }}
-                        >
-                            Tipo de relatório
-                        </label>
-
-                        <Dropdown
-                            value={selectedReport}
-                            options={reportOptions.map(
-                                (report) => ({
-                                    label: report.title,
-                                    value: report.id,
-                                })
-                            )}
-                            onChange={(e) =>
-                                setSelectedReport(e.value)
-                            }
-                            className="w-full"
-                        />
-                    </div>
-                </div>
-            </Card>
-
-            {/* =================================================
-                KPIs
-            ================================================= */}
-
-            <div className="grid mb-4">
-                <KpiCard
-                    title="Aulas realizadas"
-                    value="93%"
-                    subtitle="do planeado"
-                    icon={<GraduationCap size={20} />}
-                    iconBg={COLORS.primaryLight}
-                    iconColor={COLORS.primary}
-                    trend="+4,5%"
-                    positive
-                />
-
-                <KpiCard
-                    title="Aulas confirmadas"
-                    value="91%"
-                    subtitle="das aulas realizadas"
-                    icon={<CheckCircle2 size={20} />}
-                    iconBg={COLORS.greenLight}
-                    iconColor={COLORS.green}
-                    trend="+6,2%"
-                    positive
-                />
-
-                <KpiCard
-                    title="Avaliações no prazo"
-                    value="86%"
-                    subtitle="dentro do prazo"
-                    icon={<Clock3 size={20} />}
-                    iconBg={COLORS.orangeLight}
-                    iconColor={COLORS.orange}
-                    trend="+7,1%"
-                    positive
-                />
-
-                <KpiCard
-                    title="Pautas entregues"
-                    value="75%"
-                    subtitle="do total previsto"
-                    icon={<FileCheck2 size={20} />}
-                    iconBg={COLORS.purpleLight}
-                    iconColor={COLORS.purple}
-                    trend="+5,8%"
-                    positive
-                />
-
-                <KpiCard
-                    title="Actividades concluídas"
-                    value="84%"
-                    subtitle="dentro do prazo"
-                    icon={<ClipboardCheck size={20} />}
-                    iconBg={COLORS.cyanLight}
-                    iconColor={COLORS.cyan}
-                    trend="+8,4%"
-                    positive
-                />
-
-                <KpiCard
-                    title="Cumprimento docente"
-                    value="88%"
-                    subtitle="indicador global"
-                    icon={<Users size={20} />}
-                    iconBg={COLORS.pinkLight}
-                    iconColor={COLORS.pink}
-                    trend="+5,3%"
-                    positive
-                />
-            </div>
-
-            {/* =================================================
-                TABS
-            ================================================= */}
-
-            <div
-                className="flex gap-2 mb-4 flex-wrap"
-                style={{
-                    borderBottom: `1px solid ${COLORS.border}`,
-                    paddingBottom: 12,
-                }}
-            >
-                <TabButton
-                    active={activeTab === "indicadores"}
-                    icon={<BarChart3 size={17} />}
-                    label="Indicadores"
-                    onClick={() =>
-                        setActiveTab("indicadores")
-                    }
-                />
-
-                <TabButton
-                    active={activeTab === "relatorios"}
-                    icon={<FileBarChart size={17} />}
-                    label="Relatórios"
-                    onClick={() =>
-                        setActiveTab("relatorios")
-                    }
-                />
-
-                <TabButton
-                    active={activeTab === "comparacao"}
-                    icon={<LineChart size={17} />}
-                    label="Comparar semestres"
-                    onClick={() =>
-                        setActiveTab("comparacao")
-                    }
-                />
-            </div>
-
-            {/* =================================================
-                RELATÓRIOS
-            ================================================= */}
-
-            {activeTab === "relatorios" && (
-                <div>
-                    <SectionTitle
-                        icon={<FileBarChart size={20} />}
-                        title="Relatórios pedagógicos"
-                        description="Seleccione o tipo de relatório que pretende consultar ou gerar."
-                    />
-
-                    <div className="grid mb-4">
-                        {reportOptions.map((report) => (
-                            <div
-                                key={report.id}
-                                className="col-12 md:col-6 lg:col-4"
-                            >
-                                <div
-                                    onClick={() =>
-                                        openReport(
-                                            report.id,
-                                            report.title
-                                        )
-                                    }
-                                    style={{
-                                        height: "100%",
-                                        padding: "1.25rem",
-                                        background:
-                                            COLORS.white,
-                                        border: `1px solid ${COLORS.border}`,
-                                        borderRadius: 12,
-                                        cursor: "pointer",
-                                        transition:
-                                            "all .2s ease",
-                                    }}
-                                >
-                                    <div
-                                        className="flex justify-content-between align-items-start mb-3"
-                                    >
+                    {/* TAB PERFIS (ROLES) */}
+                    <TabPanel header="Perfis (Roles)" leftIcon={<ShieldCheck size={16} className="mr-2" />}>
+                        <div className="flex justify-content-end mb-3">
+                            <Button label="Novo perfil" icon={<UserPlus size={17} />} onClick={openCreateRole} style={{ background: COLORS.primary, border: "none" }} />
+                        </div>
+                        <div className="flex flex-column lg:flex-row gap-4" style={{ minHeight: "400px" }}>
+                            <div style={{ width: "100%", maxWidth: "340px" }}>
+                                <div className="flex flex-column gap-2">
+                                    {profilesSummary.map((profile) => (
                                         <div
+                                            key={profile.id}
+                                            onClick={() => setSelectedProfileId(profile.id)}
                                             style={{
-                                                width: 44,
-                                                height: 44,
-                                                borderRadius: 11,
-                                                display: "flex",
-                                                alignItems:
-                                                    "center",
-                                                justifyContent:
-                                                    "center",
-                                                background:
-                                                    COLORS.primaryLight,
-                                                color:
-                                                    COLORS.primary,
+                                                padding: "0.9rem",
+                                                borderRadius: "10px",
+                                                border: `1px solid ${selectedProfileId === profile.id ? profile.cor : COLORS.border}`,
+                                                background: selectedProfileId === profile.id ? `${profile.cor}08` : COLORS.white,
+                                                cursor: "pointer",
                                             }}
                                         >
-                                            {report.icon}
+                                            <div className="flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div style={{ fontWeight: 700, color: COLORS.dark }}>{profile.name}</div>
+                                                    <div style={{ fontSize: "0.72rem", color: COLORS.muted }}>{profile.utilizadores} utilizadores</div>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <Button icon={<Edit3 size={14} />} rounded text severity="secondary" onClick={(e) => { e.stopPropagation(); openEditRole(profile); }} />
+                                                    <Button icon={<Trash2 size={14} />} rounded text severity="danger" onClick={(e) => { e.stopPropagation(); handleDeleteRole(profile); }} />
+                                                </div>
+                                            </div>
                                         </div>
+                                    ))}
+                                </div>
+                            </div>
 
-                                        <i
-                                            className="pi pi-arrow-up-right"
-                                            style={{
-                                                color:
-                                                    COLORS.light,
-                                            }}
+                            {activeProfile && (
+                                <div style={{ flex: 1, border: `1px solid ${COLORS.border}`, borderRadius: "12px", background: COLORS.white, padding: "1.5rem" }}>
+                                    <h2>{activeProfile.name}</h2>
+                                    <p style={{ color: COLORS.muted }}>{activeProfile.description || "Sem descrição definida para este perfil."}</p>
+                                    <Divider />
+                                    <div className="flex justify-content-between align-items-center mb-3">
+                                        <strong>Atribuição de Permissões na Base de Dados</strong>
+                                        <Button 
+                                            label="Sincronizar Permissões" 
+                                            icon={<CheckCircle2 size={16} />} 
+                                            size="small"
+                                            onClick={() => {
+                                                const currentPerms = rolePermissionsState[activeProfile.id] || [];
+                                                handleSyncPermissions(activeProfile.id, currentPerms);
+                                            }} 
                                         />
                                     </div>
-
-                                    <h3
-                                        style={{
-                                            margin:
-                                                "0 0 8px",
-                                            color:
-                                                COLORS.dark,
-                                            fontSize: 16,
-                                        }}
-                                    >
-                                        {report.title}
-                                    </h3>
-
-                                    <p
-                                        style={{
-                                            margin: 0,
-                                            color:
-                                                COLORS.muted,
-                                            fontSize: 13,
-                                            lineHeight: 1.6,
-                                        }}
-                                    >
-                                        {report.description}
-                                    </p>
+                                    <div className="grid">
+                                        {permissions.map((perm) => {
+                                            const rolePerms = rolePermissionsState[activeProfile.id] || [];
+                                            const isChecked = rolePerms.includes(perm.id);
+                                            return (
+                                                <div key={perm.id} className="col-12 md:col-6">
+                                                    <div className="flex align-items-center justify-content-between p-3 border-1 surface-border border-round">
+                                                        <div className="flex align-items-center gap-3">
+                                                            {getPermissionIcon(perm.name)}
+                                                            <div className="font-bold text-sm">{perm.name}</div>
+                                                        </div>
+                                                        <InputSwitch 
+                                                            checked={isChecked} 
+                                                            onChange={(e) => {
+                                                                const updated = e.value 
+                                                                    ? [...rolePerms, perm.id]
+                                                                    : rolePerms.filter((id) => id !== perm.id);
+                                                                setRolePermissionsState({
+                                                                    ...rolePermissionsState,
+                                                                    [activeProfile.id]: updated
+                                                                });
+                                                            }} 
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            )}
+                        </div>
+                    </TabPanel>
 
-                    <div className="grid">
-                        <div className="col-12 lg:col-8">
-                            <Card
-                                title="Pré-visualização do relatório"
-                                style={{
-                                    border: `1px solid ${COLORS.border}`,
-                                    boxShadow: "none",
-                                }}
-                            >
-                                <div className="grid">
-                                    <MetricPreview
-                                        label="Aulas planeadas"
-                                        value="412"
-                                        icon={
-                                            <CalendarDays
-                                                size={18}
-                                            />
-                                        }
-                                    />
-
-                                    <MetricPreview
-                                        label="Aulas realizadas"
-                                        value="383"
-                                        icon={
-                                            <CheckCircle2
-                                                size={18}
-                                            />
-                                        }
-                                    />
-
-                                    <MetricPreview
-                                        label="Avaliações"
-                                        value="36"
-                                        icon={
-                                            <ClipboardCheck
-                                                size={18}
-                                            />
-                                        }
-                                    />
-
-                                    <MetricPreview
-                                        label="Pautas"
-                                        value="18"
-                                        icon={
-                                            <FileCheck2
-                                                size={18}
-                                            />
-                                        }
-                                    />
-                                </div>
-
-                                <Divider />
-
-                                <div className="flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong
-                                            style={{
-                                                color:
-                                                    COLORS.dark,
-                                            }}
-                                        >
-                                            {selectedReportTitle}
-                                        </strong>
-
-                                        <div
-                                            style={{
-                                                fontSize: 12,
-                                                color:
-                                                    COLORS.muted,
-                                                marginTop: 4,
-                                            }}
-                                        >
-                                            Período:{" "}
-                                            {
-                                                academicPeriods.find(
-                                                    (p) =>
-                                                        p.value ===
-                                                        selectedPeriod
-                                                )?.label
-                                            }
+                    {/* TAB PERMISSÕES GLOBAIS */}
+                    <TabPanel header="Permissões Globais" leftIcon={<KeyRound size={16} className="mr-2" />}>
+                        <div className="grid">
+                            {permissions.map((perm) => (
+                                <div key={perm.id} className="col-12 md:col-6">
+                                    <div className="flex align-items-center justify-content-between p-3 border-1 surface-border border-round">
+                                        <div className="flex align-items-center gap-3">
+                                            {getPermissionIcon(perm.name)}
+                                            <div>
+                                                <div className="font-bold">{perm.name}</div>
+                                                <div className="text-sm text-color-secondary">Registo oficial na base de dados</div>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <Button
-                                        label="Gerar"
-                                        icon={
-                                            <FileText
-                                                size={16}
-                                            />
-                                        }
-                                        onClick={() =>
-                                            openReport(
-                                                selectedReport,
-                                                selectedReportTitle
-                                            )
-                                        }
-                                    />
                                 </div>
-                            </Card>
+                            ))}
                         </div>
+                    </TabPanel>
+                </TabView>
+            </Card>
 
-                        <div className="col-12 lg:col-4">
-                            <Card
-                                title="Conteúdo incluído"
-                                style={{
-                                    height: "100%",
-                                    border: `1px solid ${COLORS.border}`,
-                                    boxShadow: "none",
-                                }}
-                            >
-                                <ReportContent
-                                    text="Resumo de aulas"
-                                />
-
-                                <ReportContent
-                                    text="Indicadores de avaliações"
-                                />
-
-                                <ReportContent
-                                    text="Pautas finais"
-                                />
-
-                                <ReportContent
-                                    text="Actividades pedagógicas"
-                                />
-
-                                <ReportContent
-                                    text="Cumprimento docente"
-                                />
-
-                                <ReportContent
-                                    text="Observações e ocorrências"
-                                />
-                            </Card>
-                        </div>
+            {/* MODAL UTILIZADOR */}
+            <Dialog visible={userDialog} onHide={() => setUserDialog(false)} header={selectedUser?.id ? "Editar utilizador" : "Novo utilizador"} modal style={{ width: "550px" }}>
+                <div className="flex flex-column gap-3">
+                    <div>
+                        <label className="block mb-1 font-semibold">Nome Completo</label>
+                        <InputText value={selectedUser?.nome || ""} onChange={(e) => setSelectedUser((p) => ({ ...p, nome: e.target.value }))} className="w-full" />
                     </div>
+                    <div>
+                        <label className="block mb-1 font-semibold">E-mail</label>
+                        <InputText value={selectedUser?.email || ""} onChange={(e) => setSelectedUser((p) => ({ ...p, email: e.target.value }))} className="w-full" />
+                    </div>
+                    <div>
+                        <label className="block mb-1 font-semibold">Contacto</label>
+                        <InputText value={selectedUser?.contacto || ""} onChange={(e) => setSelectedUser((p) => ({ ...p, contacto: e.target.value }))} className="w-full" />
+                    </div>
+                    <div>
+                        <label className="block mb-1 font-semibold">Palavra-passe {selectedUser?.id && "(deixe em branco para manter)"}</label>
+                        <InputText type="password" value={userPassword} onChange={(e) => setUserPassword(e.target.value)} className="w-full" />
+                    </div>
+                    <div>
+                        <label className="block mb-1 font-semibold">Perfil / Role</label>
+                        <Dropdown value={selectedUser?.role_id} options={roles.map((r) => ({ label: r.name, value: r.id }))} onChange={(e) => setSelectedUser((p) => ({ ...p, role_id: e.value }))} placeholder="Selecione o perfil" className="w-full" />
+                    </div>
+                    <Button label="Guardar" icon={<CheckCircle2 size={16} />} onClick={handleSaveUser} />
                 </div>
-            )}
+            </Dialog>
 
-            {/* =================================================
-                INDICADORES
-            ================================================= */}
-
-            {activeTab === "indicadores" && (
-                <div>
-                    <SectionTitle
-                        icon={<BarChart3 size={20} />}
-                        title="Indicadores pedagógicos"
-                        description="Visão geral do desempenho pedagógico no período seleccionado."
-                    />
-
-                    {/* PRIMEIRA LINHA DE GRÁFICOS */}
-
-                    <div className="grid mb-4">
-                        <div className="col-12 lg:col-8">
-                            <Card
-                                title="Cumprimento por docente"
-                                subTitle="Percentagem de cumprimento das actividades pedagógicas"
-                                style={{
-                                    border: `1px solid ${COLORS.border}`,
-                                    boxShadow: "none",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        height: 340,
-                                    }}
-                                >
-                                    <Bar
-                                        data={teacherChartData}
-                                        options={
-                                            barOptions
-                                        }
-                                    />
-                                </div>
-                            </Card>
-                        </div>
-
-                        <div className="col-12 lg:col-4">
-                            <Card
-                                title="Distribuição das aulas"
-                                subTitle="Estado das aulas no período"
-                                style={{
-                                    height: "100%",
-                                    border: `1px solid ${COLORS.border}`,
-                                    boxShadow: "none",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        height: 280,
-                                        display: "flex",
-                                        justifyContent:
-                                            "center",
-                                    }}
-                                >
-                                    <Doughnut
-                                        data={
-                                            lessonsChartData
-                                        }
-                                        options={
-                                            doughnutOptions
-                                        }
-                                    />
-                                </div>
-                            </Card>
-                        </div>
+            {/* MODAL PERFIL (ROLE) */}
+            <Dialog visible={roleDialog} onHide={() => setRoleDialog(false)} header={selectedRole?.id ? "Editar Perfil" : "Criar Novo Perfil"} modal style={{ width: "500px" }}>
+                <div className="flex flex-column gap-3">
+                    <div>
+                        <label className="block mb-1 font-semibold text-sm">Nome do Perfil</label>
+                        <InputText value={selectedRole?.name || ""} onChange={(e) => setSelectedRole((p) => ({ ...p, name: e.target.value }))} placeholder="Ex.: COORDENADOR" className="w-full" />
                     </div>
-
-                    {/* SEGUNDA LINHA */}
-
-                    <div className="grid mb-4">
-                        <div className="col-12 lg:col-8">
-                            <Card
-                                title="Evolução dos indicadores"
-                                subTitle="Comparação da evolução dos principais indicadores pedagógicos"
-                                style={{
-                                    border: `1px solid ${COLORS.border}`,
-                                    boxShadow: "none",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        height: 330,
-                                    }}
-                                >
-                                    <Line
-                                        data={
-                                            evolutionChartData
-                                        }
-                                        options={
-                                            lineOptions
-                                        }
-                                    />
-                                </div>
-                            </Card>
-                        </div>
-
-                        <div className="col-12 lg:col-4">
-                            <Card
-                                title="Avaliações"
-                                subTitle="Cumprimento dos prazos"
-                                style={{
-                                    height: "100%",
-                                    border: `1px solid ${COLORS.border}`,
-                                    boxShadow: "none",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        height: 280,
-                                    }}
-                                >
-                                    <Pie
-                                        data={
-                                            evaluationChartData
-                                        }
-                                        options={
-                                            doughnutOptions
-                                        }
-                                    />
-                                </div>
-                            </Card>
-                        </div>
+                    <div>
+                        <label className="block mb-1 font-semibold text-sm">Descrição</label>
+                        <InputTextarea rows={3} value={selectedRole?.description || ""} onChange={(e) => setSelectedRole((p) => ({ ...p, description: e.target.value }))} placeholder="Breve descrição das responsabilidades..." className="w-full" />
                     </div>
-
-                    {/* TERCEIRA LINHA */}
-
-                    <div className="grid mb-4">
-                        <div className="col-12 lg:col-7">
-                            <Card
-                                title="Cumprimento por unidade curricular"
-                                subTitle="Percentagem de execução pedagógica"
-                                style={{
-                                    border: `1px solid ${COLORS.border}`,
-                                    boxShadow: "none",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        height: 340,
-                                    }}
-                                >
-                                    <Bar
-                                        data={
-                                            courseChartData
-                                        }
-                                        options={
-                                            horizontalBarOptions
-                                        }
-                                    />
-                                </div>
-                            </Card>
-                        </div>
-
-                        <div className="col-12 lg:col-5">
-                            <Card
-                                title="Resumo dos indicadores"
-                                style={{
-                                    border: `1px solid ${COLORS.border}`,
-                                    boxShadow: "none",
-                                }}
-                            >
-                                <IndicatorRow
-                                    label="Aulas realizadas"
-                                    value={93}
-                                    color={
-                                        COLORS.primary
-                                    }
-                                />
-
-                                <IndicatorRow
-                                    label="Aulas confirmadas"
-                                    value={91}
-                                    color={
-                                        COLORS.green
-                                    }
-                                />
-
-                                <IndicatorRow
-                                    label="Avaliações no prazo"
-                                    value={86}
-                                    color={
-                                        COLORS.orange
-                                    }
-                                />
-
-                                <IndicatorRow
-                                    label="Pautas entregues"
-                                    value={75}
-                                    color={
-                                        COLORS.purple
-                                    }
-                                />
-
-                                <IndicatorRow
-                                    label="Actividades concluídas"
-                                    value={84}
-                                    color={
-                                        COLORS.cyan
-                                    }
-                                />
-
-                                <IndicatorRow
-                                    label="Cumprimento docente"
-                                    value={88}
-                                    color={
-                                        COLORS.pink
-                                    }
-                                />
-                            </Card>
-                        </div>
-                    </div>
-
-                    {/* TABELA */}
-
-                    <Card
-                        title="Cumprimento pedagógico por docente"
-                        subTitle="Detalhamento dos principais indicadores"
-                        style={{
-                            border: `1px solid ${COLORS.border}`,
-                            boxShadow: "none",
-                        }}
-                    >
-                        <DataTable
-                            value={teachers}
-                            paginator
-                            rows={5}
-                            stripedRows
-                            responsiveLayout="scroll"
-                            emptyMessage="Nenhum docente encontrado."
-                        >
-                            <Column
-                                field="name"
-                                header="Docente"
-                                body={teacherBody}
-                                style={{
-                                    minWidth: 230,
-                                }}
-                            />
-
-                            <Column
-                                field="planned"
-                                header="Aulas planeadas"
-                                style={{
-                                    minWidth: 140,
-                                }}
-                            />
-
-                            <Column
-                                field="realized"
-                                header="Realizadas"
-                                style={{
-                                    minWidth: 120,
-                                }}
-                            />
-
-                            <Column
-                                field="confirmed"
-                                header="Confirmadas"
-                                style={{
-                                    minWidth: 120,
-                                }}
-                            />
-
-                            <Column
-                                field="evaluationsOnTime"
-                                header="Avaliações no prazo"
-                                style={{
-                                    minWidth: 160,
-                                }}
-                            />
-
-                            <Column
-                                field="activitiesCompleted"
-                                header="Actividades"
-                                style={{
-                                    minWidth: 130,
-                                }}
-                            />
-
-                            <Column
-                                field="compliance"
-                                header="Cumprimento"
-                                body={complianceBody}
-                                style={{
-                                    minWidth: 180,
-                                }}
-                            />
-
-                            <Column
-                                header="Estado"
-                                body={statusBody}
-                                style={{
-                                    minWidth: 130,
-                                }}
-                            />
-                        </DataTable>
-                    </Card>
-                </div>
-            )}
-
-            {/* =================================================
-                COMPARAÇÃO
-            ================================================= */}
-
-            {activeTab === "comparacao" && (
-                <div>
-                    <SectionTitle
-                        icon={<LineChart size={20} />}
-                        title="Comparação entre semestres"
-                        description="Seleccione dois períodos lectivos para analisar a evolução dos indicadores."
-                    />
-
-                    <Card
-                        className="mb-4"
-                        style={{
-                            border: `1px solid ${COLORS.border}`,
-                            boxShadow: "none",
-                        }}
-                    >
-                        <div className="grid align-items-end">
-                            <div className="col-12 md:col-5">
-                                <label
-                                    className="block mb-2"
-                                    style={{
-                                        fontSize: 13,
-                                        fontWeight: 600,
-                                    }}
-                                >
-                                    Primeiro período
-                                </label>
-
-                                <Dropdown
-                                    value={
-                                        selectedPeriod1
-                                    }
-                                    options={
-                                        academicPeriods
-                                    }
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    onChange={(e) =>
-                                        setSelectedPeriod1(
-                                            e.value
-                                        )
-                                    }
-                                    className="w-full"
-                                />
-                            </div>
-
-                            <div
-                                className="col-12 md:col-2 flex justify-content-center align-items-center"
-                            >
-                                <div
-                                    style={{
-                                        width: 42,
-                                        height: 42,
-                                        borderRadius:
-                                            "50%",
-                                        background:
-                                            COLORS.primaryLight,
-                                        color:
-                                            COLORS.primary,
-                                        display:
-                                            "flex",
-                                        alignItems:
-                                            "center",
-                                        justifyContent:
-                                            "center",
-                                    }}
-                                >
-                                    <span
-                                        style={{
-                                            fontWeight: 700,
-                                        }}
-                                    >
-                                        VS
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="col-12 md:col-5">
-                                <label
-                                    className="block mb-2"
-                                    style={{
-                                        fontSize: 13,
-                                        fontWeight: 600,
-                                    }}
-                                >
-                                    Segundo período
-                                </label>
-
-                                <Dropdown
-                                    value={
-                                        selectedPeriod2
-                                    }
-                                    options={
-                                        academicPeriods
-                                    }
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    onChange={(e) =>
-                                        setSelectedPeriod2(
-                                            e.value
-                                        )
-                                    }
-                                    className="w-full"
-                                />
-                            </div>
-                        </div>
-                    </Card>
-
-                    {/* GRÁFICO COMPARATIVO */}
-
-                    <Card
-                        title="Comparação dos indicadores"
-                        subTitle="Valores percentuais simulados"
-                        className="mb-4"
-                        style={{
-                            border: `1px solid ${COLORS.border}`,
-                            boxShadow: "none",
-                        }}
-                    >
-                        <div
-                            style={{
-                                height: 390,
-                            }}
-                        >
-                            <Bar
-                                data={
-                                    comparisonChartData
-                                }
-                                options={{
-                                    ...barOptions,
-                                    scales: {
-                                        ...barOptions.scales,
-                                        y: {
-                                            ...barOptions
-                                                .scales
-                                                .y,
-                                            max: 100,
-                                        },
-                                    },
-                                }}
-                            />
-                        </div>
-                    </Card>
-
-                    {/* RESUMO DA COMPARAÇÃO */}
-
-                    <div className="grid mb-4">
-                        <ComparisonCard
-                            title="Aulas realizadas"
-                            first={89}
-                            second={93}
-                            positive
-                        />
-
-                        <ComparisonCard
-                            title="Aulas confirmadas"
-                            first={85}
-                            second={91}
-                            positive
-                        />
-
-                        <ComparisonCard
-                            title="Avaliações no prazo"
-                            first={79}
-                            second={86}
-                            positive
-                        />
-
-                        <ComparisonCard
-                            title="Pautas entregues"
-                            first={68}
-                            second={75}
-                            positive
-                        />
-
-                        <ComparisonCard
-                            title="Actividades concluídas"
-                            first={76}
-                            second={84}
-                            positive
-                        />
-
-                        <ComparisonCard
-                            title="Cumprimento docente"
-                            first={81}
-                            second={88}
-                            positive
-                        />
-                    </div>
-
-                    {/* ANÁLISE */}
-
-                    <Card
-                        title="Análise comparativa"
-                        style={{
-                            border: `1px solid ${COLORS.border}`,
-                            boxShadow: "none",
-                        }}
-                    >
-                        <div className="grid">
-                            <AnalysisBox
-                                title="Evolução das aulas"
-                                value="+4 p.p."
-                                description="A percentagem de aulas realizadas aumentou entre os períodos seleccionados."
-                                icon={
-                                    <TrendingUp
-                                        size={21}
-                                    />
-                                }
-                                color={
-                                    COLORS.green
-                                }
-                                background={
-                                    COLORS.greenLight
-                                }
-                            />
-
-                            <AnalysisBox
-                                title="Avaliações"
-                                value="+7 p.p."
-                                description="Observa-se uma melhoria no cumprimento dos prazos de avaliação."
-                                icon={
-                                    <TrendingUp
-                                        size={21}
-                                    />
-                                }
-                                color={
-                                    COLORS.primary
-                                }
-                                background={
-                                    COLORS.primaryLight
-                                }
-                            />
-
-                            <AnalysisBox
-                                title="Pautas"
-                                value="+7 p.p."
-                                description="A entrega de pautas apresenta crescimento no segundo período."
-                                icon={
-                                    <FileCheck2
-                                        size={21}
-                                    />
-                                }
-                                color={
-                                    COLORS.purple
-                                }
-                                background={
-                                    COLORS.purpleLight
-                                }
-                            />
-
-                            <AnalysisBox
-                                title="Actividades"
-                                value="+8 p.p."
-                                description="O indicador de conclusão das actividades também apresenta evolução."
-                                icon={
-                                    <ClipboardCheck
-                                        size={21}
-                                    />
-                                }
-                                color={
-                                    COLORS.orange
-                                }
-                                background={
-                                    COLORS.orangeLight
-                                }
-                            />
-                        </div>
-                    </Card>
-                </div>
-            )}
-
-            {/* =================================================
-                DIALOG RELATÓRIO
-            ================================================= */}
-
-            <Dialog
-                visible={reportDialogVisible}
-                onHide={() =>
-                    setReportDialogVisible(false)
-                }
-                header={selectedReportTitle}
-                modal
-                style={{
-                    width: "620px",
-                    maxWidth: "95vw",
-                }}
-            >
-                <div>
-                    <div
-                        style={{
-                            padding: "1rem",
-                            borderRadius: 10,
-                            background:
-                                COLORS.primaryLight,
-                            marginBottom: "1.25rem",
-                        }}
-                    >
-                        <div
-                            className="flex align-items-center gap-2"
-                        >
-                            <FileText
-                                size={20}
-                                color={
-                                    COLORS.primary
-                                }
-                            />
-
-                            <div>
-                                <strong
-                                    style={{
-                                        color:
-                                            COLORS.dark,
-                                    }}
-                                >
-                                    Configuração do relatório
-                                </strong>
-
-                                <div
-                                    style={{
-                                        fontSize: 12,
-                                        color:
-                                            COLORS.muted,
-                                        marginTop: 3,
-                                    }}
-                                >
-                                    Os dados apresentados
-                                    são simulados.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid">
-                        <div className="col-12 md:col-6">
-                            <ReportDialogMetric
-                                label="Período"
-                                value={
-                                    academicPeriods.find(
-                                        (period) =>
-                                            period.value ===
-                                            selectedPeriod
-                                    )?.label ||
-                                    selectedPeriod
-                                }
-                            />
-                        </div>
-
-                        <div className="col-12 md:col-6">
-                            <ReportDialogMetric
-                                label="Tipo"
-                                value={
-                                    selectedReportTitle
-                                }
-                            />
-                        </div>
-
-                        <div className="col-12 md:col-6">
-                            <ReportDialogMetric
-                                label="Aulas"
-                                value="383 realizadas"
-                            />
-                        </div>
-
-                        <div className="col-12 md:col-6">
-                            <ReportDialogMetric
-                                label="Cumprimento"
-                                value="88%"
-                            />
-                        </div>
-                    </div>
-
                     <Divider />
-
                     <div className="flex justify-content-end gap-2">
-                        <Button
-                            label="Cancelar"
-                            severity="secondary"
-                            outlined
-                            onClick={() =>
-                                setReportDialogVisible(
-                                    false
-                                )
-                            }
-                        />
-
-                        <Button
-                            label="Gerar relatório"
-                            icon={
-                                <FileText
-                                    size={16}
-                                />
-                            }
-                            onClick={() =>
-                                setReportDialogVisible(
-                                    false
-                                )
-                            }
-                        />
+                        <Button label="Cancelar" outlined severity="secondary" onClick={() => setRoleDialog(false)} />
+                        <Button label="Guardar" icon={<CheckCircle2 size={16} />} onClick={handleSaveRole} />
                     </div>
                 </div>
             </Dialog>
-        </div>
-    );
-}
-
-/* =========================================================
-   COMPONENTES AUXILIARES
-========================================================= */
-
-interface KpiCardProps {
-    title: string;
-    value: string;
-    subtitle: string;
-    icon: React.ReactNode;
-    iconBg: string;
-    iconColor: string;
-    trend: string;
-    positive: boolean;
-}
-
-function KpiCard({
-    title,
-    value,
-    subtitle,
-    icon,
-    iconBg,
-    iconColor,
-    trend,
-    positive,
-}: KpiCardProps) {
-    return (
-        <div className="col-12 sm:col-6 lg:col-4 xl:col-2">
-            <div
-                style={{
-                    background: COLORS.white,
-                    border: `1px solid ${COLORS.border}`,
-                    borderRadius: 12,
-                    padding: "1rem",
-                    height: "100%",
-                }}
-            >
-                <div
-                    className="flex justify-content-between align-items-start"
-                >
-                    <div
-                        style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 10,
-                            background: iconBg,
-                            color: iconColor,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}
-                    >
-                        {icon}
-                    </div>
-
-                    <span
-                        style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            color: positive
-                                ? COLORS.green
-                                : COLORS.red,
-                            background: positive
-                                ? COLORS.greenLight
-                                : COLORS.redLight,
-                            padding:
-                                "4px 7px",
-                            borderRadius: 20,
-                        }}
-                    >
-                        {trend}
-                    </span>
-                </div>
-
-                <div
-                    style={{
-                        marginTop: "1rem",
-                    }}
-                >
-                    <div
-                        style={{
-                            fontSize: 24,
-                            fontWeight: 700,
-                            color: COLORS.dark,
-                        }}
-                    >
-                        {value}
-                    </div>
-
-                    <div
-                        style={{
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: COLORS.text,
-                            marginTop: 4,
-                        }}
-                    >
-                        {title}
-                    </div>
-
-                    <div
-                        style={{
-                            fontSize: 11,
-                            color: COLORS.muted,
-                            marginTop: 3,
-                        }}
-                    >
-                        {subtitle}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function SectionTitle({
-    icon,
-    title,
-    description,
-}: {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-}) {
-    return (
-        <div className="mb-4">
-            <div
-                className="flex align-items-center gap-2"
-            >
-                <span
-                    style={{
-                        color: COLORS.primary,
-                    }}
-                >
-                    {icon}
-                </span>
-
-                <h2
-                    style={{
-                        margin: 0,
-                        fontSize: 19,
-                        color: COLORS.dark,
-                    }}
-                >
-                    {title}
-                </h2>
-            </div>
-
-            <p
-                style={{
-                    margin: "6px 0 0",
-                    color: COLORS.muted,
-                    fontSize: 13,
-                }}
-            >
-                {description}
-            </p>
-        </div>
-    );
-}
-
-function TabButton({
-    active,
-    icon,
-    label,
-    onClick,
-}: {
-    active: boolean;
-    icon: React.ReactNode;
-    label: string;
-    onClick: () => void;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            style={{
-                border: "none",
-                cursor: "pointer",
-                padding:
-                    "0.7rem 1rem",
-                borderRadius: 8,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontSize: 13,
-                fontWeight: active ? 600 : 500,
-                color: active
-                    ? COLORS.primary
-                    : COLORS.muted,
-                background: active
-                    ? COLORS.primaryLight
-                    : "transparent",
-            }}
-        >
-            {icon}
-            {label}
-        </button>
-    );
-}
-
-function MetricPreview({
-    label,
-    value,
-    icon,
-}: {
-    label: string;
-    value: string;
-    icon: React.ReactNode;
-}) {
-    return (
-        <div className="col-12 sm:col-6">
-            <div
-                style={{
-                    padding: "1rem",
-                    border: `1px solid ${COLORS.border}`,
-                    borderRadius: 10,
-                }}
-            >
-                <div
-                    className="flex align-items-center gap-2"
-                >
-                    <span
-                        style={{
-                            color: COLORS.primary,
-                        }}
-                    >
-                        {icon}
-                    </span>
-
-                    <span
-                        style={{
-                            color: COLORS.muted,
-                            fontSize: 12,
-                        }}
-                    >
-                        {label}
-                    </span>
-                </div>
-
-                <div
-                    style={{
-                        fontSize: 23,
-                        fontWeight: 700,
-                        color: COLORS.dark,
-                        marginTop: 8,
-                    }}
-                >
-                    {value}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function ReportContent({
-    text,
-}: {
-    text: string;
-}) {
-    return (
-        <div
-            className="flex align-items-center gap-2 mb-3"
-        >
-            <CheckCircle2
-                size={16}
-                color={COLORS.green}
-            />
-
-            <span
-                style={{
-                    color: COLORS.text,
-                    fontSize: 13,
-                }}
-            >
-                {text}
-            </span>
-        </div>
-    );
-}
-
-function IndicatorRow({
-    label,
-    value,
-    color,
-}: {
-    label: string;
-    value: number;
-    color: string;
-}) {
-    return (
-        <div className="mb-4">
-            <div
-                className="flex justify-content-between mb-2"
-            >
-                <span
-                    style={{
-                        fontSize: 13,
-                        color: COLORS.text,
-                    }}
-                >
-                    {label}
-                </span>
-
-                <strong
-                    style={{
-                        fontSize: 13,
-                        color: COLORS.dark,
-                    }}
-                >
-                    {value}%
-                </strong>
-            </div>
-
-            <div
-                style={{
-                    width: "100%",
-                    height: 8,
-                    borderRadius: 10,
-                    background:
-                        COLORS.background,
-                    overflow: "hidden",
-                }}
-            >
-                <div
-                    style={{
-                        width: `${value}%`,
-                        height: "100%",
-                        background: color,
-                        borderRadius: 10,
-                    }}
-                />
-            </div>
-        </div>
-    );
-}
-
-function ComparisonCard({
-    title,
-    first,
-    second,
-    positive,
-}: {
-    title: string;
-    first: number;
-    second: number;
-    positive: boolean;
-}) {
-    const difference = second - first;
-
-    return (
-        <div className="col-12 sm:col-6 lg:col-4">
-            <div
-                style={{
-                    background: COLORS.white,
-                    border: `1px solid ${COLORS.border}`,
-                    borderRadius: 12,
-                    padding: "1.1rem",
-                }}
-            >
-                <div
-                    style={{
-                        color: COLORS.muted,
-                        fontSize: 12,
-                        marginBottom: 8,
-                    }}
-                >
-                    {title}
-                </div>
-
-                <div className="flex align-items-end justify-content-between">
-                    <div>
-                        <div
-                            style={{
-                                fontSize: 25,
-                                fontWeight: 700,
-                                color: COLORS.dark,
-                            }}
-                        >
-                            {second}%
-                        </div>
-
-                        <div
-                            style={{
-                                fontSize: 11,
-                                color: COLORS.muted,
-                            }}
-                        >
-                            período actual
-                        </div>
-                    </div>
-
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems:
-                                "center",
-                            gap: 4,
-                            color: positive
-                                ? COLORS.green
-                                : COLORS.red,
-                            fontWeight: 700,
-                            fontSize: 13,
-                        }}
-                    >
-                        {positive ? (
-                            <TrendingUp
-                                size={15}
-                            />
-                        ) : (
-                            <TrendingDown
-                                size={15}
-                            />
-                        )}
-
-                        {difference > 0
-                            ? "+"
-                            : ""}
-                        {difference} p.p.
-                    </div>
-                </div>
-
-                <div
-                    style={{
-                        marginTop: 12,
-                        fontSize: 12,
-                        color: COLORS.muted,
-                    }}
-                >
-                    Período anterior:{" "}
-                    <strong>
-                        {first}%
-                    </strong>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function AnalysisBox({
-    title,
-    value,
-    description,
-    icon,
-    color,
-    background,
-}: {
-    title: string;
-    value: string;
-    description: string;
-    icon: React.ReactNode;
-    color: string;
-    background: string;
-}) {
-    return (
-        <div className="col-12 md:col-6">
-            <div
-                style={{
-                    padding: "1rem",
-                    borderRadius: 11,
-                    background,
-                    height: "100%",
-                }}
-            >
-                <div
-                    className="flex justify-content-between align-items-center mb-2"
-                >
-                    <div
-                        style={{
-                            color,
-                        }}
-                    >
-                        {icon}
-                    </div>
-
-                    <strong
-                        style={{
-                            color,
-                            fontSize: 18,
-                        }}
-                    >
-                        {value}
-                    </strong>
-                </div>
-
-                <div
-                    style={{
-                        fontWeight: 700,
-                        color: COLORS.dark,
-                        fontSize: 14,
-                    }}
-                >
-                    {title}
-                </div>
-
-                <p
-                    style={{
-                        margin:
-                            "6px 0 0",
-                        fontSize: 12,
-                        color: COLORS.muted,
-                        lineHeight: 1.5,
-                    }}
-                >
-                    {description}
-                </p>
-            </div>
-        </div>
-    );
-}
-
-function ReportDialogMetric({
-    label,
-    value,
-}: {
-    label: string;
-    value: string;
-}) {
-    return (
-        <div
-            style={{
-                border: `1px solid ${COLORS.border}`,
-                borderRadius: 9,
-                padding: "0.85rem",
-            }}
-        >
-            <div
-                style={{
-                    fontSize: 11,
-                    color: COLORS.muted,
-                    marginBottom: 5,
-                }}
-            >
-                {label}
-            </div>
-
-            <div
-                style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: COLORS.dark,
-                }}
-            >
-                {value}
-            </div>
         </div>
     );
 }

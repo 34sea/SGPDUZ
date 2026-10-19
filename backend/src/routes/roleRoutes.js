@@ -44,7 +44,7 @@ router.use(authMiddleware);
  *       201:
  *         description: Role criado
  */
-router.route('/roles')
+router.route('/')
   .get(roleController.getRoles)
   .post(roleController.createRole);
 
@@ -104,7 +104,7 @@ router.route('/roles')
  *       200:
  *         description: Role eliminado
  */
-router.route('/roles/:id')
+router.route('/:id')
   .get(roleController.getRoleById)
   .put(roleController.updateRole)
   .delete(roleController.deleteRole);
@@ -167,7 +167,7 @@ router.route('/roles/:id')
  *       200:
  *         description: Permissões sincronizadas
  */
-router.route('/roles/:roleId/permissions')
+router.route('/:roleId/permissions')
   .post(roleController.assignPermission)
   .put(roleController.syncPermissions);
 
@@ -194,7 +194,7 @@ router.route('/roles/:roleId/permissions')
  *       200:
  *         description: Permissão removida do role
  */
-router.route('/roles/:roleId/permissions/:permissionId')
+router.route('/:roleId/permissions/:permissionId')
   .delete(roleController.removePermission);
 
 module.exports = router;

@@ -38,28 +38,3 @@ export function getUserFromStorage() {
     return null;
   }
 }
-
-
-// export function getUserFromStorage() {
-
-//   try {
-//     const data = localStorage.getItem("user-dashboard-SGPD");
-
-//     if (!data) return null;
-//     const parsed = typeof data === "string" ? JSON.parse(data) : data;
-
-//     if (
-//       parsed &&
-//       Object.keys(parsed).length > 0 &&
-//       parsed !== "null" &&
-//       parsed !== "undefined"
-//     ) {
-//       return parsed;
-//     }
-
-//     return null;
-//   } catch (error) {
-//     console.error("Erro ao recuperar usuário do localStorage:", error);
-//     return null;
-//   }
-// }

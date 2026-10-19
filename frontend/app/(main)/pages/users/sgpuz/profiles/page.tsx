@@ -1,1417 +1,220 @@
-'use client';
+"use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-import { Button } from 'primereact/button';
-import { Card } from 'primereact/card';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import { Dialog } from 'primereact/dialog';
-import { InputText } from 'primereact/inputtext';
-import { MultiSelect } from 'primereact/multiselect';
-import { Tag } from 'primereact/tag';
-import { Divider } from 'primereact/divider';
-import { Toast } from 'primereact/toast';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import React, { useEffect, useMemo, useState } from "react";
+import { Card } from "primereact/card";
+import { Button } from "primereact/button";
+import { InputText } from "primereact/inputtext";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+import { Dialog } from "primereact/dialog";
+import { Divider } from "primereact/divider";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { ProgressSpinner } from "primereact/progressspinner";
+import { InputTextarea } from "primereact/inputtextarea";
 
 import {
-    getRoles,
-    createRole,
-    updateRole,
-    deleteRole,
-    getPermissions,
-    assignPermissionsToRole,
-    Role,
-    Permission
-} from '@/app/api/users/userService';
-
-
-
-
-// =====================================================
-// COMPONENT
-// =====================================================
-
-const UsersProfiles = () => {
-
-    const toast = useRef<Toast>(null);
-
-
-    // =====================================================
-    // DATA
-    // =====================================================
-
-    const [roles, setRoles] =
-        useState<Role[]>([]);
-
-    const [permissions, setPermissions] =
-        useState<Permission[]>([]);
-
-
-    // =====================================================
-    // LOADING
-    // =====================================================
-
-    const [loading, setLoading] =
-        useState(false);
-
-    const [saving, setSaving] =
-        useState(false);
-
-
-    // =====================================================
-    // ERROR
-    // =====================================================
-
-    const [error, setError] =
-        useState<string | null>(null);
-
-
-    // =====================================================
-    // FILTER
-    // =====================================================
-
-    const [search, setSearch] =
-        useState('');
-
-
-    // =====================================================
-    // DIALOG
-    // =====================================================
-
-    const [dialogVisible, setDialogVisible] =
-        useState(false);
-
-    const [editingRole, setEditingRole] =
-        useState<Role | null>(null);
-
-
-    // =====================================================
-    // FORM
-    // =====================================================
-
-    const [name, setName] =
-        useState('');
-
-    const [description, setDescription] =
-        useState('');
-
-    const [selectedPermissions, setSelectedPermissions] =
-        useState<number[]>([]);
-
-
-    // =====================================================
-    // LOAD DATA
-    // =====================================================
-
-    const loadData = useCallback(async () => {
-
-        setLoading(true);
-        setError(null);
-
-        try {
-
-            const [
-                rolesData,
-                permissionsData
-            ] = await Promise.all([
-                getRoles(),
-                getPermissions()
-            ]);
-
-            setRoles(rolesData);
-            setPermissions(permissionsData);
-
-        } catch (err: any) {
-
-            const message =
-                err?.response?.data?.message ||
-                err?.message ||
-                'Erro ao carregar perfis e permissões.';
-
-            setError(message);
-
-            toast.current?.show({
-                severity: 'error',
-                summary: 'Erro',
-                detail: message,
-                life: 4000
-            });
-
-        } finally {
-
-            setLoading(false);
-        }
-
-    }, []);
-
-
-    // =====================================================
-    // INITIAL LOAD
-    // =====================================================
-
-    useEffect(() => {
-
-        loadData();
-
-    }, [loadData]);
-
-
-    // =====================================================
-    // FILTERED ROLES
-    // =====================================================
-
-    const filteredRoles = useMemo(() => {
-
-        const value =
-            search
-                .toLowerCase()
-                .trim();
-
-        if (!value) {
-            return roles;
-        }
-
-        return roles.filter(role => {
-
-            const nameMatch =
-                role.name
-                    ?.toLowerCase()
-                    .includes(value);
-
-            const descriptionMatch =
-                role.description
-                    ?.toLowerCase()
-                    .includes(value);
-
-            const permissionMatch =
-                role.permissions?.some(
-                    permission =>
-                        permission
-                            .toLowerCase()
-                            .includes(value)
-                );
-
-            return (
-                nameMatch ||
-                descriptionMatch ||
-                permissionMatch
-            );
-        });
-
-    }, [
-        roles,
-        search
-    ]);
-
-
-    // =====================================================
-    // STATISTICS
-    // =====================================================
-
-    const totalRoles =
-        roles.length;
-
-    const rolesWithPermissions =
-        roles.filter(
-            role =>
-                role.permissions &&
-                role.permissions.length > 0
-        ).length;
-
-    const totalPermissions =
-        permissions.length;
-
-    const adminRole =
-        roles.find(
-            role =>
-                role.name?.toUpperCase() === 'ADMIN'
-        );
-
-
-    // =====================================================
-    // PERMISSION OPTIONS
-    // =====================================================
-
-    const permissionOptions = useMemo(() => {
-
-        return permissions.map(permission => ({
-
-            label:
-                permission.name,
-
-            value:
-                permission.id
-
-        }));
-
-    }, [
-        permissions
-    ]);
-
-
-    // =====================================================
-    // OPEN CREATE
-    // =====================================================
-
-    const openCreateDialog = () => {
-
-        setEditingRole(null);
-
-        setName('');
-
-        setDescription('');
-
-        setSelectedPermissions([]);
-
-        setDialogVisible(true);
-    };
-
-
-    // =====================================================
-    // OPEN EDIT
-    // =====================================================
-
-    const openEditDialog = (
-        role: Role
-    ) => {
-
-        setEditingRole(role);
-
-        setName(
-            role.name || ''
-        );
-
-        setDescription(
-            role.description || ''
-        );
-
-
-        // Converter nomes das permissões
-        // para IDs
-
-        const permissionIds =
-            permissions
-                .filter(permission =>
-                    role.permissions?.includes(
-                        permission.name
-                    )
-                )
-                .map(permission =>
-                    permission.id
-                );
-
-        setSelectedPermissions(
-            permissionIds
-        );
-
-        setDialogVisible(true);
-    };
-
-
-    // =====================================================
-    // CLOSE DIALOG
-    // =====================================================
-
-    const closeDialog = () => {
-
-        if (saving) {
-            return;
-        }
-
-        setDialogVisible(false);
-
-        setEditingRole(null);
-
-        setName('');
-
-        setDescription('');
-
-        setSelectedPermissions([]);
-    };
-
-
-    // =====================================================
-    // SAVE
-    // =====================================================
-
-    const handleSave = async () => {
-
-        // -------------------------------------------------
-        // VALIDATION
-        // -------------------------------------------------
-
-        if (!name.trim()) {
-
-            toast.current?.show({
-                severity: 'warn',
-                summary: 'Atenção',
-                detail:
-                    'Informe o nome do perfil.',
-                life: 3000
-            });
-
-            return;
-        }
-
-
-        setSaving(true);
-
-
-        try {
-
-            // =================================================
-            // CREATE
-            // =================================================
-
-            if (!editingRole) {
-
-                const createdRole =
-                    await createRole({
-
-                        name:
-                            name.trim(),
-
-                        description:
-                            description.trim() ||
-                            undefined
-
-                    });
-
-
-                // Atribuir permissões
-                if (
-                    selectedPermissions.length > 0
-                ) {
-
-                    await assignPermissionsToRole(
-                        createdRole.id,
-                        selectedPermissions
-                    );
-
-                }
-
-
-                toast.current?.show({
-                    severity: 'success',
-                    summary: 'Sucesso',
-                    detail:
-                        'Perfil criado com sucesso.',
-                    life: 3000
-                });
-
-            }
-
-            // =================================================
-            // UPDATE
-            // =================================================
-
-            else {
-
-                await updateRole(
-                    editingRole.id,
-                    {
-                        name:
-                            name.trim(),
-
-                        description:
-                            description.trim()
-                    }
-                );
-
-
-                // Actualizar permissões
-                await assignPermissionsToRole(
-                    editingRole.id,
-                    selectedPermissions
-                );
-
-
-                toast.current?.show({
-                    severity: 'success',
-                    summary: 'Sucesso',
-                    detail:
-                        'Perfil actualizado com sucesso.',
-                    life: 3000
-                });
-            }
-
-
-            // =================================================
-            // RELOAD
-            // =================================================
-
-            await loadData();
-
-            closeDialog();
-
-        } catch (err: any) {
-
-            const message =
-                err?.response?.data?.message ||
-                err?.message ||
-                'Não foi possível guardar o perfil.';
-
-            toast.current?.show({
-                severity: 'error',
-                summary: 'Erro',
-                detail: message,
-                life: 4000
-            });
-
-        } finally {
-
-            setSaving(false);
-        }
-    };
-
-
-    // =====================================================
-    // DELETE
-    // =====================================================
-
-    const handleDelete = (
-        role: Role
-    ) => {
-
-        const isAdmin =
-            role.name?.toUpperCase() === 'ADMIN';
-
-
-        if (isAdmin) {
-
-            toast.current?.show({
-                severity: 'warn',
-                summary:
-                    'Operação não permitida',
-                detail:
-                    'O perfil ADMIN não deve ser eliminado.',
-                life: 4000
-            });
-
-            return;
-        }
-
-
-        confirmDialog({
-
-            message:
-                `Tem certeza que deseja eliminar o perfil "${role.name}"?`,
-
-            header:
-                'Confirmar eliminação',
-
-            icon:
-                'pi pi-exclamation-triangle',
-
-            acceptLabel:
-                'Sim, eliminar',
-
-            rejectLabel:
-                'Cancelar',
-
-            acceptClassName:
-                'p-button-danger',
-
-            accept: async () => {
-
-                try {
-
-                    setLoading(true);
-
-
-                    await deleteRole(
-                        role.id
-                    );
-
-
-                    toast.current?.show({
-                        severity: 'success',
-                        summary: 'Sucesso',
-                        detail:
-                            'Perfil eliminado com sucesso.',
-                        life: 3000
-                    });
-
-
-                    await loadData();
-
-                } catch (err: any) {
-
-                    const message =
-                        err?.response?.data?.message ||
-                        err?.message ||
-                        'Não foi possível eliminar o perfil.';
-
-                    toast.current?.show({
-                        severity: 'error',
-                        summary: 'Erro',
-                        detail: message,
-                        life: 4000
-                    });
-
-                } finally {
-
-                    setLoading(false);
-                }
-            }
-        });
-    };
-
-
-    // =====================================================
-    // CLEAR FILTER
-    // =====================================================
-
-    const clearFilter = () => {
-
-        setSearch('');
-    };
-
-
-    // =====================================================
-    // ROLE TEMPLATE
-    // =====================================================
-
-    const roleTemplate = (
-        role: Role
-    ) => {
-
-        const roleName =
-            role.name?.toUpperCase();
-
-
-        let severity:
-            | 'success'
-            | 'info'
-            | 'warning'
-            | 'danger'
-            | 'secondary'
-            | 'contrast'
-            | undefined;
-
-
-        if (roleName === 'ADMIN') {
-
-            severity = 'warning';
-
-        } else if (
-            roleName === 'SUPERVISOR'
-        ) {
-
-            severity = 'info';
-
-        } else {
-
-            severity = 'success';
-        }
-
-
-        return (
-            <Tag
-                value={role.name}
-                severity={severity}
-            />
-        );
-    };
-
-
-    // =====================================================
-    // DESCRIPTION TEMPLATE
-    // =====================================================
-
-    const descriptionTemplate = (
-        role: Role
-    ) => {
-
-        return (
-            <span className="text-600">
-                {role.description || '-'}
-            </span>
-        );
-    };
-
-
-    // =====================================================
-    // PERMISSIONS TEMPLATE
-    // =====================================================
-
-    const permissionsTemplate = (
-        role: Role
-    ) => {
-
-        const rolePermissions =
-            role.permissions || [];
-
-
-        if (
-            rolePermissions.length === 0
-        ) {
-
-            return (
-                <span className="text-500">
-                    Sem permissões
-                </span>
-            );
-        }
-
-
-        return (
-            <div className="
-                flex
-                flex-wrap
-                gap-1
-            ">
-
-                {rolePermissions.map(
-                    permission => (
-
-                        <Tag
-                            key={permission}
-                            value={permission}
-                            severity="info"
-                        />
-
-                    )
-                )}
-
-            </div>
-        );
-    };
-
-
-    // =====================================================
-    // PERMISSION COUNT
-    // =====================================================
-
-    const permissionCountTemplate = (
-        role: Role
-    ) => {
-
-        const count =
-            role.permissions?.length || 0;
-
-
-        return (
-            <div className="
-                flex
-                align-items-center
-                gap-2
-            ">
-
-                <i className="
-                    pi
-                    pi-key
-                    text-primary
-                " />
-
-                <span>
-                    {count}
-                </span>
-
-            </div>
-        );
-    };
-
-
-    // =====================================================
-    // ACTION TEMPLATE
-    // =====================================================
-
-    const actionTemplate = (
-        role: Role
-    ) => {
-
-        const isAdmin =
-            role.name?.toUpperCase() === 'ADMIN';
-
-
-        return (
-            <div className="flex gap-1">
-
-                <Button
-                    icon="pi pi-pencil"
-                    rounded
-                    text
-                    severity="info"
-                    tooltip="Editar"
-                    tooltipOptions={{
-                        position: 'top'
-                    }}
-                    onClick={() =>
-                        openEditDialog(role)
-                    }
-                />
-
-
-                <Button
-                    icon="pi pi-trash"
-                    rounded
-                    text
-                    severity="danger"
-                    disabled={isAdmin}
-                    tooltip={
-                        isAdmin
-                            ? 'ADMIN não pode ser eliminado'
-                            : 'Eliminar'
-                    }
-                    tooltipOptions={{
-                        position: 'top'
-                    }}
-                    onClick={() =>
-                        handleDelete(role)
-                    }
-                />
-
-            </div>
-        );
-    };
-
-
-    // =====================================================
-    // RETURN
-    // =====================================================
-
-    return (
-
-        <div className="grid">
-
-            <Toast ref={toast} />
-
-            <ConfirmDialog />
-
-
-            {/* =================================================
-                HEADER
-            ================================================= */}
-
-            <div className="col-12">
-
-                <div className="
-                    flex
-                    flex-column
-                    md:flex-row
-                    md:align-items-center
-                    md:justify-content-between
-                    gap-3
-                ">
-
-                    <div>
-
-                        <h2 className="
-                            text-900
-                            font-semibold
-                            m-0
-                        ">
-                            Funções e Perfis
-                        </h2>
-
-                        <p className="
-                            text-600
-                            mt-2
-                            mb-0
-                        ">
-                            Consulte e administre as funções,
-                            perfis e permissões do sistema.
-                        </p>
-
-                    </div>
-
-
-                    <Button
-                        label="Novo perfil"
-                        icon="pi pi-shield"
-                        onClick={
-                            openCreateDialog
-                        }
-                    />
-
-                </div>
-
-            </div>
-
-
-            {/* =================================================
-                STATISTICS
-            ================================================= */}
-
-            <div className="
-                col-12
-                lg:col-6
-                xl:col-3
-            ">
-
-                <div className="
-                    card
-                    mb-0
-                    h-full
-                ">
-
-                    <span className="
-                        block
-                        text-500
-                        font-medium
-                        mb-2
-                    ">
-                        Total de perfis
-                    </span>
-
-                    <div className="
-                        text-900
-                        font-medium
-                        text-2xl
-                    ">
-                        {totalRoles}
-                    </div>
-
-                    <span className="
-                        text-500
-                        text-sm
-                    ">
-                        Perfis registados
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div className="
-                col-12
-                lg:col-6
-                xl:col-3
-            ">
-
-                <div className="
-                    card
-                    mb-0
-                    h-full
-                ">
-
-                    <span className="
-                        block
-                        text-500
-                        font-medium
-                        mb-2
-                    ">
-                        Administrador
-                    </span>
-
-                    <div className="
-                        text-900
-                        font-medium
-                        text-2xl
-                    ">
-                        {adminRole ? 1 : 0}
-                    </div>
-
-                    <span className="
-                        text-500
-                        text-sm
-                    ">
-                        Perfil ADMIN
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div className="
-                col-12
-                lg:col-6
-                xl:col-3
-            ">
-
-                <div className="
-                    card
-                    mb-0
-                    h-full
-                ">
-
-                    <span className="
-                        block
-                        text-500
-                        font-medium
-                        mb-2
-                    ">
-                        Perfis configurados
-                    </span>
-
-                    <div className="
-                        text-900
-                        font-medium
-                        text-2xl
-                    ">
-                        {rolesWithPermissions}
-                    </div>
-
-                    <span className="
-                        text-500
-                        text-sm
-                    ">
-                        Com permissões
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div className="
-                col-12
-                lg:col-6
-                xl:col-3
-            ">
-
-                <div className="
-                    card
-                    mb-0
-                    h-full
-                ">
-
-                    <span className="
-                        block
-                        text-500
-                        font-medium
-                        mb-2
-                    ">
-                        Permissões
-                    </span>
-
-                    <div className="
-                        text-900
-                        font-medium
-                        text-2xl
-                    ">
-                        {totalPermissions}
-                    </div>
-
-                    <span className="
-                        text-500
-                        text-sm
-                    ">
-                        Disponíveis no sistema
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            {/* =================================================
-                FILTER
-            ================================================= */}
-
-            <div className="col-12">
-
-                <Card>
-
-                    <div className="grid">
-
-                        <div className="
-                            col-12
-                            md:col-10
-                        ">
-
-                            <label className="
-                                block
-                                text-900
-                                font-medium
-                                mb-2
-                            ">
-                                Pesquisa
-                            </label>
-
-                            <span className="
-                                p-input-icon-left
-                                w-full
-                            ">
-
-                                <i className="
-                                    pi
-                                    pi-search
-                                " />
-
-                                <InputText
-                                    value={search}
-                                    onChange={(e) =>
-                                        setSearch(
-                                            e.target.value
-                                        )
-                                    }
-                                    placeholder="
-                                        Nome, descrição ou permissão
-                                    "
-                                    className="w-full"
-                                />
-
-                            </span>
-
-                        </div>
-
-
-                        <div className="
-                            col-12
-                            md:col-2
-                            flex
-                            align-items-end
-                        ">
-
-                            <Button
-                                label="Limpar"
-                                icon="pi pi-filter-slash"
-                                outlined
-                                className="w-full"
-                                onClick={
-                                    clearFilter
-                                }
-                            />
-
-                        </div>
-
-                    </div>
-
-                </Card>
-
-            </div>
-
-
-            {/* =================================================
-                TABLE
-            ================================================= */}
-
-            <div className="col-12">
-
-                <Card>
-
-                    <div className="
-                        flex
-                        flex-column
-                        md:flex-row
-                        md:align-items-center
-                        md:justify-content-between
-                        gap-2
-                        mb-4
-                    ">
-
-                        <div>
-
-                            <h5 className="
-                                m-0
-                                text-900
-                            ">
-                                Perfis do sistema
-                            </h5>
-
-                            <span className="
-                                text-500
-                                text-sm
-                            ">
-                                {filteredRoles.length}
-                                {' '}
-                                perfil(is) encontrado(s)
-                            </span>
-
-                        </div>
-
-
-                        <Button
-                            icon="pi pi-refresh"
-                            label="Actualizar"
-                            outlined
-                            size="small"
-                            loading={loading}
-                            onClick={loadData}
-                        />
-
-                    </div>
-
-
-                    {error && (
-
-                        <div className="
-                            p-3
-                            mb-3
-                            border-round
-                            bg-red-50
-                            text-red-700
-                        ">
-
-                            <i className="
-                                pi
-                                pi-exclamation-circle
-                                mr-2
-                            " />
-
-                            {error}
-
-                        </div>
-
-                    )}
-
-
-                    <DataTable
-                        value={filteredRoles}
-                        loading={loading}
-                        paginator
-                        rows={10}
-                        responsiveLayout="scroll"
-                        emptyMessage="
-                            Nenhum perfil encontrado.
-                        "
-                        stripedRows
-                        showGridlines
-                    >
-
-                        <Column
-                            header="Perfil"
-                            body={roleTemplate}
-                            sortable
-                        />
-
-                        <Column
-                            header="Descrição"
-                            body={descriptionTemplate}
-                        />
-
-                        <Column
-                            header="Permissões"
-                            body={permissionsTemplate}
-                        />
-
-                        <Column
-                            header="N.º Permissões"
-                            body={permissionCountTemplate}
-                            style={{
-                                width: '10rem'
-                            }}
-                        />
-
-                        <Column
-                            header="Acções"
-                            body={actionTemplate}
-                            style={{
-                                width: '8rem'
-                            }}
-                        />
-
-                    </DataTable>
-
-                </Card>
-
-            </div>
-
-
-            {/* =================================================
-                ROLE DIALOG
-            ================================================= */}
-
-            <Dialog
-                header={
-                    editingRole
-                        ? 'Editar perfil'
-                        : 'Novo perfil'
-                }
-                visible={dialogVisible}
-                style={{
-                    width: '650px',
-                    maxWidth: '95vw'
-                }}
-                onHide={closeDialog}
-                modal
-            >
-
-                <div className="
-                    flex
-                    flex-column
-                    gap-4
-                ">
-
-
-                    {/* NAME */}
-
-                    <div>
-
-                        <label className="
-                            block
-                            text-900
-                            font-medium
-                            mb-2
-                        ">
-                            Nome do perfil *
-                        </label>
-
-                        <InputText
-                            value={name}
-                            onChange={(e) =>
-                                setName(
-                                    e.target.value
-                                )
-                            }
-                            placeholder="
-                                Ex.: SUPERVISOR
-                            "
-                            className="w-full"
-                            disabled={saving}
-                        />
-
-                    </div>
-
-
-                    {/* DESCRIPTION */}
-
-                    <div>
-
-                        <label className="
-                            block
-                            text-900
-                            font-medium
-                            mb-2
-                        ">
-                            Descrição
-                        </label>
-
-                        <InputText
-                            value={description}
-                            onChange={(e) =>
-                                setDescription(
-                                    e.target.value
-                                )
-                            }
-                            placeholder="
-                                Descrição do perfil
-                            "
-                            className="w-full"
-                            disabled={saving}
-                        />
-
-                    </div>
-
-
-                    {/* PERMISSIONS */}
-
-                    <div>
-
-                        <label className="
-                            block
-                            text-900
-                            font-medium
-                            mb-2
-                        ">
-                            Permissões
-                        </label>
-
-                        <MultiSelect
-                            value={
-                                selectedPermissions
-                            }
-                            onChange={(e) =>
-                                setSelectedPermissions(
-                                    e.value
-                                )
-                            }
-                            options={
-                                permissionOptions
-                            }
-                            placeholder="
-                                Seleccione as permissões
-                            "
-                            className="w-full"
-                            display="chip"
-                            filter
-                            showSelectAll
-                            disabled={saving}
-                        />
-
-                        <small className="
-                            block
-                            text-500
-                            mt-2
-                        ">
-                            Seleccione as permissões que
-                            este perfil poderá utilizar.
-                        </small>
-
-                    </div>
-
-
-                    {/* PREVIEW */}
-
-                    {name.trim() && (
-
-                        <div className="
-                            p-3
-                            border-round
-                            surface-100
-                        ">
-
-                            <span className="
-                                block
-                                text-500
-                                text-sm
-                                mb-2
-                            ">
-                                Pré-visualização
-                            </span>
-
-                            <Tag
-                                value={name}
-                                severity={
-                                    name.toUpperCase() ===
-                                    'ADMIN'
-                                        ? 'warning'
-                                        : 'info'
-                                }
-                            />
-
-                        </div>
-
-                    )}
-
-
-                    <Divider />
-
-
-                    {/* ACTIONS */}
-
-                    <div className="
-                        flex
-                        justify-content-end
-                        gap-2
-                    ">
-
-                        <Button
-                            label="Cancelar"
-                            icon="pi pi-times"
-                            outlined
-                            onClick={closeDialog}
-                            disabled={saving}
-                        />
-
-                        <Button
-                            label={
-                                editingRole
-                                    ? 'Actualizar'
-                                    : 'Criar perfil'
-                            }
-                            icon={
-                                editingRole
-                                    ? 'pi pi-check'
-                                    : 'pi pi-shield'
-                            }
-                            loading={saving}
-                            onClick={handleSave}
-                        />
-
-                    </div>
-
-                </div>
-
-            </Dialog>
-
-        </div>
-    );
+    ShieldCheck,
+    KeyRound,
+    UserPlus,
+    Search,
+    Edit3,
+    Trash2,
+    CheckCircle2,
+    Shield,
+} from "lucide-react";
+
+import { getRoles, createRole, updateRole, deleteRole, Role } from "@/app/api/users/userService";
+
+const COLORS = {
+    primary: "#1D4ED8",
+    primaryLight: "#EFF6FF",
+    purple: "#7C3AED",
+    purpleLight: "#F3E8FF",
+    red: "#DC2626",
+    dark: "#0F172A",
+    muted: "#64748B",
+    border: "#E2E8F0",
+    background: "#F8FAFC",
+    white: "#FFFFFF",
 };
 
-export default UsersProfiles;
+export default function RoleManagement() {
+    const [roles, setRoles] = useState<Role[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [search, setSearch] = useState("");
+
+    const [roleDialog, setRoleDialog] = useState(false);
+    const [selectedRole, setSelectedRole] = useState<Partial<Role> | null>(null);
+
+    const loadRolesData = async () => {
+        try {
+            setLoading(true);
+            const data = await getRoles();
+            setRoles(data);
+            setError(null);
+        } catch (err: any) {
+            setError(err.message || "Erro ao carregar perfis.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadRolesData();
+    }, []);
+
+    const filteredRoles = useMemo(() => {
+        return roles.filter((role: any) => {
+            const name = role.name || role.nome || "";
+            return !search || name.toLowerCase().includes(search.toLowerCase());
+        });
+    }, [roles, search]);
+
+    const openCreateRole = () => {
+        setSelectedRole({ name: "", description: "" });
+        setRoleDialog(true);
+    };
+
+    const openEditRole = (role: Role) => {
+        setSelectedRole(role);
+        setRoleDialog(true);
+    };
+
+    const handleSaveRole = async () => {
+        if (!selectedRole || !selectedRole.name) return;
+        try {
+            if (selectedRole.id) {
+                await updateRole(selectedRole.id, {
+                    name: selectedRole.name,
+                    description: selectedRole.description,
+                });
+            } else {
+                await createRole({
+                    name: selectedRole.name,
+                    description: selectedRole.description,
+                });
+            }
+            setRoleDialog(false);
+            loadRolesData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Erro ao guardar perfil.");
+        }
+    };
+
+    const handleDeleteRole = (role: Role & { name: string }) => {
+        confirmDialog({
+            message: `Tem certeza que deseja remover o perfil ${role.name}?`,
+            header: "Remover perfil",
+            icon: <Trash2 size={24} />,
+            acceptLabel: "Remover",
+            rejectLabel: "Cancelar",
+            acceptClassName: "p-button-danger",
+            accept: async () => {
+                await deleteRole(role.id);
+                loadRolesData();
+            },
+        });
+    };
+
+    const roleNameTemplate = (role: any) => (
+        <div className="flex align-items-center gap-3">
+            <div style={{ width: "38px", height: "38px", borderRadius: "9px", background: COLORS.purpleLight, color: COLORS.purple, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Shield size={19} />
+            </div>
+            <div>
+                <div style={{ fontWeight: 700, color: COLORS.dark }}>{role.name || role.nome}</div>
+                <div style={{ fontSize: "0.78rem", color: COLORS.muted }}>Perfil de acesso institucional</div>
+            </div>
+        </div>
+    );
+
+    const actionsTemplate = (role: any) => (
+        <div className="flex justify-content-end gap-1">
+            <Button icon={<Edit3 size={16} />} rounded text severity="secondary" onClick={() => openEditRole(role)} tooltip="Editar" />
+            <Button icon={<Trash2 size={16} />} rounded text severity="danger" onClick={() => handleDeleteRole(role)} tooltip="Remover" />
+        </div>
+    );
+
+    if (loading && roles.length === 0) {
+        return (
+            <div className="flex align-items-center justify-content-center min-h-screen">
+                <ProgressSpinner />
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ width: "100%", padding: "1.25rem", background: COLORS.background, minHeight: "100vh" }}>
+            <ConfirmDialog />
+
+            {error && <div style={{ color: COLORS.red, marginBottom: "1rem", fontWeight: 600 }}>Erro: {error}</div>}
+
+            {/* HEADER */}
+            <div className="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-4">
+                <div>
+                    <div className="flex align-items-center gap-2" style={{ color: COLORS.primary, fontSize: "0.8rem", fontWeight: 700, marginBottom: "6px" }}>
+                        <ShieldCheck size={17} /> CONFIGURAÇÕES DE SEGURANÇA
+                    </div>
+                    <h1 style={{ margin: 0, color: COLORS.dark, fontSize: "1.7rem", fontWeight: 800 }}>Gestão de Perfis (Roles)</h1>
+                    <p style={{ margin: "6px 0 0", color: COLORS.muted, fontSize: "0.9rem" }}>Crie e administre os perfis de acesso atribuídos aos utilizadores do sistema.</p>
+                </div>
+                <Button label="Novo perfil" icon={<UserPlus size={17} />} onClick={openCreateRole} style={{ background: COLORS.primary, border: "none" }} />
+            </div>
+
+            {/* KPIS / RESUMO */}
+            <div className="grid mb-4">
+                <div className="col-12 sm:col-6 xl:col-4">
+                    <Card style={{ border: `1px solid ${COLORS.border}`, boxShadow: "none" }}>
+                        <div className="flex justify-content-between align-items-start">
+                            <div>
+                                <div style={{ color: COLORS.muted, fontSize: "0.82rem", fontWeight: 600 }}>Total de perfis</div>
+                                <div style={{ color: COLORS.dark, fontSize: "1.8rem", fontWeight: 800, marginTop: "8px" }}>{roles.length}</div>
+                            </div>
+                            <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: COLORS.purpleLight, color: COLORS.purple, display: "flex", alignItems: "center", justifyContent: "center" }}><KeyRound size={21} /></div>
+                        </div>
+                    </Card>
+                </div>
+            </div>
+
+            {/* CONTEÚDO PRINCIPAL (TABELA) */}
+            <Card style={{ border: `1px solid ${COLORS.border}`, boxShadow: "none" }}>
+                <div className="flex flex-column md:flex-row gap-2 mb-3 justify-content-between align-items-center">
+                    <div>
+                        <div style={{ fontSize: "1.05rem", fontWeight: 700, color: COLORS.dark }}>Lista de perfis configurados</div>
+                        <div style={{ color: COLORS.muted, fontSize: "0.78rem", marginTop: "3px" }}>Consulte as funções disponíveis na plataforma.</div>
+                    </div>
+                    <span className="p-input-icon-left w-full md:w-auto">
+                        <Search size={16} style={{ position: "absolute", top: "50%", left: "0.75rem", transform: "translateY(-50%)" }} />
+                        <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Pesquisar perfil..." style={{ paddingLeft: "2.4rem", minWidth: "240px" }} />
+                    </span>
+                </div>
+
+                <DataTable value={filteredRoles} paginator rows={6} responsiveLayout="scroll" stripedRows size="small" emptyMessage="Nenhum perfil encontrado.">
+                    <Column header="Perfil" body={roleNameTemplate} style={{ minWidth: "260px" }} />
+                    <Column field="description" header="Descrição" body={(rowData: any) => rowData.description || "Sem descrição definida"} style={{ minWidth: "300px" }} />
+                    <Column header="Acções" body={actionsTemplate} align="right" style={{ width: "125px" }} />
+                </DataTable>
+            </Card>
+
+            {/* MODAL DE CRIAÇÃO / EDIÇÃO DE PERFIL */}
+            <Dialog visible={roleDialog} onHide={() => setRoleDialog(false)} header={selectedRole?.id ? "Editar perfil" : "Criar novo perfil"} modal style={{ width: "500px" }}>
+                <div className="flex flex-column gap-3">
+                    <div>
+                        <label className="block mb-1 font-semibold text-sm">Nome do Perfil</label>
+                        <InputText value={selectedRole?.name || ""} onChange={(e) => setSelectedRole((p) => ({ ...p, name: e.target.value }))} placeholder="Ex.: COORDENADOR" className="w-full" />
+                    </div>
+                    <div>
+                        <label className="block mb-1 font-semibold text-sm">Descrição</label>
+                        <InputTextarea rows={3} value={selectedRole?.description || ""} onChange={(e) => setSelectedRole((p) => ({ ...p, description: e.target.value }))} placeholder="Breve descrição das responsabilidades..." className="w-full" />
+                    </div>
+                    <Divider />
+                    <div className="flex justify-content-end gap-2">
+                        <Button label="Cancelar" outlined severity="secondary" onClick={() => setRoleDialog(false)} />
+                        <Button label="Guardar" icon={<CheckCircle2 size={16} />} onClick={handleSaveRole} />
+                    </div>
+                </div>
+            </Dialog>
+        </div>
+    );
+}

@@ -46,3 +46,28 @@ exports.deletePermission = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
+
+exports.updatePermission = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'O nome da permissão é obrigatório.' });
+    }
+
+    const formattedName = name.toUpperCase().trim();
+    const [result] = await pool.query('UPDATE permissions SET name = ? WHERE id = ?', [formattedName, id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Permissão não encontrada.' });
+    }
+
+    return res.status(200).json({ success: true, message: 'Permissão atualizada com sucesso.' });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ success: false, message: 'Esta permissão já existe.' });
+    }
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};

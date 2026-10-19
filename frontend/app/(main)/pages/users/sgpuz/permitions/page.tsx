@@ -1,1319 +1,281 @@
-'use client';
+"use client";
 
-import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState
-} from 'react';
-
-import { Button } from 'primereact/button';
-import { Card } from 'primereact/card';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import { Dialog } from 'primereact/dialog';
-import { InputText } from 'primereact/inputtext';
-import { Tag } from 'primereact/tag';
-import { Divider } from 'primereact/divider';
-import { Toast } from 'primereact/toast';
-import {
-    ConfirmDialog,
-    confirmDialog
-} from 'primereact/confirmdialog';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Card } from "primereact/card";
+import { Button } from "primereact/button";
+import { InputText } from "primereact/inputtext";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+import { Dialog } from "primereact/dialog";
+import { Divider } from "primereact/divider";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { ProgressSpinner } from "primereact/progressspinner";
+import { Toast } from "primereact/toast";
 
 import {
-    getPermissions,
-    createPermission,
+    ShieldCheck,
+    KeyRound,
+    Plus,
+    Search,
+    Edit3,
+    Trash2,
+    CheckCircle2,
+    BookOpen,
+    GraduationCap,
+    ClipboardCheck,
+    Activity,
+    CalendarCheck,
+    BarChart3,
+    Settings2,
+} from "lucide-react";
+
+import { 
+    getPermissions, 
+    createPermission, 
     updatePermission,
-    deletePermission,
-    Permission
-} from '@/app/api/users/userService';
+    deletePermission, 
+    Permission 
+} from "@/app/api/users/userService";
 
+const COLORS = {
+    primary: "#1D4ED8",
+    primaryLight: "#EFF6FF",
+    purple: "#7C3AED",
+    purpleLight: "#F3E8FF",
+    red: "#DC2626",
+    dark: "#0F172A",
+    muted: "#64748B",
+    border: "#E2E8F0",
+    background: "#F8FAFC",
+    white: "#FFFFFF",
+};
 
-// =====================================================
-// COMPONENT
-// =====================================================
+const getPermissionIcon = (name: string) => {
+    const upper = name.toUpperCase();
+    if (upper.includes("PLANO")) return <BookOpen size={18} />;
+    if (upper.includes("AULA")) return <GraduationCap size={18} />;
+    if (upper.includes("AVALIAC")) return <ClipboardCheck size={18} />;
+    if (upper.includes("ACTIV")) return <Activity size={18} />;
+    if (upper.includes("CONFIRM")) return <CalendarCheck size={18} />;
+    if (upper.includes("ACOMPANH")) return <BarChart3 size={18} />;
+    return <Settings2 size={18} />;
+};
 
-const UsersPermitions = () => {
-
+export default function PermissionManagement() {
     const toast = useRef<Toast>(null);
 
+    const [permissions, setPermissions] = useState<Permission[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState("");
 
-    // =====================================================
-    // DATA
-    // =====================================================
+    const [permissionDialog, setPermissionDialog] = useState(false);
+    const [selectedPermission, setSelectedPermission] = useState<Partial<Permission> | null>(null);
+    const [permissionName, setPermissionName] = useState("");
 
-    const [permissions, setPermissions] =
-        useState<Permission[]>([]);
-
-
-    // =====================================================
-    // LOADING
-    // =====================================================
-
-    const [loading, setLoading] =
-        useState(false);
-
-    const [saving, setSaving] =
-        useState(false);
-
-
-    // =====================================================
-    // ERROR
-    // =====================================================
-
-    const [error, setError] =
-        useState<string | null>(null);
-
-
-    // =====================================================
-    // FILTER
-    // =====================================================
-
-    const [search, setSearch] =
-        useState('');
-
-
-    // =====================================================
-    // DIALOG
-    // =====================================================
-
-    const [dialogVisible, setDialogVisible] =
-        useState(false);
-
-    const [editingPermission, setEditingPermission] =
-        useState<Permission | null>(null);
-
-
-    // =====================================================
-    // FORM
-    // =====================================================
-
-    const [name, setName] =
-        useState('');
-
-    const [description, setDescription] =
-        useState('');
-
-
-    // =====================================================
-    // LOAD PERMISSIONS
-    // =====================================================
-
-    const loadPermissions = useCallback(
-        async () => {
-
+    const loadPermissionsData = async () => {
+        try {
             setLoading(true);
-
-            setError(null);
-
-            try {
-
-                const data =
-                    await getPermissions();
-
-                setPermissions(data);
-
-            } catch (err: any) {
-
-                const message =
-                    err?.response?.data?.message ||
-                    err?.message ||
-                    'Erro ao carregar as permissões.';
-
-                setError(message);
-
-                toast.current?.show({
-                    severity: 'error',
-                    summary: 'Erro',
-                    detail: message,
-                    life: 4000
-                });
-
-            } finally {
-
-                setLoading(false);
-            }
-
-        },
-        []
-    );
-
-
-    // =====================================================
-    // INITIAL LOAD
-    // =====================================================
+            const data = await getPermissions();
+            setPermissions(data);
+        } catch (err: any) {
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: err.response?.data?.message || "Erro ao carregar permissões da API.",
+                life: 4000,
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
+        loadPermissionsData();
+    }, []);
 
-        loadPermissions();
-
-    }, [
-        loadPermissions
-    ]);
-
-
-    // =====================================================
-    // FILTERED PERMISSIONS
-    // =====================================================
-
-    const filteredPermissions =
-        useMemo(() => {
-
-            const value =
-                search
-                    .toLowerCase()
-                    .trim();
-
-
-            if (!value) {
-                return permissions;
-            }
-
-
-            return permissions.filter(
-                permission => {
-
-                    const nameMatch =
-                        permission.name
-                            ?.toLowerCase()
-                            .includes(value);
-
-
-                    const descriptionMatch =
-                        permission.description
-                            ?.toLowerCase()
-                            .includes(value);
-
-
-                    return (
-                        nameMatch ||
-                        descriptionMatch
-                    );
-                }
-            );
-
-        }, [
-            permissions,
-            search
-        ]);
-
-
-    // =====================================================
-    // STATISTICS
-    // =====================================================
-
-    const totalPermissions =
-        permissions.length;
-
-
-    const filteredCount =
-        filteredPermissions.length;
-
-
-    // =====================================================
-    // OPEN CREATE
-    // =====================================================
+    const filteredPermissions = useMemo(() => {
+        return permissions.filter((perm) => {
+            const name = perm.name || "";
+            return !search || name.toLowerCase().includes(search.toLowerCase());
+        });
+    }, [permissions, search]);
 
     const openCreateDialog = () => {
-
-        setEditingPermission(null);
-
-        setName('');
-
-        setDescription('');
-
-        setDialogVisible(true);
+        setSelectedPermission(null);
+        setPermissionName("");
+        setPermissionDialog(true);
     };
 
-
-    // =====================================================
-    // OPEN EDIT
-    // =====================================================
-
-    const openEditDialog = (
-        permission: Permission
-    ) => {
-
-        setEditingPermission(
-            permission
-        );
-
-        setName(
-            permission.name || ''
-        );
-
-        setDescription(
-            permission.description || ''
-        );
-
-        setDialogVisible(true);
+    const openEditDialog = (perm: Permission) => {
+        setSelectedPermission(perm);
+        setPermissionName(perm.name);
+        setPermissionDialog(true);
     };
 
-
-    // =====================================================
-    // CLOSE DIALOG
-    // =====================================================
-
-    const closeDialog = () => {
-
-        if (saving) {
-            return;
-        }
-
-        setDialogVisible(false);
-
-        setEditingPermission(null);
-
-        setName('');
-
-        setDescription('');
-    };
-
-
-    // =====================================================
-    // SAVE
-    // =====================================================
-
-    const handleSave = async () => {
-
-        // -------------------------------------------------
-        // VALIDATION
-        // -------------------------------------------------
-
-        if (!name.trim()) {
-
+    const handleSavePermission = async () => {
+        if (!permissionName.trim()) {
             toast.current?.show({
-                severity: 'warn',
-                summary: 'Atenção',
-                detail:
-                    'Informe o nome da permissão.',
-                life: 3000
+                severity: "warn",
+                summary: "Aviso",
+                detail: "O nome da permissão é obrigatório.",
+                life: 3000,
             });
-
             return;
         }
-
-
-        setSaving(true);
-
 
         try {
-
-            // =================================================
-            // CREATE
-            // =================================================
-
-            if (!editingPermission) {
-
-                await createPermission({
-
-                    name:
-                        name.trim(),
-
-                    description:
-                        description.trim() ||
-                        undefined
-
-                });
-
-
+            if (selectedPermission?.id) {
+                await updatePermission(selectedPermission.id, { name: permissionName });
                 toast.current?.show({
-                    severity: 'success',
-                    summary: 'Sucesso',
-                    detail:
-                        'Permissão criada com sucesso.',
-                    life: 3000
+                    severity: "success",
+                    summary: "Sucesso",
+                    detail: "Permissão atualizada com sucesso.",
+                    life: 3000,
                 });
-
-            }
-
-            // =================================================
-            // UPDATE
-            // =================================================
-
-            else {
-
-                await updatePermission(
-                    editingPermission.id,
-                    {
-                        name:
-                            name.trim(),
-
-                        description:
-                            description.trim()
-                    }
-                );
-
-
+            } else {
+                await createPermission({ name: permissionName });
                 toast.current?.show({
-                    severity: 'success',
-                    summary: 'Sucesso',
-                    detail:
-                        'Permissão actualizada com sucesso.',
-                    life: 3000
+                    severity: "success",
+                    summary: "Sucesso",
+                    detail: "Permissão criada com sucesso.",
+                    life: 3000,
                 });
             }
-
-
-            // =================================================
-            // RELOAD
-            // =================================================
-
-            await loadPermissions();
-
-            closeDialog();
-
+            setPermissionDialog(false);
+            loadPermissionsData();
         } catch (err: any) {
-
-            const message =
-                err?.response?.data?.message ||
-                err?.message ||
-                'Não foi possível guardar a permissão.';
-
             toast.current?.show({
-                severity: 'error',
-                summary: 'Erro',
-                detail: message,
-                life: 4000
+                severity: "error",
+                summary: "Erro",
+                detail: err.response?.data?.message || "Erro ao guardar permissão.",
+                life: 4000,
             });
-
-        } finally {
-
-            setSaving(false);
         }
     };
 
-
-    // =====================================================
-    // DELETE
-    // =====================================================
-
-    const handleDelete = (
-        permission: Permission
-    ) => {
-
+    const handleDeletePermission = (perm: Permission) => {
         confirmDialog({
-
-            message:
-                `Tem certeza que deseja eliminar a permissão "${permission.name}"?`,
-
-            header:
-                'Confirmar eliminação',
-
-            icon:
-                'pi pi-exclamation-triangle',
-
-            acceptLabel:
-                'Sim, eliminar',
-
-            rejectLabel:
-                'Cancelar',
-
-            acceptClassName:
-                'p-button-danger',
-
+            message: `Tem certeza que deseja eliminar a permissão ${perm.name}?`,
+            header: "Eliminar permissão",
+            icon: <Trash2 size={24} />,
+            acceptLabel: "Eliminar",
+            rejectLabel: "Cancelar",
+            acceptClassName: "p-button-danger",
             accept: async () => {
-
                 try {
-
-                    setLoading(true);
-
-
-                    await deletePermission(
-                        permission.id
-                    );
-
-
+                    await deletePermission(perm.id);
                     toast.current?.show({
-                        severity: 'success',
-                        summary: 'Sucesso',
-                        detail:
-                            'Permissão eliminada com sucesso.',
-                        life: 3000
+                        severity: "success",
+                        summary: "Sucesso",
+                        detail: "Permissão eliminada com sucesso.",
+                        life: 3000,
                     });
-
-
-                    await loadPermissions();
-
+                    loadPermissionsData();
                 } catch (err: any) {
-
-                    const message =
-                        err?.response?.data?.message ||
-                        err?.message ||
-                        'Não foi possível eliminar a permissão.';
-
                     toast.current?.show({
-                        severity: 'error',
-                        summary: 'Erro',
-                        detail: message,
-                        life: 4000
+                        severity: "error",
+                        summary: "Erro",
+                        detail: err.response?.data?.message || "Erro ao eliminar permissão.",
+                        life: 4000,
                     });
-
-                } finally {
-
-                    setLoading(false);
                 }
-            }
+            },
         });
     };
 
-
-    // =====================================================
-    // CLEAR FILTER
-    // =====================================================
-
-    const clearFilter = () => {
-
-        setSearch('');
-    };
-
-
-    // =====================================================
-    // PERMISSION NAME TEMPLATE
-    // =====================================================
-
-    const permissionTemplate = (
-        permission: Permission
-    ) => {
-
-        return (
-            <Tag
-                value={
-                    permission.name
-                }
-                severity="info"
-            />
-        );
-    };
-
-
-    // =====================================================
-    // DESCRIPTION TEMPLATE
-    // =====================================================
-
-    const descriptionTemplate = (
-        permission: Permission
-    ) => {
-
-        return (
-            <span className="text-600">
-
-                {
-                    permission.description ||
-                    '-'
-                }
-
-            </span>
-        );
-    };
-
-
-    // =====================================================
-    // ACTION TEMPLATE
-    // =====================================================
-
-    const actionTemplate = (
-        permission: Permission
-    ) => {
-
-        return (
-            <div className="flex gap-1">
-
-                <Button
-                    icon="pi pi-pencil"
-                    rounded
-                    text
-                    severity="info"
-                    tooltip="Editar"
-                    tooltipOptions={{
-                        position: 'top'
-                    }}
-                    onClick={() =>
-                        openEditDialog(
-                            permission
-                        )
-                    }
-                />
-
-
-                <Button
-                    icon="pi pi-trash"
-                    rounded
-                    text
-                    severity="danger"
-                    tooltip="Eliminar"
-                    tooltipOptions={{
-                        position: 'top'
-                    }}
-                    onClick={() =>
-                        handleDelete(
-                            permission
-                        )
-                    }
-                />
-
+    const permissionNameTemplate = (perm: Permission) => (
+        <div className="flex align-items-center gap-3">
+            <div style={{ width: "38px", height: "38px", borderRadius: "9px", background: COLORS.purpleLight, color: COLORS.purple, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {getPermissionIcon(perm.name)}
             </div>
-        );
-    };
-
-
-    // =====================================================
-    // RETURN
-    // =====================================================
-
-    return (
-
-        <div className="grid">
-
-            <Toast ref={toast} />
-
-            <ConfirmDialog />
-
-
-            {/* =================================================
-                HEADER
-            ================================================= */}
-
-            <div className="col-12">
-
-                <div className="
-                    flex
-                    flex-column
-                    md:flex-row
-                    md:align-items-center
-                    md:justify-content-between
-                    gap-3
-                ">
-
-                    <div>
-
-                        <h2 className="
-                            text-900
-                            font-semibold
-                            m-0
-                        ">
-                            Gestão de Permissões
-                        </h2>
-
-
-                        <p className="
-                            text-600
-                            mt-2
-                            mb-0
-                        ">
-                            Consulte, crie e administre
-                            as permissões do sistema.
-                        </p>
-
-                    </div>
-
-
-                    <Button
-                        label="Nova permissão"
-                        icon="pi pi-key"
-                        onClick={
-                            openCreateDialog
-                        }
-                    />
-
-                </div>
-
+            <div>
+                <div style={{ fontWeight: 700, color: COLORS.dark }}>{perm.name}</div>
+                <div style={{ fontSize: "0.78rem", color: COLORS.muted }}>Permissão registada no sistema</div>
             </div>
-
-
-            {/* =================================================
-                STATISTICS
-            ================================================= */}
-
-            <div className="
-                col-12
-                lg:col-6
-                xl:col-4
-            ">
-
-                <div className="
-                    card
-                    mb-0
-                    h-full
-                ">
-
-                    <div className="
-                        flex
-                        justify-content-between
-                        align-items-start
-                    ">
-
-                        <div>
-
-                            <span className="
-                                block
-                                text-500
-                                font-medium
-                                mb-2
-                            ">
-                                Total de permissões
-                            </span>
-
-
-                            <div className="
-                                text-900
-                                font-medium
-                                text-2xl
-                            ">
-                                {totalPermissions}
-                            </div>
-
-
-                            <span className="
-                                text-500
-                                text-sm
-                            ">
-                                Permissões registadas
-                            </span>
-
-                        </div>
-
-
-                        <div className="
-                            flex
-                            align-items-center
-                            justify-content-center
-                            bg-blue-100
-                            border-round
-                        "
-                        style={{
-                            width: '2.5rem',
-                            height: '2.5rem'
-                        }}
-                        >
-
-                            <i className="
-                                pi
-                                pi-key
-                                text-blue-500
-                                text-xl
-                            " />
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div className="
-                col-12
-                lg:col-6
-                xl:col-4
-            ">
-
-                <div className="
-                    card
-                    mb-0
-                    h-full
-                ">
-
-                    <div className="
-                        flex
-                        justify-content-between
-                        align-items-start
-                    ">
-
-                        <div>
-
-                            <span className="
-                                block
-                                text-500
-                                font-medium
-                                mb-2
-                            ">
-                                Resultados
-                            </span>
-
-
-                            <div className="
-                                text-900
-                                font-medium
-                                text-2xl
-                            ">
-                                {filteredCount}
-                            </div>
-
-
-                            <span className="
-                                text-500
-                                text-sm
-                            ">
-                                Encontradas na pesquisa
-                            </span>
-
-                        </div>
-
-
-                        <div className="
-                            flex
-                            align-items-center
-                            justify-content-center
-                            bg-green-100
-                            border-round
-                        "
-                        style={{
-                            width: '2.5rem',
-                            height: '2.5rem'
-                        }}
-                        >
-
-                            <i className="
-                                pi
-                                pi-search
-                                text-green-500
-                                text-xl
-                            " />
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div className="
-                col-12
-                lg:col-12
-                xl:col-4
-            ">
-
-                <div className="
-                    card
-                    mb-0
-                    h-full
-                ">
-
-                    <div className="
-                        flex
-                        justify-content-between
-                        align-items-start
-                    ">
-
-                        <div>
-
-                            <span className="
-                                block
-                                text-500
-                                font-medium
-                                mb-2
-                            ">
-                                Estado
-                            </span>
-
-
-                            <div className="
-                                text-900
-                                font-medium
-                                text-2xl
-                            ">
-                                Activo
-                            </div>
-
-
-                            <span className="
-                                text-500
-                                text-sm
-                            ">
-                                Sistema de permissões
-                            </span>
-
-                        </div>
-
-
-                        <div className="
-                            flex
-                            align-items-center
-                            justify-content-center
-                            bg-purple-100
-                            border-round
-                        "
-                        style={{
-                            width: '2.5rem',
-                            height: '2.5rem'
-                        }}
-                        >
-
-                            <i className="
-                                pi
-                                pi-shield
-                                text-purple-500
-                                text-xl
-                            " />
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            {/* =================================================
-                FILTER
-            ================================================= */}
-
-            <div className="col-12">
-
-                <Card>
-
-                    <div className="
-                        flex
-                        align-items-center
-                        justify-content-between
-                        mb-4
-                    ">
-
-                        <div>
-
-                            <h5 className="
-                                m-0
-                                text-900
-                            ">
-                                Pesquisa e filtros
-                            </h5>
-
-
-                            <span className="
-                                text-500
-                                text-sm
-                            ">
-                                Pesquise pelas permissões disponíveis
-                            </span>
-
-                        </div>
-
-
-                        <i className="
-                            pi
-                            pi-filter
-                            text-primary
-                            text-xl
-                        " />
-
-                    </div>
-
-
-                    <div className="grid">
-
-                        <div className="
-                            col-12
-                            md:col-10
-                        ">
-
-                            <label className="
-                                block
-                                text-900
-                                font-medium
-                                mb-2
-                            ">
-                                Pesquisa
-                            </label>
-
-
-                            <span className="
-                                p-input-icon-left
-                                w-full
-                            ">
-
-                                <i className="
-                                    pi
-                                    pi-search
-                                " />
-
-
-                                <InputText
-                                    value={search}
-                                    onChange={(e) =>
-                                        setSearch(
-                                            e.target.value
-                                        )
-                                    }
-                                    placeholder="
-                                        Nome ou descrição da permissão
-                                    "
-                                    className="w-full"
-                                />
-
-                            </span>
-
-                        </div>
-
-
-                        <div className="
-                            col-12
-                            md:col-2
-                            flex
-                            align-items-end
-                        ">
-
-                            <Button
-                                label="Limpar"
-                                icon="pi pi-filter-slash"
-                                outlined
-                                className="w-full"
-                                onClick={
-                                    clearFilter
-                                }
-                            />
-
-                        </div>
-
-                    </div>
-
-                </Card>
-
-            </div>
-
-
-            {/* =================================================
-                TABLE
-            ================================================= */}
-
-            <div className="col-12">
-
-                <Card>
-
-                    <div className="
-                        flex
-                        flex-column
-                        md:flex-row
-                        md:align-items-center
-                        md:justify-content-between
-                        gap-2
-                        mb-4
-                    ">
-
-                        <div>
-
-                            <h5 className="
-                                m-0
-                                text-900
-                            ">
-                                Permissões do sistema
-                            </h5>
-
-
-                            <span className="
-                                text-500
-                                text-sm
-                            ">
-                                {filteredCount}
-                                {' '}
-                                permissão(ões)
-                                encontrada(s)
-                            </span>
-
-                        </div>
-
-
-                        <Button
-                            icon="pi pi-refresh"
-                            label="Actualizar"
-                            outlined
-                            size="small"
-                            loading={loading}
-                            onClick={
-                                loadPermissions
-                            }
-                        />
-
-                    </div>
-
-
-                    {error && (
-
-                        <div className="
-                            p-3
-                            mb-3
-                            border-round
-                            bg-red-50
-                            text-red-700
-                        ">
-
-                            <i className="
-                                pi
-                                pi-exclamation-circle
-                                mr-2
-                            " />
-
-                            {error}
-
-                        </div>
-
-                    )}
-
-
-                    <DataTable
-                        value={
-                            filteredPermissions
-                        }
-                        loading={loading}
-                        paginator
-                        rows={10}
-                        responsiveLayout="scroll"
-                        emptyMessage="
-                            Nenhuma permissão encontrada.
-                        "
-                        stripedRows
-                        showGridlines
-                    >
-
-                        <Column
-                            header="Permissão"
-                            body={
-                                permissionTemplate
-                            }
-                            sortable
-                        />
-
-
-                        <Column
-                            header="Descrição"
-                            body={
-                                descriptionTemplate
-                            }
-                        />
-
-
-                        <Column
-                            header="ID"
-                            field="id"
-                            sortable
-                            style={{
-                                width: '6rem'
-                            }}
-                        />
-
-
-                        <Column
-                            header="Acções"
-                            body={
-                                actionTemplate
-                            }
-                            style={{
-                                width: '8rem'
-                            }}
-                        />
-
-                    </DataTable>
-
-                </Card>
-
-            </div>
-
-
-            {/* =================================================
-                PERMISSION DIALOG
-            ================================================= */}
-
-            <Dialog
-                header={
-                    editingPermission
-                        ? 'Editar permissão'
-                        : 'Nova permissão'
-                }
-                visible={
-                    dialogVisible
-                }
-                style={{
-                    width: '600px',
-                    maxWidth: '95vw'
-                }}
-                onHide={
-                    closeDialog
-                }
-                modal
-            >
-
-                <div className="
-                    flex
-                    flex-column
-                    gap-4
-                ">
-
-
-                    {/* NAME */}
-
-                    <div>
-
-                        <label className="
-                            block
-                            text-900
-                            font-medium
-                            mb-2
-                        ">
-                            Nome da permissão *
-                        </label>
-
-
-                        <InputText
-                            value={name}
-                            onChange={(e) =>
-                                setName(
-                                    e.target.value
-                                )
-                            }
-                            placeholder="
-                                Ex.: USER_CREATE
-                            "
-                            className="w-full"
-                            disabled={saving}
-                        />
-
-
-                        <small className="
-                            block
-                            text-500
-                            mt-2
-                        ">
-                            Utilize um nome único e descritivo.
-                        </small>
-
-                    </div>
-
-
-                    {/* DESCRIPTION */}
-
-                    <div>
-
-                        <label className="
-                            block
-                            text-900
-                            font-medium
-                            mb-2
-                        ">
-                            Descrição
-                        </label>
-
-
-                        <InputText
-                            value={
-                                description
-                            }
-                            onChange={(e) =>
-                                setDescription(
-                                    e.target.value
-                                )
-                            }
-                            placeholder="
-                                Ex.: Permite criar utilizadores
-                            "
-                            className="w-full"
-                            disabled={saving}
-                        />
-
-                    </div>
-
-
-                    {/* PREVIEW */}
-
-                    {name.trim() && (
-
-                        <div className="
-                            p-3
-                            border-round
-                            surface-100
-                        ">
-
-                            <span className="
-                                block
-                                text-500
-                                text-sm
-                                mb-2
-                            ">
-                                Pré-visualização
-                            </span>
-
-
-                            <Tag
-                                value={
-                                    name
-                                }
-                                severity="info"
-                            />
-
-                            {description.trim() && (
-
-                                <p className="
-                                    text-600
-                                    text-sm
-                                    mt-2
-                                    mb-0
-                                ">
-                                    {description}
-                                </p>
-
-                            )}
-
-                        </div>
-
-                    )}
-
-
-                    <Divider />
-
-
-                    {/* ACTIONS */}
-
-                    <div className="
-                        flex
-                        justify-content-end
-                        gap-2
-                    ">
-
-                        <Button
-                            label="Cancelar"
-                            icon="pi pi-times"
-                            outlined
-                            onClick={
-                                closeDialog
-                            }
-                            disabled={
-                                saving
-                            }
-                        />
-
-
-                        <Button
-                            label={
-                                editingPermission
-                                    ? 'Actualizar'
-                                    : 'Criar permissão'
-                            }
-                            icon={
-                                editingPermission
-                                    ? 'pi pi-check'
-                                    : 'pi pi-key'
-                            }
-                            loading={
-                                saving
-                            }
-                            onClick={
-                                handleSave
-                            }
-                        />
-
-                    </div>
-
-                </div>
-
-            </Dialog>
-
         </div>
     );
-};
 
-export default UsersPermitions;
+    const actionsTemplate = (perm: Permission) => (
+        <div className="flex justify-content-end gap-1">
+            <Button icon={<Edit3 size={16} />} rounded text severity="secondary" onClick={() => openEditDialog(perm)} tooltip="Editar" />
+            <Button icon={<Trash2 size={16} />} rounded text severity="danger" onClick={() => handleDeletePermission(perm)} tooltip="Eliminar" />
+        </div>
+    );
+
+    if (loading && permissions.length === 0) {
+        return (
+            <div className="flex align-items-center justify-content-center min-h-screen">
+                <ProgressSpinner />
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ width: "100%", padding: "1.25rem", background: COLORS.background, minHeight: "100vh" }}>
+            <Toast ref={toast} />
+            <ConfirmDialog />
+
+            {/* HEADER */}
+            <div className="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3 mb-4">
+                <div>
+                    <div className="flex align-items-center gap-2" style={{ color: COLORS.primary, fontSize: "0.8rem", fontWeight: 700, marginBottom: "6px" }}>
+                        <ShieldCheck size={17} /> CONFIGURAÇÕES DE SEGURANÇA
+                    </div>
+                    <h1 style={{ margin: 0, color: COLORS.dark, fontSize: "1.7rem", fontWeight: 800 }}>Gestão de Permissões</h1>
+                    <p style={{ margin: "6px 0 0", color: COLORS.muted, fontSize: "0.9rem" }}>Administre as permissões globais associadas aos perfis do sistema.</p>
+                </div>
+                <Button label="Nova permissão" icon={<Plus size={17} />} onClick={openCreateDialog} style={{ background: COLORS.primary, border: "none" }} />
+            </div>
+
+            {/* KPIS / RESUMO */}
+            <div className="grid mb-4">
+                <div className="col-12 sm:col-6 xl:col-4">
+                    <Card style={{ border: `1px solid ${COLORS.border}`, boxShadow: "none" }}>
+                        <div className="flex justify-content-between align-items-start">
+                            <div>
+                                <div style={{ color: COLORS.muted, fontSize: "0.82rem", fontWeight: 600 }}>Total de permissões</div>
+                                <div style={{ color: COLORS.dark, fontSize: "1.8rem", fontWeight: 800, marginTop: "8px" }}>{permissions.length}</div>
+                            </div>
+                            <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: COLORS.purpleLight, color: COLORS.purple, display: "flex", alignItems: "center", justifyContent: "center" }}><KeyRound size={21} /></div>
+                        </div>
+                    </Card>
+                </div>
+            </div>
+
+            {/* CONTEÚDO PRINCIPAL (TABELA) */}
+            <Card style={{ border: `1px solid ${COLORS.border}`, boxShadow: "none" }}>
+                <div className="flex flex-column md:flex-row gap-2 mb-3 justify-content-between align-items-center">
+                    <div>
+                        <div style={{ fontSize: "1.05rem", fontWeight: 700, color: COLORS.dark }}>Lista de permissões</div>
+                        <div style={{ color: COLORS.muted, fontSize: "0.78rem", marginTop: "3px" }}>Funcionalidades protegidas e controladas por ACL.</div>
+                    </div>
+                    <span className="p-input-icon-left w-full md:w-auto">
+                        <Search size={16} style={{ position: "absolute", top: "50%", left: "0.75rem", transform: "translateY(-50%)" }} />
+                        <InputText value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Pesquisar permissão..." style={{ paddingLeft: "2.4rem", minWidth: "240px" }} />
+                    </span>
+                </div>
+
+                <DataTable value={filteredPermissions} paginator rows={6} responsiveLayout="scroll" stripedRows size="small" emptyMessage="Nenhuma permissão encontrada.">
+                    <Column header="Permissão" body={permissionNameTemplate} style={{ minWidth: "300px" }} />
+                    <Column field="id" header="ID" style={{ width: "100px" }} />
+                    <Column header="Acções" body={actionsTemplate} align="right" style={{ width: "120px" }} />
+                </DataTable>
+            </Card>
+
+            {/* MODAL DE CRIAÇÃO / EDIÇÃO DE PERMISSÃO */}
+            <Dialog visible={permissionDialog} onHide={() => setPermissionDialog(false)} header={selectedPermission?.id ? "Editar Permissão" : "Criar Nova Permissão"} modal style={{ width: "450px" }}>
+                <div className="flex flex-column gap-3">
+                    <div>
+                        <label className="block mb-1 font-semibold text-sm">Nome da Permissão</label>
+                        <InputText value={permissionName} onChange={(e) => setPermissionName(e.target.value)} placeholder="Ex.: MANAGE_USERS" className="w-full" />
+                    </div>
+                    <Divider />
+                    <div className="flex justify-content-end gap-2">
+                        <Button label="Cancelar" outlined severity="secondary" onClick={() => setPermissionDialog(false)} />
+                        <Button label={selectedPermission?.id ? "Atualizar" : "Criar"} icon={<CheckCircle2 size={16} />} onClick={handleSavePermission} />
+                    </div>
+                </div>
+            </Dialog>
+        </div>
+    );
+}

@@ -3,7 +3,7 @@
 const pathUrls = {
   'login': "/users/login",
   'users':"/users",
-  'roles':"/users/roles/all",
+  'roles':"/roles",
   'roles2':"/users/roles",
   'permition':"/users/permissions/all",
   'permition2':"/users/permissions",
@@ -13,6 +13,7 @@ const pathUrls = {
   'defenses': '/defenses/schedules',
   'scheduled': '/defenses/scheduled',
   'rooms': '/defenses/rooms',
+  'permissions': 'permissions',
 }
 
 
