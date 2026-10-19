@@ -253,6 +253,3 @@ INSERT IGNORE INTO permissions (id, name) VALUES
 (4, 'ASSIGN_ADHOC_TASK'), 
 (5, 'VIEW_REPORTS');
 
--- Admin Padrão
-INSERT IGNORE INTO users (id, name, email, password, role_id) VALUES 
-(1, 'Administrador do Sistema', 'admin@unizambeze.ac.mz', '$2a$12$eImiTXuWVxfM37uY4JANjOL.88T8a8B5S.Gf9/Q7C89F3tW2S0O5a', 1);

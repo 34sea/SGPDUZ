@@ -1,5 +1,6 @@
 const app = require('./src/app');
 const pool = require('./src/config/db');
+const { seedAdmin } = require('./src/seed/seedAdmin');
 
 const PORT = process.env.PORT || 5000;
 
@@ -8,6 +9,9 @@ async function startServer() {
     const connection = await pool.getConnection();
     console.log('Conexão com o MySQL estabelecida com sucesso!');
     connection.release();
+
+    // Seed do administrador: cria apenas se ainda não existir no banco
+    await seedAdmin();
 
     app.listen(PORT, () => {
       console.log(`Servidor rodando na porta ${PORT}`);
