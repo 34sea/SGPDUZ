@@ -682,4 +682,7 @@ router.route('/holidays/:id')
   .put(academicController.updateHoliday)
   .delete(academicController.deleteHoliday);
 
+// Adicionar em academicRoutes.js
+router.get('/pedagogical-monitoring', academicController.getPedagogicalMonitoring);
+
 module.exports = router;

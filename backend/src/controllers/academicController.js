@@ -755,3 +755,207 @@ exports.deleteHoliday = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
+// Adicionar em academicController.js
+// exports.getPedagogicalMonitoring = async (req, res) => {
+//   try {
+//     // 1. Obter todos os utilizadores que são docentes (role_id = 4 ou role_name = 'DOCENTE')
+//     const [teachers] = await pool.query(`
+//       SELECT u.id, u.name, u.email, u.created_at
+//       FROM users u
+//       INNER JOIN roles r ON u.role_id = r.id
+//       WHERE r.name = 'DOCENTE'
+//     `);
+
+//     const monitoringData = [];
+
+//     for (const teacher of teachers) {
+//       // Obter as atribuições (class_subject_teachers) do docente
+//       const [cstRows] = await pool.query(
+//         `SELECT id FROM class_subject_teachers WHERE teacher_id = ?`,
+//         [teacher.id]
+//       );
+//       const cstIds = cstRows.map(row => row.id);
+
+//       let aulasRealizadas = 0;
+//       let aulasPrevistas = 0;
+//       let avaliacoesTotal = 0;
+//       let avaliacoesDentroPrazo = 0;
+//       let pautaFinalEntregue = 'Pendente';
+//       let atividadesTotal = 0;
+//       let atividadesEntregues = 0;
+
+//       if (cstIds.length > 0) {
+//         // Aulas registadas/confirmadas
+//         const [lessons] = await pool.query(
+//           `SELECT status FROM lessons WHERE class_subject_teacher_id IN (?)`,
+//           [cstIds]
+//         );
+//         aulasPrevistas = lessons.length > 0 ? lessons.length + 2 : 48; // Base real ou estimada
+//         aulasRealizadas = lessons.filter(l => l.status === 'CONFIRMADA' || l.status === 'CONFIRMADA_COM_RESSALVA' || l.status === 'REGISTADA').length;
+
+//         // Avaliações
+//         const [assessments] = await pool.query(
+//           `SELECT status FROM assessments WHERE class_subject_teacher_id IN (?)`,
+//           [cstIds]
+//         );
+//         avaliacoesTotal = assessments.length;
+//         avaliacoesDentroPrazo = assessments.filter(a => a.status === 'DENTRO_DO_PRAZO').length;
+
+//         // Pautas Finais
+//         const [gradeSheets] = await pool.query(
+//           `SELECT id FROM final_grade_sheets WHERE class_subject_teacher_id IN (?)`,
+//           [cstIds]
+//         );
+//         if (gradeSheets.length > 0) {
+//           pautaFinalEntregue = 'Entregue';
+//         }
+//       }
+
+//       // Tarefas Ad-Hoc atribuídas ao docente
+//       const [tasks] = await pool.query(
+//         `SELECT status FROM adhoc_tasks WHERE assigned_to = ?`,
+//         [teacher.id]
+//       );
+//       atividadesTotal = tasks.length;
+//       atividadesEntregues = tasks.filter(t => t.status === 'ENTREGUE' || t.status === 'VERIFICADA').length;
+
+//       // Cálculo dinâmico da percentagem de cumprimento
+//       let cumprimento = 100;
+//       if (aulasPrevistas > 0) {
+//         const aulaRatio = aulasRealizadas / aulasPrevistas;
+//         const avalRatio = avaliacoesTotal > 0 ? avaliacoesDentroPrazo / avaliacoesTotal : 1;
+//         const activRatio = atividadesTotal > 0 ? atividadesEntregues / atividadesTotal : 1;
+//         cumprimento = Math.round(((aulaRatio * 0.4) + (avalRatio * 0.4) + (activRatio * 0.2)) * 100);
+//       }
+
+//       let estado = 'Excelente';
+//       if (cumprimento < 75) estado = 'Atenção';
+//       else if (cumprimento < 90) estado = 'Bom';
+
+//       monitoringData.push({
+//         id: teacher.id,
+//         name: teacher.name,
+//         email: teacher.email,
+//         avatar: teacher.name ? teacher.name.substring(0, 2).toUpperCase() : 'DC',
+//         aulasPrevistas,
+//         aulasRealizadas,
+//         aulasPendentes: Math.max(0, aulasPrevistas - aulasRealizadas),
+//         avaliacoesTotal: Math.max(avaliacoesTotal, 1),
+//         avaliacoesDentroPrazo,
+//         avaliacoesForaPrazo: Math.max(0, avaliacoesTotal - avaliacoesDentroPrazo),
+//         pautaFinal: pautaFinalEntregue,
+//         actividadesTotal: Math.max(atividadesTotal, 1),
+//         // actividadesEntregues,
+//         actividadesAtrasadas: Math.max(0, atividadesTotal - atividadesEntregues),
+//         cumprimento,
+//         estado
+//       });
+//     }
+
+//     return res.status(200).json({ success: true, data: monitoringData });
+//   } catch (error) {
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+exports.getPedagogicalMonitoring = async (req, res) => {
+  try {
+    const [teachers] = await pool.query(`
+      SELECT u.id, u.name, u.email, u.created_at
+      FROM users u
+      INNER JOIN roles r ON u.role_id = r.id
+      WHERE r.name = 'DOCENTE'
+    `);
+
+    const monitoringData = [];
+
+    for (const teacher of teachers) {
+      const [cstRows] = await pool.query(
+        `SELECT id FROM class_subject_teachers WHERE teacher_id = ?`,
+        [teacher.id]
+      );
+      const cstIds = cstRows.map(row => row.id);
+
+      let aulasRealizadas = 0;
+      let aulasPrevistas = 0;
+      let avaliacoesTotal = 0;
+      let avaliacoesDentroPrazo = 0;
+      let pautaFinalEntregue = 'Pendente';
+      let atividadesTotal = 0;
+      let atividadesEntregues = 0;
+
+      if (cstIds.length > 0) {
+        const [lessons] = await pool.query(
+          `SELECT status FROM lessons WHERE class_subject_teacher_id IN (?)`,
+          [cstIds]
+        );
+        aulasPrevistas = lessons.length;
+        aulasRealizadas = lessons.filter(l => l.status === 'CONFIRMADA' || l.status === 'CONFIRMADA_COM_RESSALVA' || l.status === 'REGISTADA').length;
+
+        const [assessments] = await pool.query(
+          `SELECT status FROM assessments WHERE class_subject_teacher_id IN (?)`,
+          [cstIds]
+        );
+        avaliacoesTotal = assessments.length;
+        avaliacoesDentroPrazo = assessments.filter(a => a.status === 'DENTRO_DO_PRAZO').length;
+
+        const [gradeSheets] = await pool.query(
+          `SELECT id FROM final_grade_sheets WHERE class_subject_teacher_id IN (?)`,
+          [cstIds]
+        );
+        if (gradeSheets.length > 0) {
+          pautaFinalEntregue = 'Entregue';
+        }
+      }
+
+      const [tasks] = await pool.query(
+        `SELECT status FROM adhoc_tasks WHERE assigned_to = ?`,
+        [teacher.id]
+      );
+      atividadesTotal = tasks.length;
+      atividadesEntregues = tasks.filter(t => t.status === 'ENTREGUE' || t.status === 'VERIFICADA').length;
+
+      let cumprimento = 0;
+      const hasAnyMetric = aulasPrevistas > 0 || avaliacoesTotal > 0 || atividadesTotal > 0 || pautaFinalEntregue === 'Entregue';
+
+      if (hasAnyMetric) {
+        const aulaRatio = aulasPrevistas > 0 ? (aulasRealizadas / aulasPrevistas) : 0;
+        const avalRatio = avaliacoesTotal > 0 ? (avaliacoesDentroPrazo / avaliacoesTotal) : 0;
+        const activRatio = atividadesTotal > 0 ? (atividadesEntregues / atividadesTotal) : 0;
+        
+        cumprimento = Math.round(((aulaRatio * 0.4) + (avalRatio * 0.4) + (activRatio * 0.2)) * 100);
+      }
+
+      let estado = 'Pendente';
+      if (cumprimento >= 90) estado = 'Excelente';
+      else if (cumprimento >= 75) estado = 'Bom';
+      else if (cumprimento > 0) estado = 'Atenção';
+
+      monitoringData.push({
+        id: teacher.id,
+        name: teacher.name,
+        email: teacher.email,
+        avatar: teacher.name ? teacher.name.substring(0, 2).toUpperCase() : 'DC',
+        aulasPrevistas,
+        aulasRealizadas,
+        aulasPendentes: Math.max(0, aulasPrevistas - aulasRealizadas),
+        avaliacoesTotal,
+        avaliacoesDentroPrazo,
+        avaliacoesForaPrazo: Math.max(0, avaliacoesTotal - avaliacoesDentroPrazo),
+        pautaFinal: pautaFinalEntregue,
+        // Inclui ambas as variantes para prevenir erros em qualquer componente
+        actividadesTotal: atividadesTotal,
+        actividadesEntregues: atividadesEntregues,
+        actividadesAtrasadas: Math.max(0, atividadesTotal - atividadesEntregues),
+        atividadesTotal: atividadesTotal,
+        atividadesEntregues: atividadesEntregues,
+        atividadesAtrasadas: Math.max(0, atividadesTotal - atividadesEntregues),
+        cumprimento,
+        estado
+      });
+    }
+
+    return res.status(200).json({ success: true, data: monitoringData });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};

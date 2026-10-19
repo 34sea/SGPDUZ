@@ -242,19 +242,19 @@ const AppMenu = () => {
             icon: 'pi pi-fw pi-cog',
             items: [
 
-                
 
+               
                 {
                     label: 'Departamentos',
                     icon: 'pi pi-fw pi-building',
                     to: '/pages/departmentCourse'
                 },
 
-                {
-                    label: 'Cursos',
-                    icon: 'pi pi-fw pi-graduation-cap',
-                    to: '/pages/admin/courses'
-                },
+                // {
+                //     label: 'Cursos',
+                //     icon: 'pi pi-fw pi-graduation-cap',
+                //     to: '/pages/admin/courses'
+                // },
 
                 {
                     label: 'Unidades Curriculares',
@@ -266,6 +266,18 @@ const AppMenu = () => {
                     label: 'Aulas',
                     icon: 'pi pi-fw pi-users',
                     to: '/pages/classesValidation'
+                },
+
+                {
+                    label: 'Pautas',
+                    icon: 'pi pi-fw pi-users',
+                    to: '/pages/avaliacoesPautas'
+                },
+
+                 {
+                    label: 'Actividades',
+                    icon: 'pi pi-fw pi-building',
+                    to: '/pages/activitiesPedagogicalMonitoring'
                 },
 
                 {
