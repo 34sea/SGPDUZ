@@ -23,7 +23,7 @@ api.interceptors.request.use((config) => {
         if (data) {
             const userData = JSON.parse(data);
 
-            const token = userData?.data?.token;
+            const token = userData?.token;
 
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;

@@ -616,8 +616,8 @@ const LoginPage = () => {
     const { authenticate, loading, error } = useAuth();
     const router = useRouter();
 
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('admin@sgpduz.local');
+    const [password, setPassword] = useState('admin123');
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

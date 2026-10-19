@@ -26,7 +26,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/roles', roleRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/academic', academicRoutes); 
+app.use('/api', academicRoutes); 
 app.use('/api', planningRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/assessments', assessmentRoutes);
