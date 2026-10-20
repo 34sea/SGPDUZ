@@ -1,12 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
-
 import Link from 'next/link';
 import { classNames } from 'primereact/utils';
-import React, { forwardRef, useContext, useImperativeHandle, useRef } from 'react';
+import React, { forwardRef, useContext, useImperativeHandle, useRef, useState, useEffect } from 'react';
 import { AppTopbarRef } from '@/types';
 import { LayoutContext } from './context/layoutcontext';
 import { useRouter } from 'next/navigation';
-
 
 const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     const { layoutConfig, layoutState, onMenuToggle, showProfileSidebar } = useContext(LayoutContext);
@@ -14,262 +11,248 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     const topbarmenuRef = useRef(null);
     const topbarmenubuttonRef = useRef(null);
 
+    // Estado para armazenar os dados do utilizador logado
+    const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem("user-dashboard-SGPD");
+        if (storedUser) {
+            try {
+                const parsedData = JSON.parse(storedUser);
+                // Valida se os dados vêm dentro de 'data' (conforme a estrutura do JSON fornecido)
+                const userData = parsedData.data || parsedData;
+                setUser({
+                    name: userData.name || "Utilizador",
+                    email: userData.email || ""
+                });
+            } catch (error) {
+                console.error("Erro ao analisar dados do utilizador do localStorage", error);
+            }
+        }
+    }, []);
+
+    // Função para gerar as iniciais do avatar com base no nome (ex: "Administrador do Sistema" -> "AS")
+    const getInitials = (name: string) => {
+        if (!name) return "US";
+        const parts = name.trim().split(" ");
+        if (parts.length >= 2) {
+            return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    };
+
     useImperativeHandle(ref, () => ({
         menubutton: menubuttonRef.current,
         topbarmenu: topbarmenuRef.current,
         topbarmenubutton: topbarmenubuttonRef.current
     }));
+
     const router = useRouter();
     const handleLogout = () => {
         localStorage.removeItem("user-dashboard-SGPD");
-
+        localStorage.removeItem("token-dashboard-SGPD");
         router.push('/');
     };
 
-    // return (
-    //     <div className="layout-topbar">
-    //         {/* <Link href="/" className="layout-topbar-logo">
-    //             <img src={`/layout/images/logo-${layoutConfig.colorScheme !== 'light' ? 'white' : 'dark'}.svg`} width="47.22px" height={'35px'} alt="logo" />
-    //             <span>SAKAI</span>
-    //         </Link> */}
+    const userName = user?.name || "Carregando...";
+    const userEmail = user?.email || "";
+    const userInitials = getInitials(userName);
 
-    //         <Link href="/" className="layout-topbar-logo">
-    //             {/* <img src={`/layout/images/logo-${layoutConfig.colorScheme !== 'light' ? 'white' : 'dark'}.svg`} width="47.22px" height={'35px'} alt="logo" /> */}
-    //             <span>SGPD</span>
-    //         </Link>
+    return (
+        <div className="layout-topbar">
 
-    //         <button ref={menubuttonRef} type="button" className="p-link layout-menu-button layout-topbar-button" onClick={onMenuToggle}>
-    //             <i className="pi pi-bars" />
-    //         </button>
+            {/* =========================================
+                MARCA
+            ========================================================= */}
 
-    //         <button ref={topbarmenubuttonRef} type="button" className="p-link layout-topbar-menu-button layout-topbar-button" onClick={showProfileSidebar}>
-    //             <i className="pi pi-ellipsis-v" />
-    //         </button>
-
-    //         <div
-    //             ref={topbarmenuRef}
-    //             className={classNames('layout-topbar-menu', {
-    //                 'layout-topbar-menu-mobile-active':
-    //                     layoutState.profileSidebarVisible
-    //             })}
-    //         >
-    //             <button
-    //                 type="button"
-    //                 className="p-link layout-topbar-button"
-    //             >
-    //                 <i className="pi pi-user"></i>
-    //                 <span>Profile</span>
-    //             </button>
-
-    //             <button
-    //                 type="button"
-    //                 className="p-link layout-topbar-button"
-    //                 onClick={handleLogout}
-    //             >
-    //                 <i className="pi pi-sign-out"></i>
-    //                 <span>Logout</span>
-    //             </button>
-    //         </div>
-    //     </div>
-    // );
-
-return (
-    <div className="layout-topbar">
-
-        {/* =========================================
-            MARCA
-        ========================================= */}
-
-        <Link href="/" className="layout-topbar-logo">
-
-            <div className="layout-topbar-logo-icon">
-                <i className="pi pi-book" />
-            </div>
-
-            <div className="layout-topbar-brand">
-                <span className="layout-topbar-title">
-                    SGPD
-                </span>
-
-                <span className="layout-topbar-subtitle">
-                    Gestão Pedagógica Digital
-                </span>
-            </div>
-
-        </Link>
-
-
-        {/* =========================================
-            BOTÃO MENU
-        ========================================= */}
-
-        <button
-            ref={menubuttonRef}
-            type="button"
-            className="p-link layout-menu-button layout-topbar-button"
-            onClick={onMenuToggle}
-            aria-label="Abrir menu"
-        >
-            <i className="pi pi-bars" />
-        </button>
-
-
-        {/* =========================================
-            ÁREA DIREITA
-        ========================================= */}
-
-        <div className="layout-topbar-actions">
-
-            {/* Notificações */}
-
-            <button
-                type="button"
-                className="p-link layout-topbar-button layout-notification-button"
-                aria-label="Notificações"
-            >
-                <i className="pi pi-bell" />
-
-                <span className="notification-badge">
-                    3
-                </span>
-            </button>
-
-
-            {/* Separador */}
-
-            <div className="layout-topbar-divider" />
-
-
-            {/* =====================================
-                UTILIZADOR
-            ===================================== */}
-
-            <button
-                type="button"
-                className="p-link layout-user-profile"
-                onClick={showProfileSidebar}
-            >
-
-                {/* Avatar */}
-
-                <div className="layout-user-avatar">
-                    <span>FD</span>
+            <Link href="/" className="layout-topbar-logo">
+                <div className="layout-topbar-logo-icon">
+                    <i className="pi pi-book" />
                 </div>
 
-
-                {/* Informação */}
-
-                <div className="layout-user-info">
-
-                    <span className="layout-user-name">
-                        Francisco Domingos
+                <div className="layout-topbar-brand">
+                    <span className="layout-topbar-title">
+                        SGPD
                     </span>
 
-                    <span className="layout-user-email">
-                        francisco@uz.ac.mz
+                    <span className="layout-topbar-subtitle">
+                        Gestão Pedagógica Digital
                     </span>
-
                 </div>
+            </Link>
 
 
-                {/* Seta */}
-
-                <i className="pi pi-chevron-down layout-user-chevron" />
-
-            </button>
-
-
-            {/* =====================================
-                MENU MOBILE
-            ===================================== */}
+            {/* =========================================
+                BOTÃO MENU
+            ========================================================= */}
 
             <button
-                ref={topbarmenubuttonRef}
+                ref={menubuttonRef}
                 type="button"
-                className="p-link layout-topbar-menu-button layout-topbar-button"
-                onClick={showProfileSidebar}
-                aria-label="Abrir menu do utilizador"
+                className="p-link layout-menu-button layout-topbar-button"
+                onClick={onMenuToggle}
+                aria-label="Abrir menu"
             >
-                <i className="pi pi-ellipsis-v" />
+                <i className="pi pi-bars" />
             </button>
 
-        </div>
+
+            {/* =========================================
+                ÁREA DIREITA
+            ========================================================= */}
+
+            <div className="layout-topbar-actions">
+
+                {/* Notificações */}
+
+                {/* <button
+                    type="button"
+                    className="p-link layout-topbar-button layout-notification-button"
+                    aria-label="Notificações"
+                >
+                    <i className="pi pi-bell" />
+
+                    <span className="notification-badge">
+                        3
+                    </span>
+                </button> */}
 
 
-        {/* =========================================
-            MENU DO UTILIZADOR
-        ========================================= */}
+                {/* Separador */}
 
-        <div
-            ref={topbarmenuRef}
-            className={classNames('layout-topbar-menu', {
-                'layout-topbar-menu-mobile-active':
-                    layoutState.profileSidebarVisible
-            })}
-        >
+                <div className="layout-topbar-divider" />
 
-            <div className="layout-mobile-user">
 
-                <div className="layout-user-avatar">
-                    <span>MM</span>
-                </div>
+                {/* =====================================
+                    UTILIZADOR
+                ===================================== */}
 
-                <div>
-                    <div className="layout-user-name">
-                        Martinho Macovere
+                <button
+                    type="button"
+                    className="p-link layout-user-profile"
+                    onClick={showProfileSidebar}
+                >
+
+                    {/* Avatar */}
+
+                    <div className="layout-user-avatar">
+                        <span>{userInitials}</span>
                     </div>
 
-                    <div className="layout-user-email">
-                        martinho@universidade.ac.mz
+
+                    {/* Informação */}
+
+                    <div className="layout-user-info">
+
+                        <span className="layout-user-name">
+                            {userName}
+                        </span>
+
+                        <span className="layout-user-email">
+                            {userEmail}
+                        </span>
+
                     </div>
-                </div>
+
+
+                    {/* Seta */}
+
+                    <i className="pi pi-chevron-down layout-user-chevron" />
+
+                </button>
+
+
+                {/* =====================================
+                    MENU MOBILE
+                ===================================== */}
+
+                <button
+                    ref={topbarmenubuttonRef}
+                    type="button"
+                    className="p-link layout-topbar-menu-button layout-topbar-button"
+                    onClick={showProfileSidebar}
+                    aria-label="Abrir menu do utilizador"
+                >
+                    <i className="pi pi-ellipsis-v" />
+                </button>
 
             </div>
 
 
-            <div className="layout-profile-divider" />
+            {/* =========================================
+                MENU DO UTILIZADOR
+            ========================================================= */}
 
-
-            <button
-                type="button"
-                className="p-link layout-topbar-menu-item"
+            <div
+                ref={topbarmenuRef}
+                className={classNames('layout-topbar-menu', {
+                    'layout-topbar-menu-mobile-active':
+                        layoutState.profileSidebarVisible
+                })}
             >
-                <i className="pi pi-user" />
 
-                <span>
-                    Meu perfil
-                </span>
-            </button>
+                <div className="layout-mobile-user">
+
+                    <div className="layout-user-avatar">
+                        <span>{userInitials}</span>
+                    </div>
+
+                    <div>
+                        <div className="layout-user-name">
+                            {userName}
+                        </div>
+
+                        <div className="layout-user-email">
+                            {userEmail}
+                        </div>
+                    </div>
+
+                </div>
 
 
-            <button
-                type="button"
-                className="p-link layout-topbar-menu-item"
-            >
-                <i className="pi pi-cog" />
-
-                <span>
-                    Definições
-                </span>
-            </button>
+                <div className="layout-profile-divider" />
 
 
-            <button
-                type="button"
-                className="p-link layout-topbar-menu-item logout"
-                onClick={handleLogout}
-            >
-                <i className="pi pi-sign-out" />
+                {/* <button
+                    type="button"
+                    className="p-link layout-topbar-menu-item"
+                >
+                    <i className="pi pi-user" />
 
-                <span>
-                    Terminar sessão
-                </span>
-            </button>
+                    <span>
+                        Meu perfil
+                    </span>
+                </button>
+
+
+                <button
+                    type="button"
+                    className="p-link layout-topbar-menu-item"
+                >
+                    <i className="pi pi-cog" />
+
+                    <span>
+                        Definições
+                    </span>
+                </button> */}
+
+
+                <button
+                    type="button"
+                    className="p-link layout-topbar-menu-item logout"
+                    onClick={handleLogout}
+                >
+                    <i className="pi pi-sign-out" />
+
+                    <span>
+                        Terminar sessão
+                    </span>
+                </button>
+
+            </div>
 
         </div>
-
-    </div>
-);
+    );
 
 });
 

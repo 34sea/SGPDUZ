@@ -1,351 +1,357 @@
 // /* eslint-disable @next/next/no-img-element */
 
-'use client';
+// 'use client';
 
-import { AppMenuItem } from '@/types';
-import AppMenuitem from './AppMenuitem';
-import { MenuProvider } from './context/menucontext';
+// import { AppMenuItem } from '@/types';
+// import AppMenuitem from './AppMenuitem';
+// import { MenuProvider } from './context/menucontext';
 
-const AppMenu = () => {
+// const AppMenu = () => {
 
-    const model: AppMenuItem[] = [
+//     const model: AppMenuItem[] = [
 
-        // =========================================================
-        // DASHBOARD
-        // =========================================================
-        {
-            label: 'Dashboard',
-            items: [
-                {
-                    label: 'Visão Geral',
-                    icon: 'pi pi-fw pi-home',
-                    to: '/dash'
-                }
-            ]
-        },
-
-
-        // =========================================================
-        // GESTÃO PEDAGÓGICA
-        // =========================================================
-        {
-            label: 'Gestão Pedagógica',
-            icon: 'pi pi-fw pi-book',
-            items: [
-
-                {
-                    label: 'Plano Analítico',
-                    icon: 'pi pi-fw pi-book',
-                    items: [
-                        {
-                            label: 'Planos',
-                            icon: 'pi pi-fw pi-list',
-                            to: '/pages/pedagogical/analytical-plan/list'
-                        },
-                        {
-                            label: 'Novo Plano',
-                            icon: 'pi pi-fw pi-plus',
-                            to: '/pages/pedagogical/analytical-plan/new'
-                        }
-                    ]
-                },
-
-                {
-                    label: 'Dosificação Semanal',
-                    icon: 'pi pi-fw pi-calendar',
-                    items: [
-                        {
-                            label: 'Dosificações',
-                            icon: 'pi pi-fw pi-list',
-                            to: '/pages/pedagogical/dosification/list'
-                        },
-                        {
-                            label: 'Nova Dosificação',
-                            icon: 'pi pi-fw pi-plus',
-                            to: '/pages/pedagogical/dosification/new'
-                        }
-                    ]
-                },
-
-                {
-                    label: 'Aulas',
-                    icon: 'pi pi-fw pi-calendar-plus',
-                    items: [
-                        {
-                            label: 'Mapa Semanal',
-                            icon: 'pi pi-fw pi-table',
-                            to: '/pages/pedagogical/classes/map'
-                        },
-                        {
-                            label: 'Registar Aula',
-                            icon: 'pi pi-fw pi-plus-circle',
-                            to: '/pages/pedagogical/classes/new'
-                        },
-                        {
-                            label: 'Validação de Aulas',
-                            icon: 'pi pi-fw pi-check-square',
-                            to: '/pages/pedagogical/classes/validation'
-                        }
-                    ]
-                },
-
-                {
-                    label: 'Avaliações',
-                    icon: 'pi pi-fw pi-file-edit',
-                    items: [
-                        {
-                            label: 'Avaliações',
-                            icon: 'pi pi-fw pi-list',
-                            to: '/pages/pedagogical/evaluations/list'
-                        },
-                        {
-                            label: 'Nova Avaliação',
-                            icon: 'pi pi-fw pi-plus',
-                            to: '/pages/pedagogical/evaluations/new'
-                        },
-                        {
-                            label: 'Controlo de Prazos',
-                            icon: 'pi pi-fw pi-clock',
-                            to: '/pages/pedagogical/evaluations/deadlines'
-                        }
-                    ]
-                }
-
-            ]
-        },
+//         // =========================================================
+//         // DASHBOARD
+//         // =========================================================
+//         {
+//             label: 'Dashboard',
+//             items: [
+//                 {
+//                     label: 'Visão Geral',
+//                     icon: 'pi pi-fw pi-home',
+//                     to: '/dash'
+//                 }
+//             ]
+//         },
 
 
-        // =========================================================
-        // PAUTAS
-        // =========================================================
-        {
-            label: 'Pautas',
-            icon: 'pi pi-fw pi-file',
-            items: [
+//         // =========================================================
+//         // GESTÃO PEDAGÓGICA
+//         // =========================================================
+//         {
+//             label: 'Gestão Pedagógica',
+//             icon: 'pi pi-fw pi-book',
+//             items: [
 
-                {
-                    label: 'Pautas Finais',
-                    icon: 'pi pi-fw pi-list',
-                    to: '/pages/grades/list'
-                },
+//                 {
+//                     label: 'Plano Analítico',
+//                     icon: 'pi pi-fw pi-book',
+//                     items: [
+//                         {
+//                             label: 'Planos',
+//                             icon: 'pi pi-fw pi-list',
+//                             to: '/pages/pedagogical/analytical-plan/list'
+//                         },
+//                         {
+//                             label: 'Novo Plano',
+//                             icon: 'pi pi-fw pi-plus',
+//                             to: '/pages/pedagogical/analytical-plan/new'
+//                         }
+//                     ]
+//                 },
 
-                {
-                    label: 'Digitalizar Pauta',
-                    icon: 'pi pi-fw pi-camera',
-                    to: '/pages/grades/scan'
-                },
+//                 {
+//                     label: 'Dosificação Semanal',
+//                     icon: 'pi pi-fw pi-calendar',
+//                     items: [
+//                         {
+//                             label: 'Dosificações',
+//                             icon: 'pi pi-fw pi-list',
+//                             to: '/pages/pedagogical/dosification/list'
+//                         },
+//                         {
+//                             label: 'Nova Dosificação',
+//                             icon: 'pi pi-fw pi-plus',
+//                             to: '/pages/pedagogical/dosification/new'
+//                         }
+//                     ]
+//                 },
 
-                {
-                    label: 'Arquivo',
-                    icon: 'pi pi-fw pi-folder-open',
-                    to: '/pages/grades/archive'
-                }
+//                 {
+//                     label: 'Aulas',
+//                     icon: 'pi pi-fw pi-calendar-plus',
+//                     items: [
+//                         {
+//                             label: 'Mapa Semanal',
+//                             icon: 'pi pi-fw pi-table',
+//                             to: '/pages/pedagogical/classes/map'
+//                         },
+//                         {
+//                             label: 'Registar Aula',
+//                             icon: 'pi pi-fw pi-plus-circle',
+//                             to: '/pages/pedagogical/classes/new'
+//                         },
+//                         {
+//                             label: 'Validação de Aulas',
+//                             icon: 'pi pi-fw pi-check-square',
+//                             to: '/pages/pedagogical/classes/validation'
+//                         }
+//                     ]
+//                 },
 
-            ]
-        },
+//                 {
+//                     label: 'Avaliações',
+//                     icon: 'pi pi-fw pi-file-edit',
+//                     items: [
+//                         {
+//                             label: 'Avaliações',
+//                             icon: 'pi pi-fw pi-list',
+//                             to: '/pages/pedagogical/evaluations/list'
+//                         },
+//                         {
+//                             label: 'Nova Avaliação',
+//                             icon: 'pi pi-fw pi-plus',
+//                             to: '/pages/pedagogical/evaluations/new'
+//                         },
+//                         {
+//                             label: 'Controlo de Prazos',
+//                             icon: 'pi pi-fw pi-clock',
+//                             to: '/pages/pedagogical/evaluations/deadlines'
+//                         }
+//                     ]
+//                 }
 
-
-        // =========================================================
-        // ACTIVIDADES
-        // =========================================================
-        {
-            label: 'Actividades',
-            icon: 'pi pi-fw pi-check-square',
-            items: [
-
-                {
-                    label: 'Minhas Actividades',
-                    icon: 'pi pi-fw pi-list',
-                    to: '/pages/activities/my'
-                },
-
-                {
-                    label: 'Atribuir Actividade',
-                    icon: 'pi pi-fw pi-plus',
-                    to: '/pages/activities/new'
-                },
-
-                {
-                    label: 'Verificar Actividades',
-                    icon: 'pi pi-fw pi-check',
-                    to: '/pages/activities/verification'
-                }
-
-            ]
-        },
-
-
-        // =========================================================
-        // ACOMPANHAMENTO
-        // =========================================================
-        {
-            label: 'Acompanhamento',
-            icon: 'pi pi-fw pi-chart-line',
-            items: [
-
-                {
-                    label: 'Acompanhamento Pedagógico',
-                    icon: 'pi pi-fw pi-chart-bar',
-                    to: '/pages/monitoring/pedagogical'
-                },
-
-                {
-                    label: 'Docentes',
-                    icon: 'pi pi-fw pi-users',
-                    to: '/pages/monitoring/teachers'
-                },
-
-                {
-                    label: 'Unidades Curriculares',
-                    icon: 'pi pi-fw pi-book',
-                    to: '/pages/monitoring/courses'
-                }
-
-            ]
-        },
-
-        // =========================================================
-        // CALENDÁRIO ACADÉMICO
-        // =========================================================
-        {
-            label: 'Calendário Académico',
-            icon: 'pi pi-fw pi-calendar',
-            items: [
-
-                {
-                    label: 'Calendário',
-                    icon: 'pi pi-fw pi-calendar',
-                    to: '/pages/calendar'
-                },
-
-                {
-                    label: 'Feriados',
-                    icon: 'pi pi-fw pi-calendar-times',
-                    to: '/pages/calendar/holidays'
-                },
-
-                {
-                    label: 'Períodos Lectivos',
-                    icon: 'pi pi-fw pi-clock',
-                    to: '/pages/calendar/periods'
-                }
-
-            ]
-        },
+//             ]
+//         },
 
 
-        // =========================================================
-        // ADMINISTRAÇÃO
-        // =========================================================
-        {
-            label: 'Administração',
-            icon: 'pi pi-fw pi-cog',
-            items: [
+//         // =========================================================
+//         // PAUTAS
+//         // =========================================================
+//         {
+//             label: 'Pautas',
+//             icon: 'pi pi-fw pi-file',
+//             items: [
+
+//                 {
+//                     label: 'Pautas Finais',
+//                     icon: 'pi pi-fw pi-list',
+//                     to: '/pages/grades/list'
+//                 },
+
+//                 {
+//                     label: 'Digitalizar Pauta',
+//                     icon: 'pi pi-fw pi-camera',
+//                     to: '/pages/grades/scan'
+//                 },
+
+//                 {
+//                     label: 'Arquivo',
+//                     icon: 'pi pi-fw pi-folder-open',
+//                     to: '/pages/grades/archive'
+//                 }
+
+//             ]
+//         },
 
 
-               
-                {
-                    label: 'Departamentos',
-                    icon: 'pi pi-fw pi-building',
-                    to: '/pages/departmentCourse'
-                },
+//         // =========================================================
+//         // ACTIVIDADES
+//         // =========================================================
+//         {
+//             label: 'Actividades',
+//             icon: 'pi pi-fw pi-check-square',
+//             items: [
 
-                // {
-                //     label: 'Cursos',
-                //     icon: 'pi pi-fw pi-graduation-cap',
-                //     to: '/pages/admin/courses'
-                // },
+//                 {
+//                     label: 'Minhas Actividades',
+//                     icon: 'pi pi-fw pi-list',
+//                     to: '/pages/activities/my'
+//                 },
 
-                {
-                    label: 'Unidades Curriculares',
-                    icon: 'pi pi-fw pi-book',
-                    to: '/pages/pedagogical'
-                },
+//                 {
+//                     label: 'Atribuir Actividade',
+//                     icon: 'pi pi-fw pi-plus',
+//                     to: '/pages/activities/new'
+//                 },
 
-                {
-                    label: 'Aulas',
-                    icon: 'pi pi-fw pi-users',
-                    to: '/pages/classesValidation'
-                },
+//                 {
+//                     label: 'Verificar Actividades',
+//                     icon: 'pi pi-fw pi-check',
+//                     to: '/pages/activities/verification'
+//                 }
 
-                {
-                    label: 'Pautas',
-                    icon: 'pi pi-fw pi-users',
-                    to: '/pages/avaliacoesPautas'
-                },
+//             ]
+//         },
 
-                 {
-                    label: 'Actividades',
-                    icon: 'pi pi-fw pi-building',
-                    to: '/pages/activitiesPedagogicalMonitoring'
-                },
 
-                {
-                    label: 'Utilizadores',
-                    icon: 'pi pi-fw pi-users',
-                    items: [
-                        {
-                            label: 'Lista',
-                            icon: 'pi pi-fw pi-list',
-                            to: '/pages/users/sgpuz/users'
-                        }
-                    ]
-                },
+//         // =========================================================
+//         // ACOMPANHAMENTO
+//         // =========================================================
+//         {
+//             label: 'Acompanhamento',
+//             icon: 'pi pi-fw pi-chart-line',
+//             items: [
 
-                {
-                    label: 'Perfis e Permissões',
-                    icon: 'pi pi-fw pi-shield',
-                    items: [
-                        {
-                            label: 'Perfis',
-                            icon: 'pi pi-fw pi-id-card',
-                            to: '/pages/users/sgpuz/profiles'
-                        },
-                        {
-                            label: 'Permissões',
-                            icon: 'pi pi-fw pi-key',
-                            to: '/pages/users/sgpuz/permitions'
-                        }
-                    ]
-                },
+//                 {
+//                     label: 'Acompanhamento Pedagógico',
+//                     icon: 'pi pi-fw pi-chart-bar',
+//                     to: '/pages/monitoring/pedagogical'
+//                 },
 
-            ]
-        },
+//                 {
+//                     label: 'Docentes',
+//                     icon: 'pi pi-fw pi-users',
+//                     to: '/pages/monitoring/teachers'
+//                 },
 
-    ];
+//                 {
+//                     label: 'Unidades Curriculares',
+//                     icon: 'pi pi-fw pi-book',
+//                     to: '/pages/monitoring/courses'
+//                 }
 
-    return (
-        <MenuProvider>
+//             ]
+//         },
 
-            <ul className="layout-menu">
+//         // =========================================================
+//         // CALENDÁRIO ACADÉMICO
+//         // =========================================================
+//         {
+//             label: 'Calendário Académico',
+//             icon: 'pi pi-fw pi-calendar',
+//             items: [
 
-                {model.map((item, i) => {
+//                 {
+//                     label: 'Calendário',
+//                     icon: 'pi pi-fw pi-calendar',
+//                     to: '/pages/calendar'
+//                 },
 
-                    return !item?.seperator
-                        ? (
-                            <AppMenuitem
-                                item={item}
-                                root={true}
-                                index={i}
-                                key={item.label}
-                            />
-                        )
-                        : (
-                            <li
-                                className="menu-separator"
-                                key={`separator-${i}`}
-                            />
-                        );
+//                 {
+//                     label: 'Feriados',
+//                     icon: 'pi pi-fw pi-calendar-times',
+//                     to: '/pages/calendar/holidays'
+//                 },
 
-                })}
+//                 {
+//                     label: 'Períodos Lectivos',
+//                     icon: 'pi pi-fw pi-clock',
+//                     to: '/pages/calendar/periods'
+//                 }
 
-            </ul>
+//             ]
+//         },
 
-        </MenuProvider>
-    );
-};
 
-export default AppMenu;
+//         // =========================================================
+//         // ADMINISTRAÇÃO
+//         // =========================================================
+//         {
+//             label: 'Administração',
+//             icon: 'pi pi-fw pi-cog',
+//             items: [
+
+
+
+//                 {
+//                     label: 'Departamentos',
+//                     icon: 'pi pi-fw pi-building',
+//                     to: '/pages/departmentCourse'
+//                 },
+
+//                 // {
+//                 //     label: 'Cursos',
+//                 //     icon: 'pi pi-fw pi-graduation-cap',
+//                 //     to: '/pages/admin/courses'
+//                 // },
+
+//                 {
+//                     label: 'Unidades Curriculares',
+//                     icon: 'pi pi-fw pi-book',
+//                     to: '/pages/pedagogical'
+//                 },
+
+//                 {
+//                     label: 'Aulas',
+//                     icon: 'pi pi-fw pi-users',
+//                     to: '/pages/classesValidation'
+//                 },
+
+//                 {
+//                     label: 'Pautas',
+//                     icon: 'pi pi-fw pi-users',
+//                     to: '/pages/avaliacoesPautas'
+//                 },
+
+//                  {
+//                     label: 'Actividades',
+//                     icon: 'pi pi-fw pi-building',
+//                     to: '/pages/activitiesPedagogicalMonitoring'
+//                 },
+
+//                  {
+//                     label: 'Calendário',
+//                     icon: 'pi pi-fw pi-building',
+//                     to: '/pages/AcademicCalendarManagement'
+//                 },
+
+//                 {
+//                     label: 'Utilizadores',
+//                     icon: 'pi pi-fw pi-users',
+//                     items: [
+//                         {
+//                             label: 'Lista',
+//                             icon: 'pi pi-fw pi-list',
+//                             to: '/pages/users/sgpuz/users'
+//                         }
+//                     ]
+//                 },
+
+//                 {
+//                     label: 'Perfis e Permissões',
+//                     icon: 'pi pi-fw pi-shield',
+//                     items: [
+//                         {
+//                             label: 'Perfis',
+//                             icon: 'pi pi-fw pi-id-card',
+//                             to: '/pages/users/sgpuz/profiles'
+//                         },
+//                         {
+//                             label: 'Permissões',
+//                             icon: 'pi pi-fw pi-key',
+//                             to: '/pages/users/sgpuz/permitions'
+//                         }
+//                     ]
+//                 },
+
+//             ]
+//         },
+
+//     ];
+
+//     return (
+//         <MenuProvider>
+
+//             <ul className="layout-menu">
+
+//                 {model.map((item, i) => {
+
+//                     return !item?.seperator
+//                         ? (
+//                             <AppMenuitem
+//                                 item={item}
+//                                 root={true}
+//                                 index={i}
+//                                 key={item.label}
+//                             />
+//                         )
+//                         : (
+//                             <li
+//                                 className="menu-separator"
+//                                 key={`separator-${i}`}
+//                             />
+//                         );
+
+//                 })}
+
+//             </ul>
+
+//         </MenuProvider>
+//     );
+// };
+
+// export default AppMenu;
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -1237,3 +1243,385 @@ export default AppMenu;
 // };
 
 // export default AppMenu;
+
+
+'use client';
+
+import { AppMenuItem } from '@/types';
+import AppMenuitem from './AppMenuitem';
+import { MenuProvider } from './context/menucontext';
+import { useEffect, useMemo, useState } from 'react';
+import { getUserFromStorage } from '@/app/api/auth/authService';
+
+interface AppMenuItemWithRoles extends AppMenuItem {
+    roles?: string[];
+    items?: AppMenuItemWithRoles[];
+}
+
+/**
+ * =========================================================
+ * MENU PRINCIPAL COM ROLES
+ * =========================================================
+ */
+const model: AppMenuItemWithRoles[] = [
+    // =========================================================
+    // DASHBOARD
+    // =========================================================
+    {
+        label: 'Dashboard',
+        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE', 'CHEFE_TURMA', 'SUBCHEFE_TURMA'],
+        items: [
+            {
+                label: 'Visão Geral',
+                icon: 'pi pi-fw pi-home',
+                to: '/dash',
+                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE', 'CHEFE_TURMA', 'SUBCHEFE_TURMA']
+            }
+        ]
+    },
+
+    // =========================================================
+    // GESTÃO PEDAGÓGICA
+    // =========================================================
+    {
+        label: 'Gestão Pedagógica',
+        icon: 'pi pi-fw pi-book',
+        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE', 'CHEFE_TURMA', 'SUBCHEFE_TURMA'],
+        items: [
+            {
+                label: 'Plano Analítico',
+                icon: 'pi pi-fw pi-book',
+                roles: ['CHEFE_CURSO', 'DOCENTE'],
+                items: [
+                    {
+                        label: 'Planos',
+                        icon: 'pi pi-fw pi-list',
+                        to: '/pages/pedagogical/analytical-plan/list',
+                        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
+                    }
+                ]
+            },
+
+            {
+                label: 'Dosificação Semanal',
+                icon: 'pi pi-fw pi-calendar',
+                roles: ['CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE'],
+                items: [
+                    {
+                        label: 'Dosificações',
+                        icon: 'pi pi-fw pi-list',
+                        to: '/pages/pedagogical/dosification/list',
+                        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
+                    }
+                ]
+            },
+
+            {
+                label: 'Aulas',
+                icon: 'pi pi-fw pi-calendar-plus',
+                roles: ['DOCENTE'],
+                items: [
+                    {
+                        label: 'Mapa Semanal',
+                        icon: 'pi pi-fw pi-table',
+                        to: '/pages/pedagogical/classes/map',
+                        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE', 'CHEFE_TURMA', 'SUBCHEFE_TURMA']
+                    },
+                    {
+                        label: 'Validação de Aulas',
+                        icon: 'pi pi-fw pi-check-square',
+                        to: '/pages/pedagogical/classes/validation',
+                        roles: ['CHEFE_TURMA', 'SUBCHEFE_TURMA', 'ADMIN', 'CHEFE_CURSO']
+                    }
+                ]
+            },
+
+            {
+                label: 'Avaliações',
+                icon: 'pi pi-fw pi-file-edit',
+                roles: ['DOCENTE'],
+                items: [
+                    {
+                        label: 'Avaliações',
+                        icon: 'pi pi-fw pi-list',
+                        to: '/pages/pedagogical/evaluations/list',
+                        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
+                    },
+                ]
+            }
+        ]
+    },
+
+    // =========================================================
+    // PAUTAS
+    // =========================================================
+    {
+        label: 'Pautas',
+        icon: 'pi pi-fw pi-file',
+        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE'],
+        items: [
+            {
+                label: 'Pautas Finais',
+                icon: 'pi pi-fw pi-list',
+                to: '/pages/grades/list',
+                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
+            },
+            {
+                label: 'Pauta públicas',
+                icon: 'pi pi-fw pi-camera',
+                to: '/pages/grades/scan',
+                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
+            }
+        ]
+    },
+
+    // =========================================================
+    // ACTIVIDADES
+    // =========================================================
+    {
+        label: 'Actividades',
+        icon: 'pi pi-fw pi-check-square',
+        roles: ['DOCENTE'],
+        items: [
+            {
+                label: 'Minhas Actividades',
+                icon: 'pi pi-fw pi-list',
+                to: '/pages/activities/my',
+                roles: ['DOCENTE', 'ADMIN']
+            }
+        ]
+    },
+
+    // =========================================================
+    // ACOMPANHAMENTO
+    // =========================================================
+    {
+        label: 'Acompanhamento',
+        icon: 'pi pi-fw pi-chart-line',
+        roles: ['DOCENTE'],
+        items: [
+            // {
+            //     label: 'Acompanhamento Pedagógico',
+            //     icon: 'pi pi-fw pi-chart-bar',
+            //     to: '/pages/monitoring/pedagogical',
+            //     roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO']
+            // },
+            {
+                label: 'Docentes',
+                icon: 'pi pi-fw pi-users',
+                to: '/pages/monitoring/teachers',
+                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO']
+            },
+            // {
+            //     label: 'Unidades Curriculares',
+            //     icon: 'pi pi-fw pi-book',
+            //     to: '/pages/monitoring/courses',
+            //     roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO']
+            // }
+        ]
+    },
+
+    // =========================================================
+    // CALENDÁRIO ACADÉMICO
+    // =========================================================
+    {
+        label: 'Calendário Académico',
+        icon: 'pi pi-fw pi-calendar',
+        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE'],
+        items: [
+            {
+                label: 'Calendário',
+                icon: 'pi pi-fw pi-calendar',
+                to: '/pages/calendar',
+                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
+            },
+            {
+                label: 'Feriados',
+                icon: 'pi pi-fw pi-calendar-times',
+                to: '/pages/calendar/holidays',
+                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO']
+            },
+            {
+                label: 'Períodos Lectivos',
+                icon: 'pi pi-fw pi-clock',
+                to: '/pages/calendar/periods',
+                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO']
+            }
+        ]
+    },
+
+    // =========================================================
+    // ADMINISTRAÇÃO (Restrito a ADMIN / Chefias)
+    // =========================================================
+
+    {
+        label: 'Administração',
+        icon: 'pi pi-fw pi-cog',
+        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO'],
+        items: [
+            {
+                label: 'Departamentos',
+                icon: 'pi pi-fw pi-sitemap',
+                to: '/pages/departmentCourse',
+                roles: ['ADMIN']
+            },
+            {
+                label: 'Unidades Curriculares',
+                icon: 'pi pi-fw pi-book',
+                to: '/pages/pedagogical',
+                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO']
+            },
+            {
+                label: 'Validação de Aulas',
+                icon: 'pi pi-fw pi-check-circle',
+                to: '/pages/classesValidation',
+                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO']
+            },
+            {
+                label: 'Pautas',
+                icon: 'pi pi-fw pi-file-edit',
+                to: '/pages/avaliacoesPautas',
+                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO']
+            },
+            {
+                label: 'Actividades',
+                icon: 'pi pi-fw pi-calendar-check',
+                to: '/pages/activitiesPedagogicalMonitoring',
+                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO']
+            },
+            {
+                label: 'Calendário',
+                icon: 'pi pi-fw pi-calendar',
+                to: '/pages/AcademicCalendarManagement',
+                roles: ['ADMIN']
+            },
+            {
+                label: 'Utilizadores',
+                icon: 'pi pi-fw pi-users',
+                roles: ['ADMIN'],
+                items: [
+                    {
+                        label: 'Lista',
+                        icon: 'pi pi-fw pi-list',
+                        to: '/pages/users/sgpuz/users',
+                        roles: ['ADMIN']
+                    }
+                ]
+            },
+            {
+                label: 'Perfis e Permissões',
+                icon: 'pi pi-fw pi-shield',
+                roles: ['ADMIN'],
+                items: [
+                    {
+                        label: 'Perfis',
+                        icon: 'pi pi-fw pi-id-card',
+                        to: '/pages/users/sgpuz/profiles',
+                        roles: ['ADMIN']
+                    },
+                    {
+                        label: 'Permissões',
+                        icon: 'pi pi-fw pi-key',
+                        to: '/pages/users/sgpuz/permitions',
+                        roles: ['ADMIN']
+                    }
+                ]
+            }
+
+        ]
+    }
+];
+
+/**
+ * =========================================================
+ * FUNÇÃO DE FILTRAGEM RECURSIVA POR ROLES
+ * =========================================================
+ */
+const filterMenuByRole = (
+    items: AppMenuItemWithRoles[],
+    userRoles: string[]
+): AppMenuItemWithRoles[] => {
+    return items
+        .filter((item) => {
+            if (!item.roles || item.roles.length === 0) {
+                return true;
+            }
+            return item.roles.some((role) => userRoles.includes(role));
+        })
+        .map((item) => {
+            if (item.items) {
+                const filteredChildren = filterMenuByRole(item.items, userRoles);
+                return {
+                    ...item,
+                    items: filteredChildren
+                };
+            }
+            return item;
+        })
+        .filter((item) => {
+            if (!item.items) {
+                return true;
+            }
+            return item.items.length > 0;
+        });
+};
+
+/**
+ * =========================================================
+ * COMPONENTE APP MENU
+ * =========================================================
+ */
+const AppMenu = () => {
+    const [userRoles, setUserRoles] = useState<string[]>([]);
+
+    useEffect(() => {
+        const stored = getUserFromStorage();
+        console.log('DADOS DO STORAGE:', stored);
+
+        // Mapeamento correto para extrair o role_name da estrutura do seu login:
+        // Ex: stored.data.role_name ou stored.role_name
+        let roles: string[] = [];
+
+        const rawData = stored?.data || stored;
+        if (rawData?.role_name) {
+            roles = [rawData.role_name];
+        } else if (Array.isArray(rawData?.roles)) {
+            roles = rawData.roles;
+        }
+
+        console.log('ROLES DO USUÁRIO IDENTIFICADAS:', roles);
+        setUserRoles(roles);
+    }, []);
+
+    const filteredModel = useMemo(() => {
+        return filterMenuByRole(model, userRoles);
+    }, [userRoles]);
+
+    return (
+        <MenuProvider>
+            <ul className="layout-menu">
+                {filteredModel.map((item, index) => {
+                    if (item?.seperator) {
+                        return (
+                            <li
+                                key={`separator-${index}`}
+                                className="menu-separator"
+                            />
+                        );
+                    }
+
+                    return (
+                        <AppMenuitem
+                            key={`${item.label}-${index}`}
+                            item={item}
+                            root={true}
+                            index={index}
+                        />
+                    );
+                })}
+            </ul>
+        </MenuProvider>
+    );
+};
+
+export default AppMenu;

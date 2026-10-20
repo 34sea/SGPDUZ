@@ -2,30 +2,95 @@ const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// exports.login = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     if (!email || !password) {
+//       return res.status(400).json({ success: false, message: 'Email e palavra-passe são obrigatórios.' });
+//     }
+
+//     const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+//     if (users.length === 0) {
+//       return res.status(401).json({ success: false, message: 'Credenciais inválidas.' });
+//     }
+
+//     const user = users[0];
+//     const isPasswordValid = await bcrypt.compare(password, user.password);
+
+//     if (!isPasswordValid) {
+//       return res.status(401).json({ success: false, message: 'Credenciais inválidas.' });
+//     }
+
+//     delete user.password;
+
+//     const token = jwt.sign(
+//       { id: user.id, email: user.email, role_id: user.role_id, role_name: user.role_name },
+//       process.env.JWT_SECRET || 'secret_key_sgpd_2026',
+//       { expiresIn: '8h' }
+//     );
+
+//     return res.status(200).json({
+//       success: true,
+//       message: 'Login efetuado com sucesso.',
+//       token,
+//       data: user
+//     });
+//   } catch (error) {
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email e palavra-passe são obrigatórios.' });
+      return res.status(400).json({
+        success: false,
+        message: 'Email e palavra-passe são obrigatórios.'
+      });
     }
 
-    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    const [users] = await pool.query(
+      `SELECT u.*, r.name AS role_name
+       FROM users u
+       INNER JOIN roles r ON u.role_id = r.id
+       WHERE u.email = ?`,
+      [email]
+    );
+
     if (users.length === 0) {
-      return res.status(401).json({ success: false, message: 'Credenciais inválidas.' });
+      return res.status(401).json({
+        success: false,
+        message: 'Credenciais inválidas.'
+      });
     }
 
     const user = users[0];
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user.password
+    );
 
     if (!isPasswordValid) {
-      return res.status(401).json({ success: false, message: 'Credenciais inválidas.' });
+      return res.status(401).json({
+        success: false,
+        message: 'Credenciais inválidas.'
+      });
     }
 
     delete user.password;
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role_id: user.role_id },
+      {
+        id: user.id,
+        email: user.email,
+        role_id: user.role_id,
+        role_name: user.role_name
+      },
       process.env.JWT_SECRET || 'secret_key_sgpd_2026',
       { expiresIn: '8h' }
     );
@@ -36,10 +101,15 @@ exports.login = async (req, res) => {
       token,
       data: user
     });
+
   } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 };
+
 
 exports.register = async (req, res) => {
  try {

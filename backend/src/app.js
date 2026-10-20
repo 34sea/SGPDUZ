@@ -12,6 +12,7 @@ const planningRoutes = require('./routes/planningRoutes');
 const lessonRoutes = require('./routes/lessonRoutes');
 const assessmentRoutes = require('./routes/assessmentRoutes');
 const adhocTaskRoutes = require('./routes/adhocTaskRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use('/api', planningRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/adhocTask', adhocTaskRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 
 app.get('/', (req, res) => {
