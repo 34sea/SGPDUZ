@@ -1344,7 +1344,7 @@ const model: AppMenuItemWithRoles[] = [
                     {
                         label: 'Avaliações',
                         icon: 'pi pi-fw pi-list',
-                        to: '/pages/pedagogical/evaluations/list',
+                        to: '/pages/avaliacoesPautasDoc',
                         roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
                     },
                 ]
@@ -1355,25 +1355,25 @@ const model: AppMenuItemWithRoles[] = [
     // =========================================================
     // PAUTAS
     // =========================================================
-    {
-        label: 'Pautas',
-        icon: 'pi pi-fw pi-file',
-        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE'],
-        items: [
-            {
-                label: 'Pautas Finais',
-                icon: 'pi pi-fw pi-list',
-                to: '/pages/grades/list',
-                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
-            },
-            {
-                label: 'Pauta públicas',
-                icon: 'pi pi-fw pi-camera',
-                to: '/pages/grades/scan',
-                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
-            }
-        ]
-    },
+    // {
+    //     label: 'Pautas',
+    //     icon: 'pi pi-fw pi-file',
+    //     roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE'],
+    //     items: [
+    //         {
+    //             label: 'Pautas',
+    //             icon: 'pi pi-fw pi-list',
+    //             to: '/pages/grades/list',
+    //             roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
+    //         },
+    //         // {
+    //         //     label: 'Pauta públicas',
+    //         //     icon: 'pi pi-fw pi-camera',
+    //         //     to: '/pages/grades/scan',
+    //         //     roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
+    //         // }
+    //     ]
+    // },
 
     // =========================================================
     // ACTIVIDADES
@@ -1384,9 +1384,9 @@ const model: AppMenuItemWithRoles[] = [
         roles: ['DOCENTE'],
         items: [
             {
-                label: 'Minhas Actividades',
+                label: 'Actividades',
                 icon: 'pi pi-fw pi-list',
-                to: '/pages/activities/my',
+                to: '/pages/activitiesPedagogicalMonitoringDoc',
                 roles: ['DOCENTE', 'ADMIN']
             }
         ]
@@ -1427,26 +1427,26 @@ const model: AppMenuItemWithRoles[] = [
     {
         label: 'Calendário Académico',
         icon: 'pi pi-fw pi-calendar',
-        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE'],
+        roles: ['DOCENTE'],
         items: [
             {
                 label: 'Calendário',
                 icon: 'pi pi-fw pi-calendar',
-                to: '/pages/calendar',
+                to: '/pages/AcademicCalendarManagementDoc',
                 roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
             },
-            {
-                label: 'Feriados',
-                icon: 'pi pi-fw pi-calendar-times',
-                to: '/pages/calendar/holidays',
-                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO']
-            },
-            {
-                label: 'Períodos Lectivos',
-                icon: 'pi pi-fw pi-clock',
-                to: '/pages/calendar/periods',
-                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO']
-            }
+            // {
+            //     label: 'Feriados',
+            //     icon: 'pi pi-fw pi-calendar-times',
+            //     to: '/pages/calendar/holidays',
+            //     roles: ['ADMIN', 'CHEFE_DEPARTAMENTO']
+            // },
+            // {
+            //     label: 'Períodos Lectivos',
+            //     icon: 'pi pi-fw pi-clock',
+            //     to: '/pages/calendar/periods',
+            //     roles: ['ADMIN', 'CHEFE_DEPARTAMENTO']
+            // }
         ]
     },
 

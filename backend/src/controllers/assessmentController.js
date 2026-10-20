@@ -19,44 +19,44 @@ const getSubfolderByMimeType = (mimetype) => {
 // ASSESSMENTS (Avaliações / Testes / Trabalhos)
 // ==========================================
 
-exports.getAssessments = async (req, res) => {
-  try {
-    const { class_subject_teacher_id, status } = req.query;
+// exports.getAssessments = async (req, res) => {
+//   try {
+//     const { class_subject_teacher_id, status } = req.query;
 
-    let query = `
-      SELECT 
-        a.*,
-        cst.class_id,
-        cst.subject_id,
-        cst.teacher_id,
-        s.name AS subject_name,
-        u.name AS teacher_name
-      FROM assessments a
-      INNER JOIN class_subject_teachers cst ON a.class_subject_teacher_id = cst.id
-      INNER JOIN subjects s ON cst.subject_id = s.id
-      INNER JOIN users u ON cst.teacher_id = u.id
-      WHERE 1=1
-    `;
-    const params = [];
+//     let query = `
+//       SELECT 
+//         a.*,
+//         cst.class_id,
+//         cst.subject_id,
+//         cst.teacher_id,
+//         s.name AS subject_name,
+//         u.name AS teacher_name
+//       FROM assessments a
+//       INNER JOIN class_subject_teachers cst ON a.class_subject_teacher_id = cst.id
+//       INNER JOIN subjects s ON cst.subject_id = s.id
+//       INNER JOIN users u ON cst.teacher_id = u.id
+//       WHERE 1=1
+//     `;
+//     const params = [];
 
-    if (class_subject_teacher_id) {
-      query += ` AND a.class_subject_teacher_id = ?`;
-      params.push(class_subject_teacher_id);
-    }
+//     if (class_subject_teacher_id) {
+//       query += ` AND a.class_subject_teacher_id = ?`;
+//       params.push(class_subject_teacher_id);
+//     }
 
-    if (status) {
-      query += ` AND a.status = ?`;
-      params.push(status);
-    }
+//     if (status) {
+//       query += ` AND a.status = ?`;
+//       params.push(status);
+//     }
 
-    query += ` ORDER BY a.assessment_date DESC, a.id DESC`;
+//     query += ` ORDER BY a.assessment_date DESC, a.id DESC`;
 
-    const [rows] = await pool.query(query, params);
-    return res.status(200).json({ success: true, data: rows });
-  } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-};
+//     const [rows] = await pool.query(query, params);
+//     return res.status(200).json({ success: true, data: rows });
+//   } catch (error) {
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
 
 exports.getAssessmentById = async (req, res) => {
   try {
@@ -201,45 +201,45 @@ exports.deleteAssessment = async (req, res) => {
 // FINAL GRADE SHEETS (Pautas Finais)
 // ==========================================
 
-exports.getFinalGradeSheets = async (req, res) => {
-  try {
-    const { class_subject_teacher_id, epoch } = req.query;
+// exports.getFinalGradeSheets = async (req, res) => {
+//   try {
+//     const { class_subject_teacher_id, epoch } = req.query;
 
-    let query = `
-      SELECT 
-        fgs.*,
-        cst.class_id,
-        cst.subject_id,
-        cst.teacher_id,
-        s.name AS subject_name,
-        u.name AS uploader_name,
-        u.email AS uploader_email
-      FROM final_grade_sheets fgs
-      INNER JOIN class_subject_teachers cst ON fgs.class_subject_teacher_id = cst.id
-      INNER JOIN subjects s ON cst.subject_id = s.id
-      INNER JOIN users u ON fgs.uploaded_by = u.id
-      WHERE 1=1
-    `;
-    const params = [];
+//     let query = `
+//       SELECT 
+//         fgs.*,
+//         cst.class_id,
+//         cst.subject_id,
+//         cst.teacher_id,
+//         s.name AS subject_name,
+//         u.name AS uploader_name,
+//         u.email AS uploader_email
+//       FROM final_grade_sheets fgs
+//       INNER JOIN class_subject_teachers cst ON fgs.class_subject_teacher_id = cst.id
+//       INNER JOIN subjects s ON cst.subject_id = s.id
+//       INNER JOIN users u ON fgs.uploaded_by = u.id
+//       WHERE 1=1
+//     `;
+//     const params = [];
 
-    if (class_subject_teacher_id) {
-      query += ` AND fgs.class_subject_teacher_id = ?`;
-      params.push(class_subject_teacher_id);
-    }
+//     if (class_subject_teacher_id) {
+//       query += ` AND fgs.class_subject_teacher_id = ?`;
+//       params.push(class_subject_teacher_id);
+//     }
 
-    if (epoch) {
-      query += ` AND fgs.epoch = ?`;
-      params.push(epoch);
-    }
+//     if (epoch) {
+//       query += ` AND fgs.epoch = ?`;
+//       params.push(epoch);
+//     }
 
-    query += ` ORDER BY fgs.uploaded_at DESC`;
+//     query += ` ORDER BY fgs.uploaded_at DESC`;
 
-    const [rows] = await pool.query(query, params);
-    return res.status(200).json({ success: true, data: rows });
-  } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-};
+//     const [rows] = await pool.query(query, params);
+//     return res.status(200).json({ success: true, data: rows });
+//   } catch (error) {
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
 
 exports.getFinalGradeSheetById = async (req, res) => {
   try {
@@ -348,6 +348,106 @@ exports.deleteFinalGradeSheet = async (req, res) => {
     }
 
     return res.status(200).json({ success: true, message: 'Pauta final eliminada com sucesso.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+
+// ==========================================
+// ASSESSMENTS (Avaliações / Testes / Trabalhos)
+// ==========================================
+
+exports.getAssessments = async (req, res) => {
+  try {
+    const { class_subject_teacher_id, status } = req.query;
+    const userId = req.user.id;
+    const userRole = req.user.role_name;
+
+    let query = `
+      SELECT 
+        a.*,
+        cst.class_id,
+        cst.subject_id,
+        cst.teacher_id,
+        s.name AS subject_name,
+        u.name AS teacher_name
+      FROM assessments a
+      INNER JOIN class_subject_teachers cst ON a.class_subject_teacher_id = cst.id
+      INNER JOIN subjects s ON cst.subject_id = s.id
+      INNER JOIN users u ON cst.teacher_id = u.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    // Restringe estritamente ao docente autenticado se ele for DOCENTE
+    if (userRole === 'DOCENTE') {
+      query += ` AND cst.teacher_id = ?`;
+      params.push(userId);
+    }
+
+    if (class_subject_teacher_id) {
+      query += ` AND a.class_subject_teacher_id = ?`;
+      params.push(class_subject_teacher_id);
+    }
+
+    if (status) {
+      query += ` AND a.status = ?`;
+      params.push(status);
+    }
+
+    query += ` ORDER BY a.assessment_date DESC, a.id DESC`;
+
+    const [rows] = await pool.query(query, params);
+    return res.status(200).json({ success: true, data: rows });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.getFinalGradeSheets = async (req, res) => {
+  try {
+    const { class_subject_teacher_id, epoch } = req.query;
+    const userId = req.user.id;
+    const userRole = req.user.role_name;
+
+    let query = `
+      SELECT 
+        fgs.*,
+        cst.class_id,
+        cst.subject_id,
+        cst.teacher_id,
+        s.name AS subject_name,
+        u.name AS uploader_name,
+        u.email AS uploader_email
+      FROM final_grade_sheets fgs
+      INNER JOIN class_subject_teachers cst ON fgs.class_subject_teacher_id = cst.id
+      INNER JOIN subjects s ON cst.subject_id = s.id
+      INNER JOIN users u ON fgs.uploaded_by = u.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    // Restringe estritamente ao docente autenticado se ele for DOCENTE
+    if (userRole === 'DOCENTE') {
+      query += ` AND cst.teacher_id = ?`;
+      params.push(userId);
+    }
+
+    if (class_subject_teacher_id) {
+      query += ` AND fgs.class_subject_teacher_id = ?`;
+      params.push(class_subject_teacher_id);
+    }
+
+    if (epoch) {
+      query += ` AND fgs.epoch = ?`;
+      params.push(epoch);
+    }
+
+    query += ` ORDER BY fgs.uploaded_at DESC`;
+
+    const [rows] = await pool.query(query, params);
+    return res.status(200).json({ success: true, data: rows });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }

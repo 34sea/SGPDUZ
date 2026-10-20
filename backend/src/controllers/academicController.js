@@ -616,25 +616,58 @@ exports.deleteClass = async (req, res) => {
 // 6. ATRIBUIÇÃO DE DOCENTES À TURMA / DISCIPLINA
 // ==========================================
 
+// exports.getClassSubjectTeachers = async (req, res) => {
+//   try {
+//     const [rows] = await pool.query(`
+//       SELECT 
+//         cst.id, 
+//         cst.class_id, 
+//         cl.name AS class_name, 
+//         cst.subject_id, 
+//         s.name AS subject_name, 
+//         s.code AS subject_code, 
+//         cst.teacher_id, 
+//         u.name AS teacher_name,
+//         u.email AS teacher_email
+//       FROM class_subject_teachers cst
+//       INNER JOIN classes cl ON cst.class_id = cl.id
+//       INNER JOIN subjects s ON cst.subject_id = s.id
+//       INNER JOIN users u ON cst.teacher_id = u.id
+//       ORDER BY cl.name ASC, s.name ASC
+//     `);
+//     return res.status(200).json({ success: true, data: rows });
+//   } catch (error) {
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
+// Exemplo no seu controller (ex: classSubjectTeacherController.js ou assessmentController.js)
 exports.getClassSubjectTeachers = async (req, res) => {
   try {
-    const [rows] = await pool.query(`
+    const userId = req.user.id;
+    const userRole = req.user.role_name;
+
+    let query = `
       SELECT 
-        cst.id, 
-        cst.class_id, 
-        cl.name AS class_name, 
-        cst.subject_id, 
-        s.name AS subject_name, 
-        s.code AS subject_code, 
-        cst.teacher_id, 
-        u.name AS teacher_name,
-        u.email AS teacher_email
+        cst.id,
+        cst.class_id,
+        cl.name AS class_name,
+        cst.subject_id,
+        s.name AS subject_name,
+        cst.teacher_id
       FROM class_subject_teachers cst
       INNER JOIN classes cl ON cst.class_id = cl.id
       INNER JOIN subjects s ON cst.subject_id = s.id
-      INNER JOIN users u ON cst.teacher_id = u.id
-      ORDER BY cl.name ASC, s.name ASC
-    `);
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (userRole === 'DOCENTE') {
+      query += ` AND cst.teacher_id = ?`;
+      params.push(userId);
+    }
+
+    const [rows] = await pool.query(query, params);
     return res.status(200).json({ success: true, data: rows });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });

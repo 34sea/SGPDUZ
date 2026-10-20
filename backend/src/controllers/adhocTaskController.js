@@ -20,49 +20,49 @@ const getSubfolderByMimeType = (mimetype) => {
 // ==========================================
 
 // Listar tarefas com filtros (atribuídas por, atribuídas a, estado)
-exports.getTasks = async (req, res) => {
-  try {
-    const { assigned_by, assigned_to, status } = req.query;
+// exports.getTasks = async (req, res) => {
+//   try {
+//     const { assigned_by, assigned_to, status } = req.query;
 
-    let query = `
-      SELECT 
-        t.*,
-        u_by.name AS assigned_by_name,
-        u_by.email AS assigned_by_email,
-        u_to.name AS assigned_to_name,
-        u_to.email AS assigned_to_email
-      FROM adhoc_tasks t
-      INNER JOIN users u_by ON t.assigned_by = u_by.id
-      INNER JOIN users u_to ON t.assigned_to = u_to.id
-      WHERE 1=1
-    `;
-    const params = [];
+//     let query = `
+//       SELECT 
+//         t.*,
+//         u_by.name AS assigned_by_name,
+//         u_by.email AS assigned_by_email,
+//         u_to.name AS assigned_to_name,
+//         u_to.email AS assigned_to_email
+//       FROM adhoc_tasks t
+//       INNER JOIN users u_by ON t.assigned_by = u_by.id
+//       INNER JOIN users u_to ON t.assigned_to = u_to.id
+//       WHERE 1=1
+//     `;
+//     const params = [];
 
-    if (assigned_by) {
-      query += ` AND t.assigned_by = ?`;
-      params.push(assigned_by);
-    }
+//     if (assigned_by) {
+//       query += ` AND t.assigned_by = ?`;
+//       params.push(assigned_by);
+//     }
 
-    if (assigned_to) {
-      query += ` AND t.assigned_to = ?`;
-      params.push(assigned_to);
-    }
+//     if (assigned_to) {
+//       query += ` AND t.assigned_to = ?`;
+//       params.push(assigned_to);
+//     }
 
-    if (status) {
-      query += ` AND t.status = ?`;
-      params.push(status);
-    }
+//     if (status) {
+//       query += ` AND t.status = ?`;
+//       params.push(status);
+//     }
 
-    query += ` ORDER BY t.created_at DESC`;
+//     query += ` ORDER BY t.created_at DESC`;
 
-    const [rows] = await pool.query(query, params);
-    return res.status(200).json({ success: true, data: rows });
-  } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-};
+//     const [rows] = await pool.query(query, params);
+//     return res.status(200).json({ success: true, data: rows });
+//   } catch (error) {
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
 
-// Obter detalhes de uma tarefa com histórico de submissões
+// // Obter detalhes de uma tarefa com histórico de submissões
 exports.getTaskById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -95,6 +95,56 @@ exports.getTaskById = async (req, res) => {
         submissions
       }
     });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.getTasks = async (req, res) => {
+  try {
+    const { assigned_by, assigned_to, status } = req.query;
+    const userId = req.user.id;
+    const userRole = req.user.role_name;
+
+    let query = `
+      SELECT 
+        t.*,
+        u_by.name AS assigned_by_name,
+        u_by.email AS assigned_by_email,
+        u_to.name AS assigned_to_name,
+        u_to.email AS assigned_to_email
+      FROM adhoc_tasks t
+      INNER JOIN users u_by ON t.assigned_by = u_by.id
+      INNER JOIN users u_to ON t.assigned_to = u_to.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    // Se for DOCENTE, restringe estritamente às tarefas atribuídas a ele
+    if (userRole === 'DOCENTE') {
+      query += ` AND t.assigned_to = ?`;
+      params.push(userId);
+    }
+
+    if (assigned_by) {
+      query += ` AND t.assigned_by = ?`;
+      params.push(assigned_by);
+    }
+
+    if (assigned_to) {
+      query += ` AND t.assigned_to = ?`;
+      params.push(assigned_to);
+    }
+
+    if (status) {
+      query += ` AND t.status = ?`;
+      params.push(status);
+    }
+
+    query += ` ORDER BY t.created_at DESC`;
+
+    const [rows] = await pool.query(query, params);
+    return res.status(200).json({ success: true, data: rows });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }

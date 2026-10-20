@@ -20,7 +20,6 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import {
     CalendarDays,
     BookOpen,
-    Users,
     Clock3,
     CheckCircle2,
     AlertTriangle,
@@ -38,7 +37,6 @@ import {
     ShieldCheck,
     Trash2,
     RefreshCw,
-    ClipboardList,
 } from "lucide-react";
 
 import {
@@ -108,11 +106,10 @@ export default function TeacherClassesAndAssessments() {
     const toast = useRef<Toast>(null);
 
     const [loading, setLoading] = useState(true);
-    const [activeModule, setActiveModule] = useState<"mapa" | "aulas" | "avaliacoes">("mapa");
+    const [activeModule, setActiveModule] = useState<"mapa" | "aulas">("mapa");
 
     const [aulas, setAulas] = useState<any[]>([]);
     const [assignments, setAssignments] = useState<any[]>([]);
-    const [avaliacoes, setAvaliacoes] = useState<any[]>([]); // Mock ou serviço próprio de avaliações
 
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | null>(null);
@@ -125,16 +122,7 @@ export default function TeacherClassesAndAssessments() {
     const [historyDialog, setHistoryDialog] = useState(false);
     const [lessonConfirmations, setLessonConfirmations] = useState<any[]>([]);
 
-    // Estados para o Modal de Avaliações
-    const [assessmentDialog, setAssessmentDialog] = useState(false);
-    const [assessmentForm, setAssessmentForm] = useState({
-        title: "",
-        exam_date: new Date().toISOString().split('T')[0],
-        publish_date: new Date().toISOString().split('T')[0],
-        weight: 20,
-    });
-
-const initialFormState = {
+    const initialFormState = {
         class_subject_teacher_id: null as number | null,
         topic_unit_id: null as number | null,
         lesson_date: new Date().toISOString().split('T')[0],
@@ -206,12 +194,6 @@ const initialFormState = {
     };
 
     const handleSaveLesson = async () => {
-        // Obter o ID do utilizador logado do localStorage por segurança (caso necessário)
-        const userStorage = localStorage.getItem("user-dashboard-SGPD");
-        const parsedUser = userStorage ? JSON.parse(userStorage) : null;
-        const currentUserId = parsedUser?.data?.id || parsedUser?.id;
-
-        // Resolve o ID final da atribuição garantindo que é um número
         const finalTeacherId = Number(registerForm.class_subject_teacher_id || selectedAssignmentId);
 
         if (!finalTeacherId || isNaN(finalTeacherId)) {
@@ -225,7 +207,6 @@ const initialFormState = {
         }
 
         try {
-            // Forçamos o tipo para garantir que o TypeScript aceite (passando explicitamente o número)
             const lessonData = {
                 class_subject_teacher_id: finalTeacherId,
                 topic_unit_id: registerForm.topic_unit_id ?? undefined,
@@ -270,17 +251,6 @@ const initialFormState = {
         });
     };
 
-    const handleSaveAssessment = () => {
-        if (!assessmentForm.title) {
-            toast.current?.show({ severity: "warn", summary: "Aviso", detail: "Informe o título da avaliação.", life: 3000 });
-            return;
-        }
-        setAvaliacoes([...avaliacoes, { id: Date.now(), ...assessmentForm, status: "Registada" }]);
-        toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Avaliação registada com sucesso.", life: 3000 });
-        setAssessmentDialog(false);
-        setAssessmentForm({ title: "", exam_date: new Date().toISOString().split('T')[0], publish_date: new Date().toISOString().split('T')[0], weight: 20 });
-    };
-
     const openHistory = async (aula: any) => {
         setSelectedAula(aula);
         try {
@@ -313,29 +283,25 @@ const initialFormState = {
                         <BookOpen size={23} />
                     </div>
                     <div>
-                        <h1 style={{ margin: 0, fontSize: "1.45rem", fontWeight: 750, color: COLORS.dark }}>Painel do Docente: Aulas e Avaliações</h1>
-                        <p style={{ margin: "4px 0 0", color: COLORS.muted, fontSize: "0.88rem" }}>Registo individual de sumários, justificações e planeamento de avaliações</p>
+                        <h1 style={{ margin: 0, fontSize: "1.45rem", fontWeight: 750, color: COLORS.dark }}>Aulas</h1>
+                        <p style={{ margin: "4px 0 0", color: COLORS.muted, fontSize: "0.88rem" }}>Registo individual de sumários, justificações e controle de leccionação</p>
                     </div>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                     <Button label="Atualizar" icon={<RefreshCw size={16} />} outlined severity="secondary" onClick={loadData} />
                     <Button
-                        label={activeModule === "avaliacoes" ? "Nova Avaliação" : "Registar Aula"}
+                        label="Registar Aula"
                         icon={<Plus size={17} />}
                         onClick={() => {
-                            if (activeModule === "avaliacoes") {
-                                setAssessmentDialog(true);
-                            } else {
-                                setEditingLessonId(null);
-                                setRegisterForm({ ...initialFormState, class_subject_teacher_id: selectedAssignmentId });
-                                setRegisterDialog(true);
-                            }
+                            setEditingLessonId(null);
+                            setRegisterForm({ ...initialFormState, class_subject_teacher_id: selectedAssignmentId });
+                            setRegisterDialog(true);
                         }}
                     />
                 </div>
             </div>
 
-            {/* KPIs */}
+            {/* KPIS */}
             <div className="grid" style={{ marginBottom: 18 }}>
                 <div className="col-12 md:col-6 xl:col-3">
                     <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 17 }}>
@@ -389,19 +355,13 @@ const initialFormState = {
                     onClick={() => setActiveModule("mapa")}
                     style={{ border: "none", borderRadius: 9, padding: "11px 17px", background: activeModule === "mapa" ? COLORS.primary : "transparent", color: activeModule === "mapa" ? COLORS.white : COLORS.text, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontWeight: 650, whiteSpace: "nowrap" }}
                 >
-                    <CalendarDays size={17} /> Meu Mapa Diário
+                    <CalendarDays size={17} /> Meu Mapa Semanal
                 </button>
                 <button
                     onClick={() => setActiveModule("aulas")}
                     style={{ border: "none", borderRadius: 9, padding: "11px 17px", background: activeModule === "aulas" ? COLORS.primary : "transparent", color: activeModule === "aulas" ? COLORS.white : COLORS.text, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontWeight: 650, whiteSpace: "nowrap" }}
                 >
                     <FileText size={17} /> Registos e Justificações
-                </button>
-                <button
-                    onClick={() => setActiveModule("avaliacoes")}
-                    style={{ border: "none", borderRadius: 9, padding: "11px 17px", background: activeModule === "avaliacoes" ? COLORS.primary : "transparent", color: activeModule === "avaliacoes" ? COLORS.white : COLORS.text, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontWeight: 650, whiteSpace: "nowrap" }}
-                >
-                    <ClipboardList size={17} /> Gestão de Avaliações
                 </button>
             </div>
 
@@ -478,13 +438,13 @@ const initialFormState = {
                 </>
             )}
 
-            {/* MÓDULO 2: REGISTOS E JUSTIFICAÇÕES */}
+            {/* MÓDULO 2: REGISTOS, ATUALIZAÇÃO, LEITURA E ELIMINAÇÃO (CRUD COMPLETO) */}
             {activeModule === "aulas" && (
                 <Card style={{ border: `1px solid ${COLORS.border}` }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20 }}>
                         <div>
-                            <h2 style={{ margin: 0, color: COLORS.dark, fontSize: "1.15rem" }}>Registo de Aulas e Justificação de Cancelamentos</h2>
-                            <p style={{ margin: "5px 0 0", color: COLORS.muted, fontSize: "0.82rem" }}>Registe o conteúdo efectivamente leccionado ou justifique aulas não realizadas.</p>
+                            <h2 style={{ margin: 0, color: COLORS.dark, fontSize: "1.15rem" }}>Gestão</h2>
+                            <p style={{ margin: "5px 0 0", color: COLORS.muted, fontSize: "0.82rem" }}>Registe, leia, atualize ou elimine os sumários das aulas leccionadas.</p>
                         </div>
                         <Button
                             label="Novo Registo"
@@ -545,39 +505,6 @@ const initialFormState = {
                 </Card>
             )}
 
-            {/* MÓDULO 3: GESTÃO DE AVALIAÇÕES (Registo, Datas e Publicação) */}
-            {activeModule === "avaliacoes" && (
-                <Card style={{ border: `1px solid ${COLORS.border}` }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20 }}>
-                        <div>
-                            <h2 style={{ margin: 0, color: COLORS.dark, fontSize: "1.15rem" }}>Registo de Avaliações e Publicação de Resultados</h2>
-                            <p style={{ margin: "5px 0 0", color: COLORS.muted, fontSize: "0.82rem" }}>Registe as avaliações, datas de realização e o prazo de publicação de pautas.</p>
-                        </div>
-                        <Button
-                            label="Nova Avaliação"
-                            icon={<Plus size={16} />}
-                            onClick={() => setAssessmentDialog(true)}
-                        />
-                    </div>
-
-                    <Divider />
-
-                    <DataTable value={avaliacoes} paginator rows={8} responsiveLayout="scroll" emptyMessage="Nenhuma avaliação registada. Clique em 'Nova Avaliação'.">
-                        <Column header="Título / Prova" field="title" body={(row) => <strong style={{ color: COLORS.primary }}>{row.title}</strong>} />
-                        <Column header="Data de Realização" field="exam_date" body={(row) => formatDate(row.exam_date)} />
-                        <Column header="Publicação de Resultados" field="publish_date" body={(row) => formatDate(row.publish_date)} />
-                        <Column header="Ponderação" field="weight" body={(row) => `${row.weight}%`} />
-                        <Column header="Estado" body={(row) => <Tag value={row.status} severity="success" />} />
-                        <Column
-                            header="Ações"
-                            body={(row) => (
-                                <Button icon={<Trash2 size={15} />} text rounded severity="danger" onClick={() => setAvaliacoes(avaliacoes.filter(a => a.id !== row.id))} tooltip="Eliminar" />
-                            )}
-                        />
-                    </DataTable>
-                </Card>
-            )}
-
             {/* --- MODAL: REGISTAR / EDITAR AULA / JUSTIFICAR --- */}
             <Dialog header={editingLessonId ? "Editar Registo de Aula" : "Registar Aula ou Justificar Cancelamento"} visible={registerDialog} onHide={() => setRegisterDialog(false)} modal style={{ width: "650px", maxWidth: "95vw" }}>
                 <div className="flex flex-column gap-3">
@@ -613,35 +540,6 @@ const initialFormState = {
                     <div className="flex justify-content-end gap-2">
                         <Button label="Cancelar" outlined severity="secondary" onClick={() => setRegisterDialog(false)} />
                         <Button label="Guardar Registo" icon={<Send size={16} />} onClick={handleSaveLesson} />
-                    </div>
-                </div>
-            </Dialog>
-
-            {/* --- MODAL: REGISTAR AVALIAÇÃO --- */}
-            <Dialog header="Registar Nova Avaliação" visible={assessmentDialog} onHide={() => setAssessmentDialog(false)} modal style={{ width: "500px", maxWidth: "95vw" }}>
-                <div className="flex flex-column gap-3">
-                    <div>
-                        <label className="block mb-1 font-semibold text-sm">Título da Avaliação</label>
-                        <InputText value={assessmentForm.title} onChange={(e) => setAssessmentForm({ ...assessmentForm, title: e.target.value })} placeholder="Ex.: 1.º Teste Escrito / Trabalho Prático" className="w-full" />
-                    </div>
-                    <div className="grid">
-                        <div className="col-6">
-                            <label className="block mb-1 font-semibold text-sm">Data de Realização</label>
-                            <InputText type="date" value={assessmentForm.exam_date} onChange={(e) => setAssessmentForm({ ...assessmentForm, exam_date: e.target.value })} className="w-full" />
-                        </div>
-                        <div className="col-6">
-                            <label className="block mb-1 font-semibold text-sm">Data de Publicação</label>
-                            <InputText type="date" value={assessmentForm.publish_date} onChange={(e) => setAssessmentForm({ ...assessmentForm, publish_date: e.target.value })} className="w-full" />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block mb-1 font-semibold text-sm">Ponderação (%)</label>
-                        <InputText type="number" value={String(assessmentForm.weight)} onChange={(e) => setAssessmentForm({ ...assessmentForm, weight: Number(e.target.value) })} className="w-full" />
-                    </div>
-                    <Divider />
-                    <div className="flex justify-content-end gap-2">
-                        <Button label="Cancelar" outlined severity="secondary" onClick={() => setAssessmentDialog(false)} />
-                        <Button label="Guardar Avaliação" icon={<Send size={16} />} onClick={handleSaveAssessment} />
                     </div>
                 </div>
             </Dialog>

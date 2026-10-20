@@ -320,7 +320,7 @@ export default function AvaliacoesPautas() {
                     </div>
                     <div>
                         <h1 className="m-0" style={{ fontSize: "1.65rem", color: COLORS.dark, fontWeight: 700 }}>Avaliações e Pautas Finais</h1>
-                        <p className="m-0 mt-1" style={{ color: COLORS.muted, fontSize: "0.9rem" }}>Gestão de avaliações, controlo de prazos regulamentares e carregamento de pautas[cite: 20].</p>
+                        <p className="m-0 mt-1" style={{ color: COLORS.muted, fontSize: "0.9rem" }}>Gestão de avaliações, controlo de prazos regulamentares e carregamento de pautas.</p>
                     </div>
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -423,7 +423,7 @@ export default function AvaliacoesPautas() {
                             <div className="flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
                                 <div>
                                     <h2 className="m-0" style={{ color: COLORS.dark, fontSize: "1.15rem" }}>Gestão de Avaliações</h2>
-                                    <p className="m-0 mt-1" style={{ color: COLORS.muted, fontSize: "0.82rem" }}>Registo e acompanhamento das avaliações do período lectivo[cite: 20].</p>
+                                    <p className="m-0 mt-1" style={{ color: COLORS.muted, fontSize: "0.82rem" }}>Registo e acompanhamento das avaliações do período lectivo.</p>
                                 </div>
                                 <Button label="Registar avaliação" icon={<Plus size={16} />} size="small" onClick={() => {
                                     setIsEditingAvaliacao(false);
@@ -498,7 +498,7 @@ export default function AvaliacoesPautas() {
                             <div className="flex align-items-center justify-content-between mb-4">
                                 <div>
                                     <h2 className="m-0" style={{ fontSize: "1.15rem", color: COLORS.dark }}>Controlo de Prazos</h2>
-                                    <p className="m-0 mt-1" style={{ color: COLORS.muted, fontSize: "0.82rem" }}>Situação das avaliações registadas[cite: 20].</p>
+                                    <p className="m-0 mt-1" style={{ color: COLORS.muted, fontSize: "0.82rem" }}>Situação das avaliações registadas.</p>
                                 </div>
                                 <Timer size={22} color={COLORS.primary} />
                             </div>
@@ -538,7 +538,7 @@ export default function AvaliacoesPautas() {
                             <div className="flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
                                 <div>
                                     <h2 className="m-0" style={{ fontSize: "1.15rem", color: COLORS.dark }}>Pautas Finais</h2>
-                                    <p className="m-0 mt-1" style={{ color: COLORS.muted, fontSize: "0.82rem" }}>Consulta, digitalização e arquivo das pautas finais[cite: 20].</p>
+                                    <p className="m-0 mt-1" style={{ color: COLORS.muted, fontSize: "0.82rem" }}>Consulta, digitalização e arquivo das pautas finais.</p>
                                 </div>
                                 <Button label="Digitalizar" icon={<Camera size={16} />} onClick={() => {
                                     setIsEditingPauta(false);
@@ -608,7 +608,7 @@ export default function AvaliacoesPautas() {
                             <div className="flex align-items-center justify-content-between mb-4">
                                 <div>
                                     <h2 className="m-0" style={{ fontSize: "1.15rem", color: COLORS.dark }}>Digitalização de Pautas</h2>
-                                    <p className="m-0 mt-1" style={{ color: COLORS.muted, fontSize: "0.82rem" }}>Captura e tratamento de documentos[cite: 20].</p>
+                                    <p className="m-0 mt-1" style={{ color: COLORS.muted, fontSize: "0.82rem" }}>Captura e tratamento de documentos.</p>
                                 </div>
                                 <ScanLine size={23} color={COLORS.primary} />
                             </div>

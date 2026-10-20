@@ -946,7 +946,7 @@ export default function AcademicCalendarManagement() {
                         <div>
                             <div style={{ fontWeight: 700, color: COLORS.dark }}>Feriados e Eventos do Calendário</div>
                             <div style={{ fontSize: "0.76rem", color: COLORS.muted, marginTop: "3px" }}>
-                                Gestão de feriados e excepções reguladas na base de dados.
+                                Gestão de feriados.
                             </div>
                         </div>
                         <Button label="Adicionar evento" icon={<Plus size={16} />} onClick={openNewEvent} />
