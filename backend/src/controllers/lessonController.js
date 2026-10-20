@@ -4,25 +4,82 @@ const pool = require('../config/db');
 // LESSONS (Registo e Gestão de Aulas)
 // ==========================================
 
+// exports.getLessons = async (req, res) => {
+//   try {
+//     const { class_subject_teacher_id, status, start_date, end_date } = req.query;
+
+//     let query = `
+//       SELECT 
+//         l.*,
+//         cst.class_id,
+//         cst.subject_id,
+//         cst.teacher_id,
+//         tu.title AS topic_unit_title,
+//         u.name AS teacher_name
+//       FROM lessons l
+//       INNER JOIN class_subject_teachers cst ON l.class_subject_teacher_id = cst.id
+//       LEFT JOIN topic_units tu ON l.topic_unit_id = tu.id
+//       INNER JOIN users u ON cst.teacher_id = u.id
+//       WHERE 1=1
+//     `;
+//     const params = [];
+
+//     if (class_subject_teacher_id) {
+//       query += ` AND l.class_subject_teacher_id = ?`;
+//       params.push(class_subject_teacher_id);
+//     }
+
+//     if (status) {
+//       query += ` AND l.status = ?`;
+//       params.push(status);
+//     }
+
+//     if (start_date && end_date) {
+//       query += ` AND l.lesson_date BETWEEN ? AND ?`;
+//       params.push(start_date, end_date);
+//     }
+
+//     query += ` ORDER BY l.lesson_date DESC, l.id DESC`;
+
+//     const [rows] = await pool.query(query, params);
+//     return res.status(200).json({ success: true, data: rows });
+//   } catch (error) {
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
+// No getLessons (dentro de lessonController_3.js):
 exports.getLessons = async (req, res) => {
   try {
     const { class_subject_teacher_id, status, start_date, end_date } = req.query;
+    const userId = req.user.id;
+    const userRole = req.user.role_name;
 
     let query = `
       SELECT 
         l.*,
         cst.class_id,
+        cl.name AS class_name,
         cst.subject_id,
+        s.name AS subject_name,
         cst.teacher_id,
         tu.title AS topic_unit_title,
         u.name AS teacher_name
       FROM lessons l
       INNER JOIN class_subject_teachers cst ON l.class_subject_teacher_id = cst.id
+      INNER JOIN classes cl ON cst.class_id = cl.id
+      INNER JOIN subjects s ON cst.subject_id = s.id
       LEFT JOIN topic_units tu ON l.topic_unit_id = tu.id
       INNER JOIN users u ON cst.teacher_id = u.id
       WHERE 1=1
     `;
     const params = [];
+
+    // Se for DOCENTE, restringe estritamente às aulas das disciplinas dele
+    if (userRole === 'DOCENTE') {
+      query += ` AND cst.teacher_id = ?`;
+      params.push(userId);
+    }
 
     if (class_subject_teacher_id) {
       query += ` AND l.class_subject_teacher_id = ?`;
@@ -47,6 +104,29 @@ exports.getLessons = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
+
+exports.getTeacherAssignments = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const [rows] = await pool.query(`
+      SELECT 
+        cst.id AS class_subject_teacher_id,
+        cst.class_id,
+        cl.name AS class_name,
+        cst.subject_id,
+        s.name AS subject_name,
+        s.code AS subject_code
+      FROM class_subject_teachers cst
+      INNER JOIN classes cl ON cst.class_id = cl.id
+      INNER JOIN subjects s ON cst.subject_id = s.id
+      WHERE cst.teacher_id = ?
+    `, [userId]);
+    return res.status(200).json({ success: true, data: rows });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 
 exports.getLessonById = async (req, res) => {
   try {

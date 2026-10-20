@@ -92,7 +92,9 @@ router.use(authMiddleware);
 router.route('/')
   .get(lessonController.getLessons)
   .post(lessonController.createLesson);
-
+  
+router.route('/my-assignments')
+  .get(lessonController.getTeacherAssignments);
 /**
  * @swagger
  * /api/lessons/{id}:
@@ -205,6 +207,9 @@ router.route('/:id')
  */
 router.route('/confirmations')
   .post(lessonController.confirmLesson);
+
+
+
 
 /**
  * @swagger

@@ -1296,25 +1296,25 @@ const model: AppMenuItemWithRoles[] = [
                     {
                         label: 'Planos',
                         icon: 'pi pi-fw pi-list',
-                        to: '/pages/pedagogical/analytical-plan/list',
+                        to: '/pages/pedagogicalDoc',
                         roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
                     }
                 ]
             },
 
-            {
-                label: 'Dosificação Semanal',
-                icon: 'pi pi-fw pi-calendar',
-                roles: ['CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE'],
-                items: [
-                    {
-                        label: 'Dosificações',
-                        icon: 'pi pi-fw pi-list',
-                        to: '/pages/pedagogical/dosification/list',
-                        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
-                    }
-                ]
-            },
+            // {
+            //     label: 'Dosificação Semanal',
+            //     icon: 'pi pi-fw pi-calendar',
+            //     roles: ['CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE'],
+            //     items: [
+            //         {
+            //             label: 'Dosificações',
+            //             icon: 'pi pi-fw pi-list',
+            //             to: '/pages/pedagogical/dosification/list',
+            //             roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE']
+            //         }
+            //     ]
+            // },
 
             {
                 label: 'Aulas',
@@ -1322,17 +1322,17 @@ const model: AppMenuItemWithRoles[] = [
                 roles: ['DOCENTE'],
                 items: [
                     {
-                        label: 'Mapa Semanal',
+                        label: 'Aulas',
                         icon: 'pi pi-fw pi-table',
-                        to: '/pages/pedagogical/classes/map',
-                        roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE', 'CHEFE_TURMA', 'SUBCHEFE_TURMA']
+                        to: '/pages/classesValidationDoc',
+                        roles: ['DOCENTE']
                     },
-                    {
-                        label: 'Validação de Aulas',
-                        icon: 'pi pi-fw pi-check-square',
-                        to: '/pages/pedagogical/classes/validation',
-                        roles: ['CHEFE_TURMA', 'SUBCHEFE_TURMA', 'ADMIN', 'CHEFE_CURSO']
-                    }
+                    // {
+                    //     label: 'Validação de Aulas',
+                    //     icon: 'pi pi-fw pi-check-square',
+                    //     to: '/pages/pedagogical/classes/validation',
+                    //     roles: ['CHEFE_TURMA', 'SUBCHEFE_TURMA', 'ADMIN', 'CHEFE_CURSO']
+                    // }
                 ]
             },
 

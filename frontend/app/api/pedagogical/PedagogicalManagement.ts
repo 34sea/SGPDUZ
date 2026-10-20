@@ -116,3 +116,30 @@ export const deleteWeeklyDosification = async (id: number) => {
     const res = await api.delete(`/weekly-dosifications/${id}`, { headers: getAuthHeaders() });
     return res.data;
 };
+
+export const generateWeeklyDosifications = async (analytical_plan_id: number) => {
+    const res = await api.post('/weekly-dosifications/generate', { analytical_plan_id }, { headers: getAuthHeaders() });
+    return res.data;
+};
+
+// --- TURMAS (Classes) ---
+export const updateClass = async (id: number, data: any) => {
+    const res = await api.put(`/academic/classes/${id}`, data, { headers: getAuthHeaders() });
+    return res.data;
+};
+
+export const getClassById = async (id: number) => {
+    const res = await api.get(`/academic/classes/${id}`, { headers: getAuthHeaders() });
+    return res.data.data || res.data;
+};
+
+// --- ATRIBUIÇÃO DE DOCENTES À TURMA / DISCIPLINA (class_subject_teachers) ---
+export const assignTeacherToClassSubject = async (data: { class_id: number; subject_id: number; teacher_id: number }) => {
+    const res = await api.post('/academic/class-subject-teachers', data, { headers: getAuthHeaders() });
+    return res.data;
+};
+
+export const removeTeacherFromClassSubject = async (assignmentId: number) => {
+    const res = await api.delete(`/academic/class-subject-teachers/${assignmentId}`, { headers: getAuthHeaders() });
+    return res.data;
+};

@@ -22,17 +22,16 @@ import {
     Users,
     CalendarDays,
     ClipboardList,
-    Clock3,
     CheckCircle2,
-    AlertCircle,
     Plus,
     Pencil,
-    Eye,
     Layers3,
     School,
     Trash2,
     FileText,
     RefreshCw,
+    Sparkles,
+    UserPlus,
 } from "lucide-react";
 
 import {
@@ -41,8 +40,12 @@ import {
     updateSubject,
     deleteSubject,
     getClasses,
+    getClassById,
     createClass,
+    updateClass,
     deleteClass,
+    assignTeacherToClassSubject,
+    removeTeacherFromClassSubject,
     getAnalyticalPlans,
     getAnalyticalPlanById,
     createAnalyticalPlan,
@@ -50,9 +53,11 @@ import {
     updateTopicUnit,
     deleteTopicUnit,
     confirmDosification,
+    generateWeeklyDosifications,
 } from "@/app/api/pedagogical/PedagogicalManagement";
 
-// import { getSubjects } from "@/app/api/pedagogical/PedagogicalManagement";
+import { getCourses } from "@/app/api/academic/academicService";
+import { getUsers } from "@/app/api/users/userService";
 
 const COLORS = {
     primary: "#1D4ED8",
@@ -100,6 +105,8 @@ export default function PedagogicalManagement() {
 
     const [unidades, setUnidades] = useState<any[]>([]);
     const [turmas, setTurmas] = useState<any[]>([]);
+    const [cursos, setCursos] = useState<any[]>([]);
+    const [docentes, setDocentes] = useState<any[]>([]);
     const [analyticalPlans, setAnalyticalPlans] = useState<any[]>([]);
     const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
     const [planDetails, setPlanDetails] = useState<any>({
@@ -111,21 +118,30 @@ export default function PedagogicalManagement() {
     const [selectedSemester, setSelectedSemester] = useState("1");
     const [search, setSearch] = useState("");
 
-    // --- DIALOGS E ESTADOS DE FORMULÁRIO (COM SUPORTE A EDIÇÃO) ---
+    // --- DIALOGS E ESTADOS DE FORMULÁRIO ---
     const [unitDialog, setUnitDialog] = useState(false);
     const [editingUnitId, setEditingUnitId] = useState<number | null>(null);
     const [unitForm, setUnitForm] = useState({
         code: "",
         name: "",
-        course_id: 1,
+        course_id: null as number | null,
         workload: 64,
     });
 
     const [classDialog, setClassDialog] = useState(false);
+    const [editingClassId, setEditingClassId] = useState<number | null>(null);
     const [classForm, setClassForm] = useState({
         name: "",
-        course_id: 1,
+        course_id: null as number | null,
         academic_year_id: 1,
+    });
+
+    // Modal para gerir docentes da turma (class_subject_teachers)
+    const [classTeachersDialog, setClassTeachersDialog] = useState(false);
+    const [selectedClassDetails, setSelectedClassDetails] = useState<any>(null);
+    const [assignmentForm, setAssignmentForm] = useState({
+        subject_id: null as number | null,
+        teacher_id: null as number | null,
     });
 
     const [planDialog, setPlanDialog] = useState(false);
@@ -147,17 +163,22 @@ export default function PedagogicalManagement() {
     const loadInitialData = async () => {
         try {
             setLoading(true);
-            const [subjectsRes, classesRes, plansRes] = await Promise.all([
+            const [subjectsRes, classesRes, coursesRes, usersRes, plansRes] = await Promise.all([
                 getSubjects(),
                 getClasses().catch(() => []),
+                getCourses().catch(() => []),
+                getUsers().catch(() => []),
                 getAnalyticalPlans(),
             ]);
 
-            setUnidades(subjectsRes);
-            setTurmas(classesRes);
-            setAnalyticalPlans(plansRes);
+            setUnidades(subjectsRes || []);
+            setTurmas(classesRes || []);
+            setCursos(coursesRes || []);
+            // Filtra apenas utilizadores que sejam docentes (role_name ou role_id)
+            setDocentes((usersRes || []).filter((u: any) => u.role_name === 'DOCENTE' || u.role_id === 4));
+            setAnalyticalPlans(plansRes || []);
 
-            if (plansRes.length > 0 && !selectedPlanId) {
+            if (plansRes && plansRes.length > 0 && !selectedPlanId) {
                 setSelectedPlanId(plansRes[0].id);
             }
         } catch (err: any) {
@@ -179,7 +200,7 @@ export default function PedagogicalManagement() {
     useEffect(() => {
         if (!selectedPlanId) return;
         getAnalyticalPlanById(selectedPlanId)
-            .then((data) => setPlanDetails(data))
+            .then((data) => setPlanDetails(data || { topic_units: [], weekly_dosifications: [] }))
             .catch(() => {
                 toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao carregar detalhes do plano analítico.", life: 3000 });
             });
@@ -208,10 +229,10 @@ export default function PedagogicalManagement() {
     const totalDosifications = planDetails.weekly_dosifications?.length || 0;
     const progress = totalDosifications > 0 ? Math.round((confirmedCount / totalDosifications) * 100) : 0;
 
-    // --- GUARDAR / EDITAR UNIDADE CURRICULAR (COM RESET DE CAMPOS) ---
+    // --- GUARDAR UNIDADE CURRICULAR ---
     const handleSaveUnit = async () => {
-        if (!unitForm.code || !unitForm.name) {
-            toast.current?.show({ severity: "warn", summary: "Aviso", detail: "Código e Nome são obrigatórios.", life: 3000 });
+        if (!unitForm.code || !unitForm.name || !unitForm.course_id) {
+            toast.current?.show({ severity: "warn", summary: "Aviso", detail: "Código, Nome e Curso são obrigatórios.", life: 3000 });
             return;
         }
 
@@ -225,7 +246,7 @@ export default function PedagogicalManagement() {
             }
             setUnitDialog(false);
             setEditingUnitId(null);
-            setUnitForm({ code: "", name: "", course_id: 1, workload: 64 }); // Reset completo
+            setUnitForm({ code: "", name: "", course_id: null, workload: 64 });
             loadInitialData();
         } catch (err: any) {
             toast.current?.show({ severity: "error", summary: "Erro", detail: err.response?.data?.message || "Erro ao guardar unidade curricular.", life: 4000 });
@@ -250,20 +271,26 @@ export default function PedagogicalManagement() {
         });
     };
 
-    // --- GUARDAR TURMA ---
+    // --- GUARDAR / EDITAR TURMA ---
     const handleSaveClass = async () => {
-        if (!classForm.name) {
-            toast.current?.show({ severity: "warn", summary: "Aviso", detail: "O nome/código da turma é obrigatório.", life: 3000 });
+        if (!classForm.name || !classForm.course_id) {
+            toast.current?.show({ severity: "warn", summary: "Aviso", detail: "Nome da turma e Curso são obrigatórios.", life: 3000 });
             return;
         }
         try {
-            await createClass(classForm);
-            toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Turma criada com sucesso.", life: 3000 });
+            if (editingClassId) {
+                await updateClass(editingClassId, classForm);
+                toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Turma atualizada com sucesso.", life: 3000 });
+            } else {
+                await createClass(classForm);
+                toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Turma criada com sucesso.", life: 3000 });
+            }
             setClassDialog(false);
-            setClassForm({ name: "", course_id: 1, academic_year_id: 1 }); // Reset
+            setEditingClassId(null);
+            setClassForm({ name: "", course_id: null, academic_year_id: 1 });
             loadInitialData();
         } catch (err: any) {
-            toast.current?.show({ severity: "error", summary: "Erro", detail: err.response?.data?.message || "Erro ao criar turma.", life: 4000 });
+            toast.current?.show({ severity: "error", summary: "Erro", detail: err.response?.data?.message || "Erro ao guardar turma.", life: 4000 });
         }
     };
 
@@ -273,10 +300,60 @@ export default function PedagogicalManagement() {
             header: "Confirmação",
             acceptClassName: "p-button-danger",
             accept: async () => {
-                await deleteClass(id);
-                loadInitialData();
+                try {
+                    await deleteClass(id);
+                    toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Turma eliminada.", life: 3000 });
+                    loadInitialData();
+                } catch (err: any) {
+                    toast.current?.show({ severity: "error", summary: "Erro", detail: err.response?.data?.message || "Erro ao eliminar turma.", life: 4000 });
+                }
             },
         });
+    };
+
+    // --- ABRIR GESTÃO DE DOCENTES DA TURMA ---
+    const handleOpenClassTeachers = async (classId: number) => {
+        try {
+            const data = await getClassById(classId);
+            setSelectedClassDetails(data);
+            setAssignmentForm({ subject_id: null, teacher_id: null });
+            setClassTeachersDialog(true);
+        } catch (err: any) {
+            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao carregar atribuições da turma.", life: 3000 });
+        }
+    };
+
+    const handleAssignTeacher = async () => {
+        if (!selectedClassDetails || !assignmentForm.subject_id || !assignmentForm.teacher_id) {
+            toast.current?.show({ severity: "warn", summary: "Aviso", detail: "Selecione a disciplina e o docente.", life: 3000 });
+            return;
+        }
+        try {
+            await assignTeacherToClassSubject({
+                class_id: selectedClassDetails.id,
+                subject_id: assignmentForm.subject_id,
+                teacher_id: assignmentForm.teacher_id,
+            });
+            toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Docente atribuído com sucesso.", life: 3000 });
+            const updated = await getClassById(selectedClassDetails.id);
+            setSelectedClassDetails(updated);
+            setAssignmentForm({ subject_id: null, teacher_id: null });
+        } catch (err: any) {
+            toast.current?.show({ severity: "error", summary: "Erro", detail: err.response?.data?.message || "Erro ao atribuir docente.", life: 4000 });
+        }
+    };
+
+    const handleRemoveAssignment = async (assignmentId: number) => {
+        try {
+            await removeTeacherFromClassSubject(assignmentId);
+            toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Atribuição removida.", life: 3000 });
+            if (selectedClassDetails) {
+                const updated = await getClassById(selectedClassDetails.id);
+                setSelectedClassDetails(updated);
+            }
+        } catch (err: any) {
+            toast.current?.show({ severity: "error", summary: "Erro", detail: err.response?.data?.message || "Erro ao remover atribuição.", life: 4000 });
+        }
     };
 
     // --- CRIAR PLANO ANALÍTICO ---
@@ -289,14 +366,14 @@ export default function PedagogicalManagement() {
             await createAnalyticalPlan({ subject_id: planForm.subject_id, academic_year_id: planForm.academic_year_id });
             toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Plano analítico criado.", life: 3000 });
             setPlanDialog(false);
-            setPlanForm({ subject_id: null, academic_year_id: 1 }); // Reset
+            setPlanForm({ subject_id: null, academic_year_id: 1 });
             loadInitialData();
         } catch (err: any) {
             toast.current?.show({ severity: "error", summary: "Erro", detail: err.response?.data?.message || "Erro ao criar plano.", life: 4000 });
         }
     };
 
-    // --- GUARDAR UNIDADE TEMÁTICA (COM RESET DE CAMPOS) ---
+    // --- GUARDAR UNIDADE TEMÁTICA ---
     const handleSaveTopic = async () => {
         if (!selectedPlanId) {
             toast.current?.show({ severity: "warn", summary: "Aviso", detail: "Selecione um plano analítico primeiro.", life: 3000 });
@@ -320,7 +397,7 @@ export default function PedagogicalManagement() {
             }
             setTopicDialog(false);
             setEditingTopicId(null);
-            setTopicForm({ title: "", description: "", planned_hours: 4, lesson_type: "TEORICA", sequence_order: 1 }); // Reset completo
+            setTopicForm({ title: "", description: "", planned_hours: 4, lesson_type: "TEORICA", sequence_order: 1 });
             
             const updatedPlan = await getAnalyticalPlanById(selectedPlanId);
             setPlanDetails(updatedPlan);
@@ -335,13 +412,36 @@ export default function PedagogicalManagement() {
             header: "Confirmação",
             acceptClassName: "p-button-danger",
             accept: async () => {
-                await deleteTopicUnit(id);
-                if (selectedPlanId) {
-                    const updated = await getAnalyticalPlanById(selectedPlanId);
-                    setPlanDetails(updated);
+                try {
+                    await deleteTopicUnit(id);
+                    toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Unidade temática eliminada.", life: 3000 });
+                    if (selectedPlanId) {
+                        const updated = await getAnalyticalPlanById(selectedPlanId);
+                        setPlanDetails(updated);
+                    }
+                } catch (err: any) {
+                    toast.current?.show({ severity: "error", summary: "Erro", detail: err.response?.data?.message || "Erro ao eliminar.", life: 4000 });
                 }
             },
         });
+    };
+
+    // --- GERAR DOSIFICAÇÃO AUTOMÁTICA ---
+    const handleGenerateDosification = async () => {
+        if (!selectedPlanId) return;
+        try {
+            await generateWeeklyDosifications(selectedPlanId);
+            toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Dosificação semanal gerada automaticamente.", life: 3000 });
+            const updatedPlan = await getAnalyticalPlanById(selectedPlanId);
+            setPlanDetails(updatedPlan);
+        } catch (err: any) {
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: err.response?.data?.message || "Erro ao gerar dosificação. Certifique-se de que existem unidades temáticas cadastradas.",
+                life: 4000,
+            });
+        }
     };
 
     const handleConfirmDosification = async (id: number) => {
@@ -390,9 +490,11 @@ export default function PedagogicalManagement() {
                             if (activeModule === "estrutura") {
                                 if (activeStructureTab === "unidades") {
                                     setEditingUnitId(null);
-                                    setUnitForm({ code: "", name: "", course_id: 1, workload: 64 });
+                                    setUnitForm({ code: "", name: "", course_id: null, workload: 64 });
                                     setUnitDialog(true);
                                 } else {
+                                    setEditingClassId(null);
+                                    setClassForm({ name: "", course_id: cursos[0]?.id || null, academic_year_id: 1 });
                                     setClassDialog(true);
                                 }
                             } else if (activeModule === "plano") {
@@ -501,7 +603,7 @@ export default function PedagogicalManagement() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 15, marginBottom: 18 }}>
                         <div>
                             <h2 style={{ margin: 0, fontSize: "1.15rem", color: COLORS.dark }}>Estrutura Académica e Ensino</h2>
-                            <p style={{ margin: "5px 0 0", color: COLORS.muted, fontSize: "0.85rem" }}>Gerencie unidades curriculares, turmas e atribuições.</p>
+                            <p style={{ margin: "5px 0 0", color: COLORS.muted, fontSize: "0.85rem" }}>Gerencie unidades curriculares, turmas e a atribuição de docentes por disciplina.</p>
                         </div>
                         <div style={{ display: "flex", gap: 6, background: COLORS.background, padding: 4, borderRadius: 9 }}>
                             <Button label="Unidades Curriculares" text={activeStructureTab !== "unidades"} onClick={() => setActiveStructureTab("unidades")} size="small" />
@@ -521,7 +623,7 @@ export default function PedagogicalManagement() {
                                     icon={<Plus size={16} />}
                                     onClick={() => {
                                         setEditingUnitId(null);
-                                        setUnitForm({ code: "", name: "", course_id: 1, workload: 64 });
+                                        setUnitForm({ code: "", name: "", course_id: cursos[0]?.id || null, workload: 64 });
                                         setUnitDialog(true);
                                     }}
                                     size="small"
@@ -544,7 +646,7 @@ export default function PedagogicalManagement() {
                                                 severity="secondary"
                                                 onClick={() => {
                                                     setEditingUnitId(row.id);
-                                                    setUnitForm({ code: row.code, name: row.name, course_id: row.course_id || 1, workload: row.workload || 64 });
+                                                    setUnitForm({ code: row.code, name: row.name, course_id: row.course_id || cursos[0]?.id || null, workload: row.workload || 64 });
                                                     setUnitDialog(true);
                                                 }}
                                                 tooltip="Editar"
@@ -567,15 +669,52 @@ export default function PedagogicalManagement() {
                     {activeStructureTab === "turmas" && (
                         <>
                             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
-                                <Button label="Adicionar Turma" icon={<Plus size={16} />} onClick={() => setClassDialog(true)} size="small" />
+                                <Button label="Adicionar Turma" icon={<Plus size={16} />} onClick={() => {
+                                    setEditingClassId(null);
+                                    setClassForm({ name: "", course_id: cursos[0]?.id || null, academic_year_id: 1 });
+                                    setClassDialog(true);
+                                }} size="small" />
                             </div>
                             <DataTable value={turmas} paginator rows={6} responsiveLayout="scroll" emptyMessage="Nenhuma turma registada.">
                                 <Column header="Nome / Código da Turma" field="name" body={(row) => <strong style={{ color: COLORS.primary }}>{row.name}</strong>} />
-                                <Column header="Curso ID" field="course_id" />
+                                <Column header="Curso" field="course_name" body={(row) => <span>{row.course_name || cursos.find(c => c.id === row.course_id)?.name || '---'}</span>} />
+                                <Column
+                                    header="Docentes & Disciplinas"
+                                    body={(row) => (
+                                        <Button
+                                            label="Gerir Docentes"
+                                            icon={<UserPlus size={14} />}
+                                            size="small"
+                                            outlined
+                                            onClick={() => handleOpenClassTeachers(row.id)}
+                                        />
+                                    )}
+                                />
                                 <Column
                                     header="Ações"
                                     body={(row) => (
-                                        <Button icon={<Trash2 size={15} />} text rounded severity="danger" onClick={() => handleDeleteClass(row.id)} tooltip="Eliminar Turma" />
+                                        <div style={{ display: "flex", gap: 6 }}>
+                                            <Button
+                                                icon={<Pencil size={15} />}
+                                                text
+                                                rounded
+                                                severity="secondary"
+                                                onClick={() => {
+                                                    setEditingClassId(row.id);
+                                                    setClassForm({ name: row.name, course_id: row.course_id, academic_year_id: row.academic_year_id || 1 });
+                                                    setClassDialog(true);
+                                                }}
+                                                tooltip="Editar Turma"
+                                            />
+                                            <Button
+                                                icon={<Trash2 size={15} />}
+                                                text
+                                                rounded
+                                                severity="danger"
+                                                onClick={() => handleDeleteClass(row.id)}
+                                                tooltip="Eliminar Turma"
+                                            />
+                                        </div>
                                     )}
                                 />
                             </DataTable>
@@ -696,17 +835,26 @@ export default function PedagogicalManagement() {
             {activeModule === "dosificacao" && (
                 <>
                     <Card style={{ marginBottom: 18, border: `1px solid ${COLORS.border}` }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 15 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 15 }}>
                             <div>
                                 <h2 style={{ margin: 0, fontSize: "1.15rem", color: COLORS.dark }}>Dosificação Semanal Automática</h2>
                                 <p style={{ margin: "5px 0 0", color: COLORS.muted, fontSize: "0.82rem" }}>Distribuição de conteúdos considerando o calendário e feriados.</p>
                             </div>
-                            <Tag value={`${confirmedCount}/${totalDosifications} Confirmadas`} severity="success" />
+                            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                                <Tag value={`${confirmedCount}/${totalDosifications} Confirmadas`} severity="success" />
+                                <Button
+                                    label="Gerar Dosificação Automática"
+                                    // icon={<Sparkles size={15} />}
+                                    size="small"
+                                    onClick={handleGenerateDosification}
+                                    // tooltip="Gera as semanas automaticamente com base nas unidades temáticas"
+                                />
+                            </div>
                         </div>
                     </Card>
 
                     <Card style={{ border: `1px solid ${COLORS.border}` }}>
-                        <DataTable value={planDetails.weekly_dosifications || []} paginator rows={8} responsiveLayout="scroll" emptyMessage="Nenhuma dosificação gerada para este plano.">
+                        <DataTable value={planDetails.weekly_dosifications || []} paginator rows={8} responsiveLayout="scroll" emptyMessage="Nenhuma dosificação gerada para este plano. Clique em 'Gerar Dosificação Automática'.">
                             <Column header="Semana" field="week_number" body={(row) => <div style={{ fontWeight: 700 }}>Semana {row.week_number}</div>} />
                             <Column header="Tópico / Conteúdo" field="topic_title" body={(row) => <strong>{row.topic_title}</strong>} />
                             <Column header="Tipo de Aula" field="lesson_type" body={(row) => <Tag value={tipoLabelMap[row.lesson_type] || row.lesson_type} />} />
@@ -722,11 +870,21 @@ export default function PedagogicalManagement() {
                 </>
             )}
 
-            {/* --- MODAIS COM RESET DE CAMPOS CORRIGIDOS --- */}
+            {/* --- MODAIS DE GESTÃO --- */}
 
             {/* Modal: Unidade Curricular */}
             <Dialog header={editingUnitId ? "Editar Unidade Curricular" : "Nova Unidade Curricular"} visible={unitDialog} onHide={() => setUnitDialog(false)} style={{ width: "550px", maxWidth: "95vw" }} modal>
                 <div className="flex flex-column gap-3">
+                    <div>
+                        <label className="block mb-1 font-semibold text-sm">Curso Associado</label>
+                        <Dropdown
+                            value={unitForm.course_id}
+                            options={cursos.map((c) => ({ label: `${c.code} - ${c.name}`, value: c.id }))}
+                            onChange={(e) => setUnitForm({ ...unitForm, course_id: e.value })}
+                            placeholder="Selecione o curso"
+                            className="w-full"
+                        />
+                    </div>
                     <div>
                         <label className="block mb-1 font-semibold text-sm">Código</label>
                         <InputText value={unitForm.code} onChange={(e) => setUnitForm({ ...unitForm, code: e.target.value.toUpperCase() })} placeholder="Ex.: INF301" className="w-full" />
@@ -747,9 +905,19 @@ export default function PedagogicalManagement() {
                 </div>
             </Dialog>
 
-            {/* Modal: Turma */}
-            <Dialog header="Nova Turma" visible={classDialog} onHide={() => setClassDialog(false)} style={{ width: "450px" }} modal>
+            {/* Modal: Turma (Criar e Editar) */}
+            <Dialog header={editingClassId ? "Editar Turma" : "Nova Turma"} visible={classDialog} onHide={() => setClassDialog(false)} style={{ width: "480px", maxWidth: "95vw" }} modal>
                 <div className="flex flex-column gap-3">
+                    <div>
+                        <label className="block mb-1 font-semibold text-sm">Curso Associado</label>
+                        <Dropdown
+                            value={classForm.course_id}
+                            options={cursos.map((c) => ({ label: `${c.code} - ${c.name}`, value: c.id }))}
+                            onChange={(e) => setClassForm({ ...classForm, course_id: e.value })}
+                            placeholder="Selecione o curso"
+                            className="w-full"
+                        />
+                    </div>
                     <div>
                         <label className="block mb-1 font-semibold text-sm">Nome / Código da Turma</label>
                         <InputText value={classForm.name} onChange={(e) => setClassForm({ ...classForm, name: e.target.value })} placeholder="Ex.: EI31A" className="w-full" />
@@ -757,7 +925,62 @@ export default function PedagogicalManagement() {
                     <Divider />
                     <div className="flex justify-content-end gap-2">
                         <Button label="Cancelar" outlined severity="secondary" onClick={() => setClassDialog(false)} />
-                        <Button label="Criar Turma" icon={<CheckCircle2 size={16} />} onClick={handleSaveClass} />
+                        <Button label="Guardar Turma" icon={<CheckCircle2 size={16} />} onClick={handleSaveClass} />
+                    </div>
+                </div>
+            </Dialog>
+
+            {/* Modal: Atribuir Docente à Turma e Disciplina (class_subject_teachers) */}
+            <Dialog header={`Atribuir Docentes - Turma: ${selectedClassDetails?.name || ''}`} visible={classTeachersDialog} onHide={() => setClassTeachersDialog(false)} style={{ width: "650px", maxWidth: "95vw" }} modal>
+                <div className="flex flex-column gap-4">
+                    <div style={{ background: COLORS.background, padding: 12, borderRadius: 10, border: `1px solid ${COLORS.border}` }}>
+                        <h4 style={{ margin: "0 0 10px 0", fontSize: "0.95rem" }}>Nova Atribuição</h4>
+                        <div className="grid">
+                            <div className="col-12 md:col-5">
+                                <label className="block mb-1 text-xs font-semibold">Disciplina</label>
+                                <Dropdown
+                                    value={assignmentForm.subject_id}
+                                    options={unidades.map(u => ({ label: `${u.code} - ${u.name}`, value: u.id }))}
+                                    onChange={(e) => setAssignmentForm({ ...assignmentForm, subject_id: e.value })}
+                                    placeholder="Selecione a disciplina"
+                                    className="w-full"
+                                />
+                            </div>
+                            <div className="col-12 md:col-5">
+                                <label className="block mb-1 text-xs font-semibold">Docente Responsável</label>
+                                <Dropdown
+                                    value={assignmentForm.teacher_id}
+                                    options={docentes.map(d => ({ label: d.name || d.email, value: d.id }))}
+                                    onChange={(e) => setAssignmentForm({ ...assignmentForm, teacher_id: e.value })}
+                                    placeholder="Selecione o docente"
+                                    className="w-full"
+                                />
+                            </div>
+                            <div className="col-12 md:col-2 flex align-items-end">
+                                <Button label="Atribuir" icon={<Plus size={14} />} onClick={handleAssignTeacher} className="w-full" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 style={{ margin: "0 0 8px 0", fontSize: "0.95rem" }}>Docentes já atribuídos a esta Turma</h4>
+                        <DataTable value={selectedClassDetails?.subject_teachers || []} responsiveLayout="scroll" emptyMessage="Nenhum docente atribuído a esta turma.">
+                            <Column header="Disciplina" field="subject_name" body={(row) => <strong>{row.subject_code} - {row.subject_name}</strong>} />
+                            <Column header="Docente" field="teacher_name" body={(row) => <span>{row.teacher_name || row.teacher_email}</span>} />
+                            <Column
+                                header="Ações"
+                                body={(row) => (
+                                    <Button
+                                        icon={<Trash2 size={14} />}
+                                        text
+                                        rounded
+                                        severity="danger"
+                                        onClick={() => handleRemoveAssignment(row.assignment_id)}
+                                        tooltip="Remover atribuição"
+                                    />
+                                )}
+                            />
+                        </DataTable>
                     </div>
                 </div>
             </Dialog>

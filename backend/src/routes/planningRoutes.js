@@ -312,6 +312,7 @@ router.get('/analytical-plans/:planId/dosifications', planningController.getDosi
  *         description: Dosificação criada
  */
 router.post('/weekly-dosifications', planningController.createWeeklyDosification);
+router.post('/weekly-dosifications/generate', planningController.generateWeeklyDosifications);
 
 /**
  * @swagger

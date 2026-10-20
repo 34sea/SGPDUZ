@@ -55,3 +55,8 @@ export const getConfirmationsByLesson = async (lesson_id: number) => {
     const res = await api.get(`/lessons/confirmations/${lesson_id}`, { headers: getAuthHeaders() });
     return res.data.data || res.data;
 };
+
+export const getTeacherAssignments = async () => {
+    const res = await api.get('/lessons/my-assignments', { headers: getAuthHeaders() });
+    return res.data.data || res.data;
+};

@@ -4,11 +4,55 @@ const pool = require('../config/db');
 // 1. PLANOS ANALÍTICOS (ANALYTICAL PLANS)
 // ==========================================
 
+// exports.getAnalyticalPlans = async (req, res) => {
+//   try {
+//     const { subject_id, academic_year_id } = req.query;
+//     let query = `
+//       SELECT 
+//         ap.id, 
+//         ap.subject_id, 
+//         s.name AS subject_name, 
+//         s.code AS subject_code,
+//         ap.academic_year_id, 
+//         ay.year AS academic_year, 
+//         ay.semester,
+//         ap.created_by, 
+//         u.name AS creator_name,
+//         ap.created_at
+//       FROM analytical_plans ap
+//       INNER JOIN subjects s ON ap.subject_id = s.id
+//       INNER JOIN academic_years ay ON ap.academic_year_id = ay.id
+//       INNER JOIN users u ON ap.created_by = u.id
+//       WHERE 1=1
+//     `;
+//     const params = [];
+
+//     if (subject_id) {
+//       query += ' AND ap.subject_id = ?';
+//       params.push(subject_id);
+//     }
+//     if (academic_year_id) {
+//       query += ' AND ap.academic_year_id = ?';
+//       params.push(academic_year_id);
+//     }
+
+//     query += ' ORDER BY ap.id DESC';
+
+//     const [rows] = await pool.query(query, params);
+//     return res.status(200).json({ success: true, data: rows });
+//   } catch (error) {
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
 exports.getAnalyticalPlans = async (req, res) => {
   try {
     const { subject_id, academic_year_id } = req.query;
+    const userId = req.user.id;
+    const userRole = req.user.role_name; 
+
     let query = `
-      SELECT 
+      SELECT DISTINCT
         ap.id, 
         ap.subject_id, 
         s.name AS subject_name, 
@@ -23,9 +67,16 @@ exports.getAnalyticalPlans = async (req, res) => {
       INNER JOIN subjects s ON ap.subject_id = s.id
       INNER JOIN academic_years ay ON ap.academic_year_id = ay.id
       INNER JOIN users u ON ap.created_by = u.id
+      LEFT JOIN class_subject_teachers cst ON cst.subject_id = s.id
       WHERE 1=1
     `;
     const params = [];
+
+
+    if (userRole === 'DOCENTE') {
+      query += ` AND cst.teacher_id = ?`;
+      params.push(userId);
+    }
 
     if (subject_id) {
       query += ' AND ap.subject_id = ?';
@@ -436,5 +487,47 @@ exports.deleteWeeklyDosification = async (req, res) => {
     return res.status(200).json({ success: true, message: 'Dosificação semanal eliminada com sucesso.' });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.generateWeeklyDosifications = async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const { analytical_plan_id } = req.body;
+
+    if (!analytical_plan_id) {
+      return res.status(400).json({ success: false, message: 'ID do plano analítico é obrigatório.' });
+    }
+
+    const [topics] = await connection.query(
+      'SELECT id, planned_hours FROM topic_units WHERE analytical_plan_id = ? ORDER BY sequence_order ASC',
+      [analytical_plan_id]
+    );
+
+    if (topics.length === 0) {
+      return res.status(400).json({ success: false, message: 'Adicione unidades temáticas antes de gerar a dosificação.' });
+    }
+
+    await connection.query('DELETE FROM weekly_dosifications WHERE analytical_plan_id = ?', [analytical_plan_id]);
+
+    let currentWeek = 1;
+    for (const topic of topics) {
+      await connection.query(
+        `INSERT INTO weekly_dosifications (analytical_plan_id, topic_unit_id, week_number, is_evaluation_week, is_confirmed_by_teacher)
+         VALUES (?, ?, ?, FALSE, FALSE)`,
+        [analytical_plan_id, topic.id, currentWeek]
+      );
+      currentWeek++;
+      if (currentWeek > 15) currentWeek = 1; 
+    }
+
+    await connection.commit();
+    return res.status(200).json({ success: true, message: 'Dosificação semanal gerada automaticamente com sucesso.' });
+  } catch (error) {
+    await connection.rollback();
+    return res.status(500).json({ success: false, error: error.message });
+  } finally {
+    connection.release();
   }
 };
