@@ -1291,7 +1291,7 @@ const model: AppMenuItemWithRoles[] = [
             {
                 label: 'Plano Analítico',
                 icon: 'pi pi-fw pi-book',
-                roles: ['CHEFE_CURSO', 'DOCENTE'],
+                roles: ['DOCENTE'],
                 items: [
                     {
                         label: 'Planos',
@@ -1447,6 +1447,48 @@ const model: AppMenuItemWithRoles[] = [
             //     to: '/pages/calendar/periods',
             //     roles: ['ADMIN', 'CHEFE_DEPARTAMENTO']
             // }
+        ]
+    },
+
+    {
+        label: 'Validação de Aulas',
+        icon: 'pi pi-fw pi-calendar',
+        roles: ['CHEFE_TURMA', 'SUBCHEFE_TURMA'],
+        items: [
+            {
+                label: 'Aulas',
+                icon: 'pi pi-fw pi-calendar',
+                to: '/pages/classesValidationChief',
+                roles: ['CHEFE_TURMA', 'SUBCHEFE_TURMA']
+            },
+        ]
+    },
+
+     {
+        label: 'Departamentos e Cursos',
+        icon: 'pi pi-fw pi-calendar',
+        roles: ['CHEFE_CURSO'],
+        items: [
+            {
+                label: 'Departamentos',
+                icon: 'pi pi-fw pi-calendar',
+                to: '/pages/departmentCourseChiefCourse',
+                roles: ['CHEFE_CURSO']
+            },
+        ]
+    },
+
+    {
+        label: 'Actividades',
+        icon: 'pi pi-fw pi-calendar',
+        roles: ['CHEFE_CURSO'],
+        items: [
+            {
+                label: 'Actividades',
+                icon: 'pi pi-fw pi-calendar',
+                to: '/pages/activitiesPedagogicalMonitoring',
+                roles: ['CHEFE_CURSO']
+            },
         ]
     },
 
