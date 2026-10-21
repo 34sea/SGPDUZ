@@ -508,10 +508,10 @@ export default function UserManagement() {
 
                         <DataTable value={filteredUsers} paginator rows={6} responsiveLayout="scroll" stripedRows size="small" emptyMessage="Nenhum utilizador encontrado.">
                             <Column header="Utilizador" body={userTemplate} style={{ minWidth: "260px" }} />
-                            <Column field="contacto" header="Contacto" />
+                            {/* <Column field="contacto" header="Contacto" /> */}
                             <Column header="Perfil" body={profileTemplate} />
-                            <Column field="departamento" header="Departamento" />
-                            <Column field="curso" header="Curso" />
+                            {/* <Column field="departamento" header="Departamento" /> */}
+                            {/* <Column field="curso" header="Curso" /> */}
                             <Column header="Estado" body={statusTemplate} />
                             <Column header="Acções" body={actionsTemplate} align="right" />
                         </DataTable>

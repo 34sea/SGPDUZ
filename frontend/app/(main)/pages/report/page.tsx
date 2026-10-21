@@ -123,7 +123,7 @@ export default function ReportsAndIndicators() {
 
     const [reportDialogVisible, setReportDialogVisible] = useState(false);
     const [selectedReportTitle, setSelectedReportTitle] = useState("Relatório semestral");
-
+const [exportFormat, setExportFormat] = useState<'excel' | 'pdf'>('excel');
     // Estados reais vindos da API
     const [indicatorsData, setIndicatorsData] = useState<any>(null);
     const [teachersData, setTeachersData] = useState<any[]>([]);
@@ -247,19 +247,44 @@ export default function ReportsAndIndicators() {
     const horizontalBarOptions = { ...commonOptions, indexAxis: "y" as const, scales: { x: { beginAtZero: true, max: 100, ticks: { callback: (v: any) => `${v}%` } }, y: { grid: { display: false } } } };
     const doughnutOptions = { ...commonOptions, cutout: "68%" };
 
+    // const handleGenerateReportAction = async () => {
+    //     try {
+    //         await generateReport({
+    //             report_type: selectedReport,
+    //             period: selectedPeriod,
+    //             teacher_id: selectedTeacher || undefined,
+    //         });
+    //         toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Relatório gerado com sucesso.", life: 3000 });
+    //         setReportDialogVisible(false);
+    //     } catch (err: any) {
+    //         toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao gerar relatório.", life: 4000 });
+    //     }
+    // };
+
     const handleGenerateReportAction = async () => {
-        try {
-            await generateReport({
-                report_type: selectedReport,
-                period: selectedPeriod,
-                teacher_id: selectedTeacher || undefined,
-            });
-            toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Relatório gerado com sucesso.", life: 3000 });
-            setReportDialogVisible(false);
-        } catch (err: any) {
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao gerar relatório.", life: 4000 });
-        }
-    };
+    try {
+        await generateReport({
+            report_type: selectedReport,
+            period: selectedPeriod,
+            format: exportFormat,
+            teacher_id: selectedTeacher || undefined,
+        });
+        toast.current?.show({ 
+            severity: "success", 
+            summary: "Sucesso", 
+            detail: `Relatório exportado em ${exportFormat.toUpperCase()} com sucesso.`, 
+            life: 3000 
+        });
+        setReportDialogVisible(false);
+    } catch (err: any) {
+        toast.current?.show({ 
+            severity: "error", 
+            summary: "Erro", 
+            detail: "Erro ao exportar o relatório.", 
+            life: 4000 
+        });
+    }
+};
 
     if (loading && !indicatorsData) {
         return (
@@ -430,7 +455,7 @@ export default function ReportsAndIndicators() {
             )}
 
             {/* DIALOG DE RELATÓRIO */}
-            <Dialog visible={reportDialogVisible} onHide={() => setReportDialogVisible(false)} header={selectedReportTitle} modal style={{ width: "520px" }}>
+            {/* <Dialog visible={reportDialogVisible} onHide={() => setReportDialogVisible(false)} header={selectedReportTitle} modal style={{ width: "520px" }}>
                 <div>
                     <p style={{ color: COLORS.muted }}>Deseja gerar e exportar o <strong>{selectedReportTitle}</strong> referente ao período <strong>{selectedPeriod}</strong>?</p>
                     <Divider />
@@ -439,7 +464,48 @@ export default function ReportsAndIndicators() {
                         <Button label="Confirmar e Gerar" icon={<FileText size={16} />} onClick={handleGenerateReportAction} />
                     </div>
                 </div>
-            </Dialog>
+            </Dialog> */}
+
+            <Dialog visible={reportDialogVisible} onHide={() => setReportDialogVisible(false)} header={selectedReportTitle} modal style={{ width: "520px" }}>
+    <div>
+        <p style={{ color: COLORS.muted }}>
+            Selecione o formato para exportação do <strong>{selectedReportTitle}</strong> ({selectedPeriod}):
+        </p>
+
+        <div className="flex gap-3 my-3">
+            <div className="flex align-items-center gap-2">
+                <input 
+                    type="radio" 
+                    id="excel" 
+                    name="format" 
+                    value="excel" 
+                    checked={exportFormat === 'excel'} 
+                    onChange={() => setExportFormat('excel')} 
+                />
+                <label htmlFor="excel" className="font-semibold cursor-pointer">Excel (.xlsx)</label>
+            </div>
+
+            <div className="flex align-items-center gap-2">
+                <input 
+                    type="radio" 
+                    id="pdf" 
+                    name="format" 
+                    value="pdf" 
+                    checked={exportFormat === 'pdf'} 
+                    onChange={() => setExportFormat('pdf')} 
+                />
+                <label htmlFor="pdf" className="font-semibold cursor-pointer">PDF (.pdf)</label>
+            </div>
+        </div>
+
+        <Divider />
+
+        <div className="flex justify-content-end gap-2">
+            <Button label="Cancelar" severity="secondary" outlined onClick={() => setReportDialogVisible(false)} />
+            <Button label={`Exportar ${exportFormat.toUpperCase()}`} icon={<FileText size={16} />} onClick={handleGenerateReportAction} />
+        </div>
+    </div>
+</Dialog>
         </div>
     );
 }

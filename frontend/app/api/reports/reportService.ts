@@ -42,7 +42,31 @@ export const compareSemesters = async (period1: string, period2: string) => {
     return res.data.data || res.data;
 };
 
-export const generateReport = async (data: { report_type: string; period: string; teacher_id?: number; subject_id?: number }) => {
-    const res = await api.post('/reports/generate-report', data, { headers: getAuthHeaders() });
-    return res.data.data || res.data;
+// export const generateReport = async (data: { report_type: string; period: string; teacher_id?: number; subject_id?: number }) => {
+//     const res = await api.post('/reports/generate-report', data, { headers: getAuthHeaders() });
+//     return res.data.data || res.data;
+// };
+
+
+export const generateReport = async (data: { 
+    report_type: string; 
+    period: string; 
+    format?: 'excel' | 'pdf';
+    teacher_id?: number; 
+    subject_id?: number; 
+}) => {
+    const res = await api.post('/reports/generate-report', data, { 
+        headers: getAuthHeaders(),
+        responseType: 'blob' // Necessário para baixar arquivos do axios
+    });
+
+    // Criação do link para download automático
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    const extension = data.format === 'pdf' ? 'pdf' : 'xlsx';
+    link.setAttribute('download', `Relatorio_${data.report_type}_${data.period}.${extension}`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 };

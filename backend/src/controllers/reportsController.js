@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const ExcelJS = require('exceljs');
 
 // =========================================================================
 // 1. INDICADORES GLOBAIS E DETALHADOS (Aulas, Avaliações, Pautas, Actividades)
@@ -375,9 +376,60 @@ exports.compareSemesters = async (req, res) => {
 // =========================================================================
 // 5. GERAÇÃO E CONSULTA DE RELATÓRIOS (Semestral, Anual, Docente, Unidade)
 // =========================================================================
+// exports.generateReport = async (req, res) => {
+//   try {
+//     const { report_type, period, teacher_id, subject_id } = req.body;
+
+//     if (!report_type || !period) {
+//       return res.status(400).json({ success: false, message: 'Tipo de relatório e período são obrigatórios.' });
+//     }
+
+//     const [year, semester] = period.split('-');
+
+//     let reportData = {
+//       type: report_type,
+//       period,
+//       generated_at: new Date(),
+//       metrics: {}
+//     };
+
+//     // Consulta genérica de apoio para resumo de aulas e avaliações no período
+//     const [summary] = await pool.query(`
+//       SELECT 
+//         COUNT(DISTINCT l.id) AS aulas_realizadas,
+//         COUNT(DISTINCT a.id) AS total_avaliacoes,
+//         COUNT(DISTINCT fgs.id) AS total_pautas
+//       FROM classes cl
+//       INNER JOIN academic_years ay ON cl.academic_year_id = ay.id
+//       LEFT JOIN class_subject_teachers cst ON cst.class_id = cl.id
+//       LEFT JOIN lessons l ON l.class_subject_teacher_id = cst.id
+//       LEFT JOIN assessments a ON a.class_subject_teacher_id = cst.id
+//       LEFT JOIN final_grade_sheets fgs ON fgs.class_subject_teacher_id = cst.id
+//       WHERE ay.year = ? AND ay.semester = ?
+//     `, [year || 2026, semester || '1']);
+
+//     reportData.metrics = {
+//       aulas_planeadas: (summary[0]?.aulas_realizadas || 0) + 20,
+//       aulas_realizadas: summary[0]?.aulas_realizadas || 0,
+//       total_avaliacoes: summary[0]?.total_avaliacoes || 0,
+//       total_pautas: summary[0]?.total_pautas || 0,
+//       cumprimento_global: 88
+//     };
+
+//     return res.status(200).json({
+//       success: true,
+//       message: `Relatório (${report_type}) gerado com sucesso.`,
+//       data: reportData
+//     });
+
+//   } catch (error) {
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
 exports.generateReport = async (req, res) => {
   try {
-    const { report_type, period, teacher_id, subject_id } = req.body;
+    const { report_type, period, format = 'excel', teacher_id } = req.body;
 
     if (!report_type || !period) {
       return res.status(400).json({ success: false, message: 'Tipo de relatório e período são obrigatórios.' });
@@ -385,41 +437,61 @@ exports.generateReport = async (req, res) => {
 
     const [year, semester] = period.split('-');
 
-    let reportData = {
-      type: report_type,
-      period,
-      generated_at: new Date(),
-      metrics: {}
-    };
-
-    // Consulta genérica de apoio para resumo de aulas e avaliações no período
-    const [summary] = await pool.query(`
+    // Consulta dos dados para o relatório
+    const [rows] = await pool.query(`
       SELECT 
+        u.name AS docente,
+        c.name AS curso,
+        s.name AS disciplina,
         COUNT(DISTINCT l.id) AS aulas_realizadas,
-        COUNT(DISTINCT a.id) AS total_avaliacoes,
-        COUNT(DISTINCT fgs.id) AS total_pautas
-      FROM classes cl
+        SUM(CASE WHEN l.status IN ('CONFIRMADA', 'CONFIRMADA_COM_RESSALVA') THEN 1 ELSE 0 END) AS aulas_confirmadas,
+        COUNT(DISTINCT a.id) AS avaliacoes
+      FROM class_subject_teachers cst
+      INNER JOIN users u ON cst.teacher_id = u.id
+      INNER JOIN classes cl ON cst.class_id = cl.id
+      INNER JOIN courses c ON cl.course_id = c.id
+      INNER JOIN subjects s ON cst.subject_id = s.id
       INNER JOIN academic_years ay ON cl.academic_year_id = ay.id
-      LEFT JOIN class_subject_teachers cst ON cst.class_id = cl.id
       LEFT JOIN lessons l ON l.class_subject_teacher_id = cst.id
       LEFT JOIN assessments a ON a.class_subject_teacher_id = cst.id
-      LEFT JOIN final_grade_sheets fgs ON fgs.class_subject_teacher_id = cst.id
       WHERE ay.year = ? AND ay.semester = ?
-    `, [year || 2026, semester || '1']);
+      ${teacher_id ? 'AND u.id = ?' : ''}
+      GROUP BY u.name, c.name, s.name
+    `, teacher_id ? [year, semester, teacher_id] : [year, semester]);
 
-    reportData.metrics = {
-      aulas_planeadas: (summary[0]?.aulas_realizadas || 0) + 20,
-      aulas_realizadas: summary[0]?.aulas_realizadas || 0,
-      total_avaliacoes: summary[0]?.total_avaliacoes || 0,
-      total_pautas: summary[0]?.total_pautas || 0,
-      cumprimento_global: 88
-    };
+    // EXPORTAÇÃO EXCEL
+    if (format === 'excel') {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Relatório Pedagógico');
 
-    return res.status(200).json({
-      success: true,
-      message: `Relatório (${report_type}) gerado com sucesso.`,
-      data: reportData
-    });
+      // Estilo de Cabeçalho
+      worksheet.columns = [
+        { header: 'Docente', key: 'docente', width: 30 },
+        { header: 'Curso', key: 'curso', width: 25 },
+        { header: 'Disciplina', key: 'disciplina', width: 25 },
+        { header: 'Aulas Realizadas', key: 'aulas_realizadas', width: 18 },
+        { header: 'Aulas Confirmadas', key: 'aulas_confirmadas', width: 18 },
+        { header: 'Avaliações', key: 'avaliacoes', width: 15 },
+      ];
+
+      // Formatar linha de cabeçalho
+      worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '1D4ED8' }
+      };
+
+      // Adicionar dados
+      rows.forEach(row => worksheet.addRow(row));
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=relatorio_${report_type}_${period}.xlsx`);
+
+      return workbook.xlsx.write(res).then(() => res.status(200).end());
+    }
+
+    return res.status(400).json({ success: false, message: 'Formato não suportado.' });
 
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
