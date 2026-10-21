@@ -1276,6 +1276,12 @@ const model: AppMenuItemWithRoles[] = [
                 icon: 'pi pi-fw pi-home',
                 to: '/dash',
                 roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE', 'CHEFE_TURMA', 'SUBCHEFE_TURMA']
+            },
+            {
+                label: 'Relatórios',
+                icon: 'pi pi-fw pi-file-pdf',
+                to: '/pages/report',
+                roles: ['ADMIN', 'CHEFE_DEPARTAMENTO', 'CHEFE_CURSO', 'DOCENTE', 'CHEFE_TURMA', 'SUBCHEFE_TURMA']
             }
         ]
     },
